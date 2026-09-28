@@ -1,4 +1,7 @@
 {
+  "rewrites": [
+    { "source": "/images/:file", "destination": "/images/images/:file" }
+  ],
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
