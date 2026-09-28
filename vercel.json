@@ -72,6 +72,61 @@
       "source": "/tasting-wine",
       "destination": "/wineculture#tasting-the-wine",
       "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
+      "source": "/wines/italian",
+      "destination": "/wines?country=Italy",
+      "permanent": true
+    },
+    {
+      "source": "/wines/french",
+      "destination": "/wines?country=France",
+      "permanent": true
+    },
+    {
+      "source": "/wines/german",
+      "destination": "/wines?country=Germany",
+      "permanent": true
+    },
+    {
+      "source": "/wines/burgundy",
+      "destination": "/wines?q=burgundy",
+      "permanent": true
+    },
+    {
+      "source": "/wines/champagne",
+      "destination": "/wines?color=Sparkling",
+      "permanent": true
+    },
+    {
+      "source": "/wines/rose",
+      "destination": "/wines?color=Ros%C3%A9",
+      "permanent": true
+    },
+    {
+      "source": "/wines/white",
+      "destination": "/wines?color=White",
+      "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
     }
   ],
   "headers": [
