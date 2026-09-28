@@ -1,6 +1,5 @@
 {
   "rewrites": [
-    { "source": "/images/bottles/:file", "destination": "/images/images/:file" },
     {
       "source": "/images/:file",
       "destination": "/images/images/:file"
@@ -72,6 +71,16 @@
     {
       "source": "/tasting-wine",
       "destination": "/wineculture#tasting-the-wine",
+      "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
       "permanent": true
     },
     {
