@@ -36,3 +36,17 @@ form.f{display:grid;gap:14px}form.f input,form.f textarea{font:inherit;padding:1
 footer.site{background:var(--ink);color:#d8dcdf;padding:60px 0 30px;font-size:.95rem}footer.site .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:40px}footer.site h4{color:#fff;font-size:.95rem}footer.site a{color:#d8dcdf}
 footer.site form.f{grid-template-columns:1fr auto}footer.site form.f input{border:0}footer.site .btn{margin:0;color:#fff}
 .legal{margin-top:40px;font-size:.8rem;opacity:.6;text-align:center}
+.logo{display:flex;align-items:center;gap:12px}.logo img{height:48px;width:auto}
+@media(max-width:520px){.logo{font-size:1.25rem}.logo img{height:38px}}
+.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:40px 30px}
+.art-card{text-decoration:none}.art-card .cv{background:#fff;padding:14px;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:box-shadow .2s,transform .2s}.art-card:hover .cv{box-shadow:0 10px 30px rgba(0,0,0,.16);transform:translateY(-3px)}
+.art-card img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top}.art-card h3{margin:18px 0 6px;font-size:1.1rem}.art-card p{margin:0;opacity:.75;font-size:.95rem}
+.fb-sec{background:#e3e6e8}.fb-bar{display:flex;justify-content:center;align-items:center;gap:18px;margin-bottom:22px}.fb-bar .btn{margin:0}.fb-count{font-family:var(--head);letter-spacing:.08em;font-size:.9rem;min-width:130px;text-align:center}
+.fb-stage{position:relative;max-width:1400px;margin:0 auto;min-height:320px}.fb-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-style:italic}
+.fb-page{background:#fff}.fb-page canvas{width:100%;height:100%;display:block}
+.fb-actions{text-align:center;margin-top:26px}.fb-actions .btn{margin:8px}
+.fb-more{margin-top:60px;text-align:center}.fb-more div{display:flex;flex-wrap:wrap;gap:12px 26px;justify-content:center}.fb-more a{color:var(--olive-2)}
+.age-gate{position:fixed;inset:0;z-index:100;background:rgba(27,29,24,.96);display:flex;align-items:center;justify-content:center;padding:24px}
+.age-box{background:var(--paper);max-width:440px;width:100%;padding:44px 34px;text-align:center}.age-box img{height:90px;margin:0 auto 18px}.age-box h2{font-size:1.5rem}.age-box .btn{margin:8px}.age-box small{display:block;margin-top:18px;opacity:.65}
+.tasting-table{width:100%;border-collapse:collapse;margin:10px 0 24px;font-size:.95rem}.tasting-table th,.tasting-table td{border:1px solid var(--mist);padding:8px 10px;text-align:left;vertical-align:top}.tasting-table th{background:#e3e6e8;font-family:var(--head);font-weight:400;text-transform:uppercase;font-size:.8rem;letter-spacing:.08em}
+.quote-sm{font-style:italic;text-align:center;margin:0 0 30px;opacity:.85}

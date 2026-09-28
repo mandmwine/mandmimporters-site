@@ -1,17 +1,15 @@
 {
   "rewrites": [
-    { "source": "/images/:file", "destination": "/images/images/:file" }
+    {
+      "source": "/images/:file",
+      "destination": "/images/images/:file"
+    }
   ],
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
     {
       "source": "/understanding-winw",
-      "destination": "/wineculture",
-      "permanent": true
-    },
-    {
-      "source": "/tasting-wine",
       "destination": "/wineculture",
       "permanent": true
     },
@@ -61,11 +59,6 @@
       "permanent": true
     },
     {
-      "source": "/articles",
-      "destination": "/",
-      "permanent": true
-    },
-    {
       "source": "/wine-lexicon",
       "destination": "/",
       "permanent": true
@@ -73,6 +66,11 @@
     {
       "source": "/cart",
       "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/tasting-wine",
+      "destination": "/wineculture#tasting-the-wine",
       "permanent": true
     }
   ],
@@ -83,6 +81,15 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/articles/pdf/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
         }
       ]
     }
