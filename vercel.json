@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/images/bottles/:file",
+      "destination": "/images/images/:file"
+    },
+    {
       "source": "/images/:file",
       "destination": "/images/images/:file"
     }
