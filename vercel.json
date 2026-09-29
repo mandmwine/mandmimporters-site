@@ -88,106 +88,6 @@
       "permanent": true
     },
     {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
-    },
-    {
       "source": "/wines/italian",
       "destination": "/wines?country=Italy",
       "permanent": true
@@ -221,19 +121,38 @@
       "source": "/wines/white",
       "destination": "/wines?color=White",
       "permanent": true
-    },
-    {
-      "source": "/wine-doctor",
-      "destination": "/the-wine-doctor",
-      "permanent": true
-    },
-    {
-      "source": "/kosher",
-      "destination": "/learn/kosher-wine",
-      "permanent": true
     }
   ],
   "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "upgrade-insecure-requests"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
     {
       "source": "/images/(.*)",
       "headers": [
