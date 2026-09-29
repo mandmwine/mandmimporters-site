@@ -168,6 +168,26 @@
       "permanent": true
     },
     {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
       "source": "/wines/italian",
       "destination": "/wines?country=Italy",
       "permanent": true
@@ -219,7 +239,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "value": "public, max-age=86400, must-revalidate"
         }
       ]
     },
