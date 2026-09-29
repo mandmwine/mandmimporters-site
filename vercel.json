@@ -98,6 +98,76 @@
       "permanent": true
     },
     {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
+      "source": "/wine-doctor",
+      "destination": "/the-wine-doctor",
+      "permanent": true
+    },
+    {
+      "source": "/kosher",
+      "destination": "/learn/kosher-wine",
+      "permanent": true
+    },
+    {
       "source": "/wines/italian",
       "destination": "/wines?country=Italy",
       "permanent": true
