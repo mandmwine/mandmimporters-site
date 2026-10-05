@@ -111,7 +111,31 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
 .filters input[name="q"] { flex: 1 1 260px; }
 .form-grid { display: flex; flex-direction: column; gap: 12px; align-self: start; }
+.form-grid.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.form-grid.two .span-2 { grid-column: 1 / -1; }
 .form-grid label, .login-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 500; }
+.form-grid textarea { font: inherit; resize: vertical; }
+.form-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.panel-head h2 { margin: 0; }
+.tabs-aside { margin-left: auto; }
+.inline-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.inline-form input[type="text"], .inline-form input[type="number"] { width: 110px; }
+.checkbox { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; }
+.checkbox input { margin: 0; }
+
+/* Score editor */
+.score-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.score-row:last-child { border-bottom: 0; }
+.score-row .score { font-family: var(--font-display), serif; font-size: 22px; min-width: 60px; color: var(--accent); }
+.score-row.editing { display: block; padding: 10px; background: #f8f4ec; border: 1px dashed var(--rule); border-radius: var(--radius); }
+.score-actions { margin-left: auto; display: inline-flex; gap: 10px; }
+.score-form { display: grid; grid-template-columns: 1fr 100px 120px 90px; gap: 8px; align-items: center; }
+.score-form input, .score-form textarea { width: 100%; }
+.score-form textarea { grid-column: 1 / -1; }
+.score-form .checkbox { grid-column: 1 / 3; }
+.score-form-actions { grid-column: 3 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+@media (max-width: 700px) { .score-form { grid-template-columns: 1fr 1fr; } .form-grid.two { grid-template-columns: 1fr; } }
 .notice { background: var(--ok-soft); color: var(--ok); padding: 10px 12px; border-radius: var(--radius); margin: 0; }
 .error { background: var(--err-soft); color: var(--err); padding: 10px 12px; border-radius: var(--radius); margin: 0; }
 .notice p, .error p { margin: 0 0 6px; }

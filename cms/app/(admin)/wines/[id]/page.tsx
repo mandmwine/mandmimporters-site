@@ -4,6 +4,9 @@ import { one, query } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { SeverityBadge, StatusBadge } from "@/components/Badge";
 import FlagButtons from "@/components/FlagButtons";
+import AddVintageButton from "@/components/AddVintageButton";
+import ScoresPanel, { type ScoreRow } from "@/components/ScoresPanel";
+import { EditableCopy, EditableGrapes, EditableTechnical } from "@/components/WineEditSections";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +14,7 @@ type Vintage = {
   id: string; wine_id: string; vintage_text: string | null; status: string; mevushal: string;
   supervision_display: string | null; aging_display: string | null; bottle_sizes: string[];
   special_designation: string | null; tasting_note: string | null; food_pairing: string | null;
+  short_description: string | null; wine_story: string | null;
   first_kosher_vintage: boolean | null; organic: boolean | null; biodynamic: boolean | null;
   legacy: Record<string, unknown>; updated_at: Date;
   display_name: string; canonical_name: string; category: string | null; slug: string; website_slug: string | null;
@@ -30,14 +34,19 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
   const canEdit = user?.role === "admin" || user?.role === "editor";
 
   const v = await one<Vintage>(
-    `SELECT v.*, w.display_name, w.canonical_name, w.category, w.slug, w.website_slug, w.producer_id, p.name AS producer
+    `SELECT v.id, v.wine_id, v.vintage_text, v.status, v.mevushal, v.supervision_display,
+            v.aging_display, v.bottle_sizes, v.special_designation, v.tasting_note, v.food_pairing,
+            v.short_description, v.wine_story, v.first_kosher_vintage, v.organic, v.biodynamic,
+            v.legacy, v.updated_at, v.location_id,
+            w.display_name, w.canonical_name, w.category, w.slug, w.website_slug, w.producer_id,
+            p.name AS producer
      FROM wine_vintages v JOIN wines w ON w.id = v.wine_id JOIN producers p ON p.id = w.producer_id
      WHERE v.id = $1`,
     [id],
   );
   if (!v) notFound();
 
-  const [chain, siblings, grapes, scores, supervision, flags, provenance] = await Promise.all([
+  const [chain, siblings, grapes, scores, supervision, flags, provenance, criticOptions] = await Promise.all([
     query<{ type: string; name: string }>(
       `WITH RECURSIVE up AS (
          SELECT id, parent_id, type, name, 0 AS depth FROM locations WHERE id = $1
@@ -54,9 +63,11 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
        WHERE wg.wine_vintage_id = $1 ORDER BY wg.display_order`,
       [id],
     ),
-    query<{ critic: string | null; score_text: string; award_text: string | null; is_primary: boolean; raw_text: string | null }>(
-      `SELECT c.canonical_name AS critic, s.score_text, s.award_text, s.is_primary, s.raw_text
-       FROM wine_scores s LEFT JOIN critics c ON c.id = s.critic_id WHERE s.wine_vintage_id = $1 ORDER BY s.display_order`,
+    query<ScoreRow>(
+      `SELECT s.id, c.canonical_name AS critic, s.score_text, s.award_text, s.is_primary, s.raw_text,
+              s.review_year, s.review_url
+       FROM wine_scores s LEFT JOIN critics c ON c.id = s.critic_id
+       WHERE s.wine_vintage_id = $1 ORDER BY s.display_order`,
       [id],
     ),
     query<{ name: string }>(
@@ -76,10 +87,15 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
        WHERE fp.entity_type = 'wine_vintage' AND fp.entity_id = $1 AND fp.is_current ORDER BY fp.field_name`,
       [id],
     ),
+    query<{ canonical_name: string }>("SELECT canonical_name FROM critics ORDER BY canonical_name"),
   ]);
 
   const loc = (t: string) => chain.find((c) => c.type === t)?.name;
   const yesNo = (b: boolean | null) => (b === null ? null : b ? "Yes" : "No");
+  const grapesText = grapes
+    .map((g) => (g.percentage ? `${fmtPct(g.percentage).trim()} ${g.name}` : g.name))
+    .join(", ");
+
   const facts: [string, string | null | undefined][] = [
     ["Producer", v.producer],
     ["Country", loc("country")],
@@ -87,7 +103,6 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
     ["Subregion", loc("subregion")],
     ["Appellation", loc("appellation")],
     ["Designation", v.special_designation],
-    ["Grapes", grapes.map((g) => fmtPct(g.percentage) + g.name).join(", ") || null],
     ["Aging", v.aging_display],
     ["Bottle sizes", v.bottle_sizes.join(", ") || null],
     ["Mevushal", v.mevushal === "unknown" ? null : v.mevushal === "yes" ? "Yes" : "No"],
@@ -98,6 +113,59 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
   ];
   const legacy = v.legacy as Record<string, unknown>;
   const openFlags = flags.filter((f) => f.status === "open");
+
+  const technicalSummary = (
+    <dl className="specs">
+      {facts.map(([k, val]) => (
+        <div key={k}>
+          <dt>{k}</dt>
+          <dd>{val ? val : <span className="missing">not recorded</span>}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+
+  const copySummary = (
+    <>
+      <h3>Tasting note</h3>
+      <p>{v.tasting_note ?? <span className="missing">none</span>}</p>
+      {v.tasting_note && (
+        <p className={`small ${v.tasting_note.length > 450 ? "warn-text" : "muted"}`}>
+          {v.tasting_note.length} characters (target 250–450)
+        </p>
+      )}
+      <h3>Food pairing</h3>
+      <p>{v.food_pairing ?? <span className="missing">none</span>}</p>
+      {v.short_description && (
+        <>
+          <h3>Short description</h3>
+          <p>{v.short_description}</p>
+        </>
+      )}
+    </>
+  );
+
+  const grapesSummary = (
+    <p className={grapesText ? "" : "missing"}>{grapesText || "Not recorded"}</p>
+  );
+
+  const editableVintage = {
+    id: v.id,
+    vintage_text: v.vintage_text,
+    status: v.status,
+    mevushal: v.mevushal,
+    supervision_display: v.supervision_display,
+    aging_display: v.aging_display,
+    bottle_sizes: v.bottle_sizes,
+    special_designation: v.special_designation,
+    tasting_note: v.tasting_note,
+    food_pairing: v.food_pairing,
+    short_description: v.short_description,
+    first_kosher_vintage: v.first_kosher_vintage,
+    organic: v.organic,
+    biodynamic: v.biodynamic,
+    wine_story: v.wine_story,
+  };
 
   return (
     <>
@@ -134,60 +202,37 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
         </div>
       </header>
 
-      {siblings.length > 1 && (
-        <nav className="tabs">
-          {siblings.map((s) => (
-            <Link key={s.id} href={`/wines/${s.id}`} className={s.id === id ? "active" : undefined}>
-              {s.vintage_text ?? "No vintage"}
-            </Link>
-          ))}
-        </nav>
-      )}
+      <nav className="tabs">
+        {siblings.map((s) => (
+          <Link key={s.id} href={`/wines/${s.id}`} className={s.id === id ? "active" : undefined}>
+            {s.vintage_text ?? "No vintage"}
+          </Link>
+        ))}
+        {canEdit && (
+          <span className="tabs-aside">
+            <AddVintageButton wineId={v.wine_id} hasExisting={siblings.length > 0} />
+          </span>
+        )}
+      </nav>
 
       <section className="split wide">
         <div>
-          <div className="panel">
-            <h2>Technical details</h2>
-            <dl className="specs">
-              {facts.map(([k, val]) => (
-                <div key={k}>
-                  <dt>{k}</dt>
-                  <dd>{val ? val : <span className="missing">not recorded</span>}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+          <EditableTechnical v={editableVintage} summary={technicalSummary} canEdit={canEdit} />
+          <EditableGrapes vintageId={id} grapesText={grapesText} summary={grapesSummary} canEdit={canEdit} />
 
           <div className="panel">
-            <h2>Scores</h2>
-            {scores.length === 0 ? (
-              <p className="muted">No scores for this vintage.</p>
-            ) : (
-              <ul className="scores">
-                {scores.map((s, i) => (
-                  <li key={i}>
-                    <span className="score">{s.score_text}</span>
-                    <span>{s.critic ?? "Unknown critic"}</span>
-                    {s.award_text && <span className="muted">{s.award_text}</span>}
-                    {s.is_primary && <span className="badge">Primary</span>}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div className="panel-head">
+              <h2>Scores</h2>
+            </div>
+            <ScoresPanel
+              vintageId={id}
+              scores={scores}
+              criticOptions={criticOptions.map((c) => c.canonical_name)}
+              canEdit={canEdit}
+            />
           </div>
 
-          <div className="panel">
-            <h2>Copy</h2>
-            <h3>Tasting note</h3>
-            <p>{v.tasting_note ?? <span className="missing">none</span>}</p>
-            {v.tasting_note && (
-              <p className={`small ${v.tasting_note.length > 450 ? "warn-text" : "muted"}`}>
-                {v.tasting_note.length} characters (target 250–450)
-              </p>
-            )}
-            <h3>Food pairing</h3>
-            <p>{v.food_pairing ?? <span className="missing">none</span>}</p>
-          </div>
+          <EditableCopy v={editableVintage} summary={copySummary} canEdit={canEdit} />
         </div>
 
         <div>
@@ -258,7 +303,6 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
           )}
         </div>
       </section>
-      <p className="muted small">Editing, Duplicate Previous Vintage and the live sheet preview arrive in the next build phase.</p>
     </>
   );
 }

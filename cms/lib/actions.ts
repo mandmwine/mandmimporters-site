@@ -1,5 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireAdmin, requireEditor, type Role } from "./auth";
 import { one, query } from "./db";
 import { audit } from "./audit";
@@ -104,3 +105,370 @@ export async function updateUser(formData: FormData) {
   }
   revalidatePath("/users");
 }
+
+// =============================================================================
+// Wine vintage editing
+// =============================================================================
+
+const STATUSES = ["draft", "needs_review", "approved", "published", "discontinued"] as const;
+type VintageStatus = (typeof STATUSES)[number];
+const MEVUSHAL = ["yes", "no", "unknown"] as const;
+type Mevushal = (typeof MEVUSHAL)[number];
+
+function s(formData: FormData, key: string): string | null {
+  const v = formData.get(key);
+  if (v === null) return null;
+  const t = String(v).trim();
+  return t === "" ? null : t;
+}
+
+function b3(formData: FormData, key: string): boolean | null {
+  const v = formData.get(key);
+  if (v === null || v === "") return null;
+  const t = String(v).toLowerCase();
+  if (t === "yes" || t === "true") return true;
+  if (t === "no" || t === "false") return false;
+  return null;
+}
+
+function arr(formData: FormData, key: string): string[] {
+  const v = s(formData, key);
+  if (!v) return [];
+  return v.split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+}
+
+type VintageRow = {
+  id: string;
+  wine_id: string;
+  vintage_text: string | null;
+  status: VintageStatus;
+  mevushal: Mevushal;
+  supervision_display: string | null;
+  aging_display: string | null;
+  bottle_sizes: string[];
+  special_designation: string | null;
+  tasting_note: string | null;
+  food_pairing: string | null;
+  short_description: string | null;
+  first_kosher_vintage: boolean | null;
+  organic: boolean | null;
+  biodynamic: boolean | null;
+  wine_story: string | null;
+};
+
+// Update the main set of vintage fields in a single save. Each change is audited.
+export async function updateWineVintage(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const before = await one<VintageRow>(
+    `SELECT id, wine_id, vintage_text, status, mevushal, supervision_display, aging_display,
+            bottle_sizes, special_designation, tasting_note, food_pairing, short_description,
+            first_kosher_vintage, organic, biodynamic, wine_story
+     FROM wine_vintages WHERE id = $1`,
+    [id],
+  );
+  if (!before) return;
+
+  const next = {
+    vintage_text: s(formData, "vintage_text"),
+    status: (STATUSES as readonly string[]).includes(String(formData.get("status")))
+      ? (String(formData.get("status")) as VintageStatus)
+      : before.status,
+    mevushal: (MEVUSHAL as readonly string[]).includes(String(formData.get("mevushal")))
+      ? (String(formData.get("mevushal")) as Mevushal)
+      : before.mevushal,
+    supervision_display: s(formData, "supervision_display"),
+    aging_display: s(formData, "aging_display"),
+    bottle_sizes: arr(formData, "bottle_sizes"),
+    special_designation: s(formData, "special_designation"),
+    tasting_note: s(formData, "tasting_note"),
+    food_pairing: s(formData, "food_pairing"),
+    short_description: s(formData, "short_description"),
+    first_kosher_vintage: b3(formData, "first_kosher_vintage"),
+    organic: b3(formData, "organic"),
+    biodynamic: b3(formData, "biodynamic"),
+    wine_story: s(formData, "wine_story"),
+  };
+
+  // Only persist what actually changed; keeps the audit log clean.
+  const diffs: { field: string; old: unknown; new: unknown }[] = [];
+  for (const key of Object.keys(next) as (keyof typeof next)[]) {
+    const a = before[key];
+    const n = next[key];
+    const same = Array.isArray(a) && Array.isArray(n) ? a.join("|") === (n as string[]).join("|") : a === n;
+    if (!same) diffs.push({ field: key, old: a, new: n });
+  }
+  if (diffs.length === 0) {
+    revalidatePath(`/wines/${id}`);
+    return;
+  }
+
+  await query(
+    `UPDATE wine_vintages SET
+       vintage_text = $2, status = $3, mevushal = $4, supervision_display = $5,
+       aging_display = $6, bottle_sizes = $7, special_designation = $8,
+       tasting_note = $9, food_pairing = $10, short_description = $11,
+       first_kosher_vintage = $12, organic = $13, biodynamic = $14, wine_story = $15,
+       reviewed_at = CASE WHEN $3 = 'approved' AND status <> 'approved' THEN now() ELSE reviewed_at END,
+       reviewed_by = CASE WHEN $3 = 'approved' AND status <> 'approved' THEN $16::uuid ELSE reviewed_by END,
+       approved_at = CASE WHEN $3 = 'approved' AND status <> 'approved' THEN now() ELSE approved_at END,
+       approved_by = CASE WHEN $3 = 'approved' AND status <> 'approved' THEN $16::uuid ELSE approved_by END,
+       published_at = CASE WHEN $3 = 'published' AND status <> 'published' THEN now() ELSE published_at END,
+       updated_at = now()
+     WHERE id = $1`,
+    [
+      id, next.vintage_text, next.status, next.mevushal, next.supervision_display,
+      next.aging_display, next.bottle_sizes, next.special_designation,
+      next.tasting_note, next.food_pairing, next.short_description,
+      next.first_kosher_vintage, next.organic, next.biodynamic, next.wine_story,
+      user.id,
+    ],
+  );
+  for (const d of diffs) {
+    await audit(user.id, "wine_vintage.update", { type: "wine_vintage", id, field: d.field }, { old: d.old, new: d.new });
+  }
+  revalidatePath(`/wines/${id}`);
+  revalidatePath("/wines", "layout");
+}
+
+// =============================================================================
+// Add vintage: blank or duplicated from the most recent one
+// =============================================================================
+
+export async function addVintage(formData: FormData) {
+  const user = await requireEditor();
+  const wineId = String(formData.get("wine_id") ?? "");
+  const vintage = (s(formData, "vintage_text") ?? "").trim() || null;
+  const duplicate = formData.get("duplicate") === "on" || formData.get("duplicate") === "true";
+  if (!/^[0-9a-f-]{36}$/i.test(wineId)) return;
+
+  const existing = await one<{ n: number }>(
+    "SELECT count(*)::int AS n FROM wine_vintages WHERE wine_id = $1 AND vintage_text IS NOT DISTINCT FROM $2 AND deleted_at IS NULL",
+    [wineId, vintage],
+  );
+  if ((existing?.n ?? 0) > 0) {
+    redirect(`/wines?q=${encodeURIComponent(vintage ?? "")}&error=exists`);
+  }
+
+  let newId: string;
+  if (duplicate) {
+    const prev = await one<{ id: string }>(
+      `SELECT id FROM wine_vintages
+       WHERE wine_id = $1 AND deleted_at IS NULL
+       ORDER BY vintage_text DESC NULLS LAST LIMIT 1`,
+      [wineId],
+    );
+    if (!prev) {
+      // No source to copy from; fall through to blank insert.
+      const r = await one<{ id: string }>(
+        "INSERT INTO wine_vintages (wine_id, vintage_text, status) VALUES ($1, $2, 'draft') RETURNING id",
+        [wineId, vintage],
+      );
+      newId = r!.id;
+    } else {
+      const r = await one<{ id: string }>(
+        `INSERT INTO wine_vintages (
+           wine_id, vintage_text, status, display_title_override, location_id, mevushal,
+           supervision_display, aging_display, bottle_sizes, special_designation,
+           first_kosher_vintage, organic, biodynamic, tasting_note, winery_note_override,
+           wine_story, food_pairing, short_description, catalog_note, bottle_asset_id,
+           bottle_family, bottle_scale_override, bottle_x_override, bottle_y_override,
+           map_asset_override_id, theme_override,
+           duplicated_from_id,
+           carried_forward_fields)
+         SELECT wine_id, $2, 'needs_review', display_title_override, location_id, mevushal,
+                supervision_display, aging_display, bottle_sizes, special_designation,
+                first_kosher_vintage, organic, biodynamic, tasting_note, winery_note_override,
+                wine_story, food_pairing, short_description, catalog_note, bottle_asset_id,
+                bottle_family, bottle_scale_override, bottle_x_override, bottle_y_override,
+                map_asset_override_id, theme_override,
+                id,
+                ARRAY['mevushal','supervision_display','aging_display','bottle_sizes',
+                      'special_designation','first_kosher_vintage','organic','biodynamic',
+                      'tasting_note','food_pairing','grapes','location_id']::text[]
+         FROM wine_vintages WHERE id = $1
+         RETURNING id`,
+        [prev.id, vintage],
+      );
+      newId = r!.id;
+      // Copy grapes from the source.
+      await query(
+        `INSERT INTO wine_grapes (wine_vintage_id, grape_id, percentage, display_order)
+         SELECT $1, grape_id, percentage, display_order FROM wine_grapes WHERE wine_vintage_id = $2`,
+        [newId, prev.id],
+      );
+      // Copy supervision authorities.
+      await query(
+        `INSERT INTO wine_supervision (wine_vintage_id, authority_id, display_order)
+         SELECT $1, authority_id, display_order FROM wine_supervision WHERE wine_vintage_id = $2`,
+        [newId, prev.id],
+      );
+      // Flag that this is carried forward.
+      await query(
+        `INSERT INTO review_flags (entity_type, entity_id, flag_type, severity, message)
+         VALUES ('wine_vintage', $1, 'new_vintage', 'info',
+                 $2)`,
+        [newId, `Carried forward from vintage ${(await one<{ v: string | null }>("SELECT vintage_text AS v FROM wine_vintages WHERE id = $1", [prev.id]))?.v ?? "previous"}. Review every field before approval.`],
+      );
+    }
+  } else {
+    const r = await one<{ id: string }>(
+      "INSERT INTO wine_vintages (wine_id, vintage_text, status) VALUES ($1, $2, 'draft') RETURNING id",
+      [wineId, vintage],
+    );
+    newId = r!.id;
+  }
+
+  await audit(user.id, duplicate ? "wine_vintage.duplicate" : "wine_vintage.create",
+    { type: "wine_vintage", id: newId }, { new: { wine_id: wineId, vintage_text: vintage } });
+  revalidatePath(`/wines`, "layout");
+  redirect(`/wines/${newId}`);
+}
+
+// =============================================================================
+// Score add / update / delete
+// =============================================================================
+
+type ScoreRow = {
+  id: string;
+  wine_vintage_id: string;
+  critic_id: string | null;
+  score_text: string;
+  numeric_score: string | null;
+  award_text: string | null;
+  review_year: number | null;
+  review_url: string | null;
+  is_primary: boolean;
+  raw_text: string | null;
+};
+
+async function resolveCriticId(criticName: string): Promise<string | null> {
+  const name = criticName.trim();
+  if (!name) return null;
+  const existing = await one<{ id: string }>(
+    `SELECT id FROM critics
+     WHERE lower(canonical_name) = lower($1)
+        OR lower($1) = ANY(array(SELECT lower(unnest(aliases))))`,
+    [name],
+  );
+  if (existing) return existing.id;
+  const r = await one<{ id: string }>(
+    "INSERT INTO critics (canonical_name) VALUES ($1) RETURNING id",
+    [name],
+  );
+  return r?.id ?? null;
+}
+
+function parseScoreNumeric(text: string): number | null {
+  const t = text.trim();
+  const m = t.match(/^(\d+(?:\.\d+)?)/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+export async function saveScore(formData: FormData) {
+  const user = await requireEditor();
+  const vintageId = String(formData.get("wine_vintage_id") ?? "");
+  const scoreId = s(formData, "id");
+  if (!/^[0-9a-f-]{36}$/i.test(vintageId)) return;
+
+  const criticName = s(formData, "critic") ?? "";
+  const scoreText = s(formData, "score_text") ?? "";
+  if (!scoreText) return;
+  const awardText = s(formData, "award_text");
+  const reviewYear = (() => {
+    const n = s(formData, "review_year");
+    if (!n) return null;
+    const y = parseInt(n, 10);
+    return y >= 1900 && y <= 2100 ? y : null;
+  })();
+  const reviewUrl = s(formData, "review_url");
+  const isPrimary = formData.get("is_primary") === "on" || formData.get("is_primary") === "true";
+  const rawText = s(formData, "raw_text");
+  const criticId = criticName ? await resolveCriticId(criticName) : null;
+  const numeric = parseScoreNumeric(scoreText);
+
+  if (scoreId) {
+    const before = await one<ScoreRow>("SELECT * FROM wine_scores WHERE id = $1", [scoreId]);
+    if (!before) return;
+    await query(
+      `UPDATE wine_scores SET critic_id = $2, score_text = $3, numeric_score = $4,
+         award_text = $5, review_year = $6, review_url = $7, is_primary = $8, raw_text = $9
+       WHERE id = $1`,
+      [scoreId, criticId, scoreText, numeric, awardText, reviewYear, reviewUrl, isPrimary, rawText],
+    );
+    await audit(user.id, "score.update", { type: "wine_score", id: scoreId },
+      { old: { critic: before.critic_id, score: before.score_text }, new: { critic: criticId, score: scoreText } });
+  } else {
+    const r = await one<{ id: string }>(
+      `INSERT INTO wine_scores
+         (wine_vintage_id, critic_id, score_text, numeric_score, award_text, review_year, review_url, is_primary, raw_text, display_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
+               coalesce((SELECT max(display_order) + 1 FROM wine_scores WHERE wine_vintage_id = $1), 0))
+       RETURNING id`,
+      [vintageId, criticId, scoreText, numeric, awardText, reviewYear, reviewUrl, isPrimary, rawText],
+    );
+    await audit(user.id, "score.create", { type: "wine_score", id: r!.id },
+      { new: { wine_vintage_id: vintageId, critic: criticId, score: scoreText } });
+  }
+  revalidatePath(`/wines/${vintageId}`);
+}
+
+export async function deleteScore(formData: FormData) {
+  const user = await requireEditor();
+  const scoreId = String(formData.get("id") ?? "");
+  const vintageId = String(formData.get("wine_vintage_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(scoreId)) return;
+  const before = await one<{ score_text: string; wine_vintage_id: string }>(
+    "SELECT score_text, wine_vintage_id FROM wine_scores WHERE id = $1",
+    [scoreId],
+  );
+  if (!before) return;
+  await query("DELETE FROM wine_scores WHERE id = $1", [scoreId]);
+  await audit(user.id, "score.delete", { type: "wine_score", id: scoreId }, { old: before });
+  revalidatePath(`/wines/${vintageId || before.wine_vintage_id}`);
+}
+
+// =============================================================================
+// Grape management
+// =============================================================================
+
+async function resolveGrapeId(name: string, color?: string | null): Promise<string | null> {
+  const n = name.trim();
+  if (!n) return null;
+  const existing = await one<{ id: string }>(
+    "SELECT id FROM grapes WHERE lower(canonical_name) = lower($1) OR lower($1) = ANY(array(SELECT lower(unnest(aliases))))",
+    [n],
+  );
+  if (existing) return existing.id;
+  const r = await one<{ id: string }>(
+    "INSERT INTO grapes (canonical_name, color) VALUES ($1, $2) RETURNING id",
+    [n, color ?? null],
+  );
+  return r?.id ?? null;
+}
+
+export async function replaceGrapes(formData: FormData) {
+  const user = await requireEditor();
+  const vintageId = String(formData.get("wine_vintage_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(vintageId)) return;
+  // Comma-separated "60% Merlot, 40% Cabernet Franc" or just names.
+  const text = s(formData, "grapes_text") ?? "";
+  const parts = text.split(/\s*,\s*/).filter(Boolean);
+  await query("DELETE FROM wine_grapes WHERE wine_vintage_id = $1", [vintageId]);
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    const m = p.match(/^(\d+(?:\.\d+)?)%\s*(.+)$/);
+    const pct = m ? parseFloat(m[1]) : null;
+    const name = m ? m[2].trim() : p.trim();
+    const gid = await resolveGrapeId(name);
+    if (!gid) continue;
+    await query(
+      "INSERT INTO wine_grapes (wine_vintage_id, grape_id, percentage, display_order) VALUES ($1, $2, $3, $4) ON CONFLICT (wine_vintage_id, grape_id) DO UPDATE SET percentage = EXCLUDED.percentage, display_order = EXCLUDED.display_order",
+      [vintageId, gid, pct, i],
+    );
+  }
+  await audit(user.id, "wine_vintage.grapes.update", { type: "wine_vintage", id: vintageId, field: "grapes" }, { new: text });
+  revalidatePath(`/wines/${vintageId}`);
+}
+
