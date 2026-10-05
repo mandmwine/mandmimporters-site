@@ -25,5 +25,8 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.2.0",
     "typescript": "~5.9.2"
+  },
+  "overrides": {
+    "jose": "~4.15.9"
   }
 }
