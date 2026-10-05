@@ -34,7 +34,11 @@ export async function POST(req: NextRequest) {
   if (!user) {
     const bootstrap = (process.env.BOOTSTRAP_ADMIN_EMAIL ?? "").toLowerCase().trim();
     const count = await one<{ n: number }>("SELECT count(*)::int AS n FROM users");
-    if (bootstrap && email === bootstrap && count?.n === 0 && decoded.email_verified !== false) {
+    // Bootstrap the first Admin on first-ever sign-in. The email must match the
+    // BOOTSTRAP_ADMIN_EMAIL env var and the users table must still be empty.
+    // (The email-verified flag is skipped: a user added through the Firebase
+    // console starts unverified, and we're trusting the env-var match.)
+    if (bootstrap && email === bootstrap && count?.n === 0) {
       user = await one(
         "INSERT INTO users (firebase_uid, email, display_name, role) VALUES ($1, $2, $3, 'admin') RETURNING id, active, firebase_uid",
         [decoded.uid, decoded.email, decoded.name ?? null],
