@@ -1,0 +1,253 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { one, query } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth";
+import { SeverityBadge, StatusBadge } from "@/components/Badge";
+import FlagButtons from "@/components/FlagButtons";
+
+export const dynamic = "force-dynamic";
+
+type Vintage = {
+  id: string; wine_id: string; vintage_text: string | null; status: string; mevushal: string;
+  supervision_display: string | null; aging_display: string | null; bottle_sizes: string[];
+  special_designation: string | null; tasting_note: string | null; food_pairing: string | null;
+  first_kosher_vintage: boolean | null; organic: boolean | null; biodynamic: boolean | null;
+  legacy: Record<string, unknown>; updated_at: Date;
+  display_name: string; canonical_name: string; category: string | null; slug: string; website_slug: string | null;
+  producer_id: string; producer: string; location_id: string | null;
+};
+
+function fmtPct(p: string | null) {
+  if (p === null) return "";
+  const n = Number(p);
+  return `${Number.isInteger(n) ? n : n.toFixed(1)}% `;
+}
+
+export default async function WineDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  const user = await getSessionUser();
+  const canEdit = user?.role === "admin" || user?.role === "editor";
+
+  const v = await one<Vintage>(
+    `SELECT v.*, w.display_name, w.canonical_name, w.category, w.slug, w.website_slug, w.producer_id, p.name AS producer
+     FROM wine_vintages v JOIN wines w ON w.id = v.wine_id JOIN producers p ON p.id = w.producer_id
+     WHERE v.id = $1`,
+    [id],
+  );
+  if (!v) notFound();
+
+  const [chain, siblings, grapes, scores, supervision, flags, provenance] = await Promise.all([
+    query<{ type: string; name: string }>(
+      `WITH RECURSIVE up AS (
+         SELECT id, parent_id, type, name, 0 AS depth FROM locations WHERE id = $1
+         UNION ALL SELECT x.id, x.parent_id, x.type, x.name, up.depth + 1 FROM locations x JOIN up ON x.id = up.parent_id)
+       SELECT type, name FROM up ORDER BY depth DESC`,
+      [v.location_id],
+    ),
+    query<{ id: string; vintage_text: string | null; status: string }>(
+      "SELECT id, vintage_text, status FROM wine_vintages WHERE wine_id = $1 AND deleted_at IS NULL ORDER BY vintage_text DESC NULLS LAST",
+      [v.wine_id],
+    ),
+    query<{ name: string; percentage: string | null }>(
+      `SELECT g.canonical_name AS name, wg.percentage FROM wine_grapes wg JOIN grapes g ON g.id = wg.grape_id
+       WHERE wg.wine_vintage_id = $1 ORDER BY wg.display_order`,
+      [id],
+    ),
+    query<{ critic: string | null; score_text: string; award_text: string | null; is_primary: boolean; raw_text: string | null }>(
+      `SELECT c.canonical_name AS critic, s.score_text, s.award_text, s.is_primary, s.raw_text
+       FROM wine_scores s LEFT JOIN critics c ON c.id = s.critic_id WHERE s.wine_vintage_id = $1 ORDER BY s.display_order`,
+      [id],
+    ),
+    query<{ name: string }>(
+      `SELECT a.canonical_name AS name FROM wine_supervision ws JOIN supervision_authorities a ON a.id = ws.authority_id
+       WHERE ws.wine_vintage_id = $1 ORDER BY ws.display_order`,
+      [id],
+    ),
+    query<{ id: string; field_name: string | null; flag_type: string; severity: string; message: string; status: string }>(
+      `SELECT id, field_name, flag_type, severity, message, status FROM review_flags
+       WHERE entity_type = 'wine_vintage' AND entity_id = $1
+       ORDER BY status = 'open' DESC, CASE severity WHEN 'error' THEN 0 WHEN 'warning' THEN 1 ELSE 2 END, created_at`,
+      [id],
+    ),
+    query<{ field_name: string; raw_value: string | null; verification_status: string; verified_at: Date | null; title: string | null; source_locator: string | null }>(
+      `SELECT fp.field_name, fp.raw_value, fp.verification_status, fp.verified_at, s.title, fp.source_locator
+       FROM field_provenance fp LEFT JOIN sources s ON s.id = fp.source_id
+       WHERE fp.entity_type = 'wine_vintage' AND fp.entity_id = $1 AND fp.is_current ORDER BY fp.field_name`,
+      [id],
+    ),
+  ]);
+
+  const loc = (t: string) => chain.find((c) => c.type === t)?.name;
+  const yesNo = (b: boolean | null) => (b === null ? null : b ? "Yes" : "No");
+  const facts: [string, string | null | undefined][] = [
+    ["Producer", v.producer],
+    ["Country", loc("country")],
+    ["Region", loc("region")],
+    ["Subregion", loc("subregion")],
+    ["Appellation", loc("appellation")],
+    ["Designation", v.special_designation],
+    ["Grapes", grapes.map((g) => fmtPct(g.percentage) + g.name).join(", ") || null],
+    ["Aging", v.aging_display],
+    ["Bottle sizes", v.bottle_sizes.join(", ") || null],
+    ["Mevushal", v.mevushal === "unknown" ? null : v.mevushal === "yes" ? "Yes" : "No"],
+    ["Supervision", supervision.map((s) => s.name).join(" · ") || v.supervision_display],
+    ["First kosher vintage", yesNo(v.first_kosher_vintage)],
+    ["Organic", yesNo(v.organic)],
+    ["Biodynamic", yesNo(v.biodynamic)],
+  ];
+  const legacy = v.legacy as Record<string, unknown>;
+  const openFlags = flags.filter((f) => f.status === "open");
+
+  return (
+    <>
+      <p className="crumbs">
+        <Link href="/wines">Wines</Link> / {v.producer}
+      </p>
+      <header className="page-head row">
+        <div>
+          <p className="eyebrow">{v.vintage_text ?? "Vintage not set"}</p>
+          <h1>{v.display_name}</h1>
+          <p className="muted">
+            {[loc("appellation"), loc("region"), loc("country")].filter(Boolean).join(" · ")}
+            {v.category ? ` · ${v.category}` : ""}
+          </p>
+        </div>
+        <div className="head-side">
+          <StatusBadge status={v.status} />
+          {v.website_slug && (
+            <a className="link small" href={`https://www.mandmimporters.com/wines/p/${v.website_slug}`} target="_blank" rel="noreferrer">
+              Public page ↗
+            </a>
+          )}
+        </div>
+      </header>
+
+      {siblings.length > 1 && (
+        <nav className="tabs">
+          {siblings.map((s) => (
+            <Link key={s.id} href={`/wines/${s.id}`} className={s.id === id ? "active" : undefined}>
+              {s.vintage_text ?? "No vintage"}
+            </Link>
+          ))}
+        </nav>
+      )}
+
+      <section className="split wide">
+        <div>
+          <div className="panel">
+            <h2>Technical details</h2>
+            <dl className="specs">
+              {facts.map(([k, val]) => (
+                <div key={k}>
+                  <dt>{k}</dt>
+                  <dd>{val ? val : <span className="missing">not recorded</span>}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div className="panel">
+            <h2>Scores</h2>
+            {scores.length === 0 ? (
+              <p className="muted">No scores for this vintage.</p>
+            ) : (
+              <ul className="scores">
+                {scores.map((s, i) => (
+                  <li key={i}>
+                    <span className="score">{s.score_text}</span>
+                    <span>{s.critic ?? "Unknown critic"}</span>
+                    {s.award_text && <span className="muted">{s.award_text}</span>}
+                    {s.is_primary && <span className="badge">Primary</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="panel">
+            <h2>Copy</h2>
+            <h3>Tasting note</h3>
+            <p>{v.tasting_note ?? <span className="missing">none</span>}</p>
+            {v.tasting_note && (
+              <p className={`small ${v.tasting_note.length > 450 ? "warn-text" : "muted"}`}>
+                {v.tasting_note.length} characters (target 250–450)
+              </p>
+            )}
+            <h3>Food pairing</h3>
+            <p>{v.food_pairing ?? <span className="missing">none</span>}</p>
+          </div>
+        </div>
+
+        <div>
+          <div className="panel">
+            <h2>Review items {openFlags.length > 0 && <span className="pill">{openFlags.length}</span>}</h2>
+            {flags.length === 0 ? (
+              <p className="muted">No review items.</p>
+            ) : (
+              <ul className="flags">
+                {flags.map((f) => (
+                  <li key={f.id} className={f.status !== "open" ? "closed" : undefined}>
+                    <SeverityBadge severity={f.severity} />
+                    <div>
+                      <p>{f.message}</p>
+                      <div className="muted small">
+                        {f.field_name ? `${f.field_name.replace(/_/g, " ")} · ` : ""}
+                        {f.status !== "open" ? f.status : f.flag_type.replace(/_/g, " ")}
+                        {canEdit && <> · <FlagButtons id={f.id} status={f.status} /></>}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="panel">
+            <h2>Sources</h2>
+            {provenance.length === 0 ? (
+              <p className="muted">No source recorded.</p>
+            ) : (
+              <table className="table compact">
+                <tbody>
+                  {provenance.map((p, i) => (
+                    <tr key={i}>
+                      <td>{p.field_name.replace(/_/g, " ")}</td>
+                      <td className="small">
+                        {p.raw_value ?? "—"}
+                        <div className="muted">{p.title}</div>
+                      </td>
+                      <td className="small">
+                        {p.verification_status === "verified" && p.verified_at
+                          ? `Verified ${new Date(p.verified_at).toLocaleDateString("en-US")}`
+                          : <span className="missing">{p.verification_status}</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {Object.keys(legacy).length > 0 && (
+            <details className="panel">
+              <summary>Original imported copy</summary>
+              <p className="muted small">Kept exactly as imported. Never edited.</p>
+              <dl className="specs small">
+                {["expert_note", "serve", "region_text", "grape_text", "vintages", "score"].map((k) =>
+                  legacy[k] ? (
+                    <div key={k}>
+                      <dt>{k.replace(/_/g, " ")}</dt>
+                      <dd>{String(legacy[k])}</dd>
+                    </div>
+                  ) : null,
+                )}
+              </dl>
+            </details>
+          )}
+        </div>
+      </section>
+      <p className="muted small">Editing, Duplicate Previous Vintage and the live sheet preview arrive in the next build phase.</p>
+    </>
+  );
+}
