@@ -146,8 +146,7 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
       supervision_display: v.supervision_display,
       mevushal: v.mevushal,
       bottle_sizes: v.bottle_sizes,
-      aging_display: v.aging_display ??
-        (typeof v.legacy?.serve === "string" ? null : null),
+      aging_display: v.aging_display,
       first_kosher_vintage: v.first_kosher_vintage,
       organic: v.organic,
       biodynamic: v.biodynamic,
