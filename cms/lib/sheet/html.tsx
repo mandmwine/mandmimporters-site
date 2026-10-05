@@ -1,6 +1,6 @@
 // Returns the full standalone HTML document used to generate the sheet PDF.
 // Called by the PDF export route — puppeteer feeds this to Chromium via setContent.
-import { renderToStaticMarkup } from "react-dom/server";
+import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { SingleWineSheet } from "./SingleWineSheet";
@@ -15,6 +15,9 @@ async function sheetCss(): Promise<string> {
 }
 
 export async function sheetHtml(data: SheetData): Promise<string> {
+  // Dynamic import so Turbopack doesn't treat react-dom/server as a top-level import
+  // of a module that could be reached from client code.
+  const { renderToStaticMarkup } = await import("react-dom/server");
   const body = renderToStaticMarkup(<SingleWineSheet data={data} mode="print" />);
   const css = await sheetCss();
   // Google Fonts stylesheet; the browser downloads the two families used by the sheet.
