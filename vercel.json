@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/catalog-admin",
+      "destination": "https://mandm-catalog.vercel.app/catalog-admin"
+    },
+    {
+      "source": "/catalog-admin/:path*",
+      "destination": "https://mandm-catalog.vercel.app/catalog-admin/:path*"
+    },
+    {
       "source": "/images/bottles/:file",
       "destination": "/images/images/:file"
     },
