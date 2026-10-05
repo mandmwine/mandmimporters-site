@@ -36,14 +36,16 @@ async function createPool(): Promise<Pool> {
   if (process.env.DATABASE_URL) {
     return new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
   }
-  const { Connector, AuthTypes, IpAddressTypes } = await import("@google-cloud/cloud-sql-connector");
+  const mod = (await import("@google-cloud/cloud-sql-connector")) as {
+    Connector: new (opts?: unknown) => { getOptions: (o: Record<string, unknown>) => Promise<Record<string, unknown>> };
+  };
   await useServiceAccountForGoogleCloud();
-  const connector = new Connector();
+  const connector = new mod.Connector();
   const iam = process.env.DB_AUTH === "IAM";
   const clientOpts = await connector.getOptions({
     instanceConnectionName: process.env.CLOUD_SQL_INSTANCE as string,
-    ipType: IpAddressTypes.PUBLIC,
-    ...(iam ? { authType: AuthTypes.IAM } : {}),
+    ipType: "PUBLIC",
+    ...(iam ? { authType: "IAM" } : {}),
   });
   return new pg.Pool({
     ...clientOpts,
@@ -52,6 +54,51 @@ async function createPool(): Promise<Pool> {
     database: process.env.DB_NAME || "catalog",
     max: 5,
   });
+}
+
+// Run pending SQL migrations exactly once per process, inside an advisory lock.
+// Called lazily at first database access so a cold start applies new migrations
+// without needing a build-time connection to the database.
+let migrationsPromise: Promise<void> | null = null;
+async function ensureMigrations(pool: Pool): Promise<void> {
+  if (migrationsPromise) return migrationsPromise;
+  migrationsPromise = (async () => {
+    const path = await import("node:path");
+    const { readdir, readFile } = await import("node:fs/promises");
+    const dir = path.join(process.cwd(), "migrations");
+    const client = await pool.connect();
+    try {
+      await client.query("SELECT pg_advisory_lock(727274)");
+      await client.query(
+        "CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())",
+      );
+      const done = new Set(
+        (await client.query<{ name: string }>("SELECT name FROM schema_migrations")).rows.map((r) => r.name),
+      );
+      const files = (await readdir(dir)).filter((f) => f.endsWith(".sql")).sort();
+      for (const file of files) {
+        if (done.has(file)) continue;
+        const sql = await readFile(path.join(dir, file), "utf8");
+        console.log(`[migrate] applying ${file}`);
+        await client.query("BEGIN");
+        try {
+          await client.query(sql);
+          await client.query("INSERT INTO schema_migrations (name) VALUES ($1)", [file]);
+          await client.query("COMMIT");
+        } catch (err) {
+          await client.query("ROLLBACK");
+          throw err;
+        }
+      }
+    } finally {
+      await client.query("SELECT pg_advisory_unlock(727274)").catch(() => {});
+      client.release();
+    }
+  })().catch((err) => {
+    migrationsPromise = null; // allow retry on the next request
+    throw err;
+  });
+  return migrationsPromise;
 }
 
 export function getPool(): Promise<Pool> {
@@ -67,6 +114,7 @@ export function getPool(): Promise<Pool> {
 
 export async function query<T extends QueryResultRow = QueryResultRow>(text: string, params: unknown[] = []): Promise<T[]> {
   const pool = await getPool();
+  await ensureMigrations(pool);
   const res = await pool.query<T>(text, params as unknown[]);
   return res.rows;
 }

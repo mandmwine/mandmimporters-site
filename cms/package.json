@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "next dev",
     "migrate": "node scripts/migrate.mjs",
-    "build": "node scripts/migrate.mjs && next build",
+    "build": "next build",
     "start": "next start"
   },
   "dependencies": {

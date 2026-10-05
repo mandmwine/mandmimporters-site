@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   basePath: "/catalog-admin",
   poweredByHeader: false,
   serverExternalPackages: ["firebase-admin", "pg", "@google-cloud/cloud-sql-connector"],
+  // Include the SQL migration files in the serverless function bundle so
+  // the lazy migrate step in lib/db.ts can read them at runtime.
+  outputFileTracingIncludes: {
+    "/**/*": ["./migrations/*.sql"],
+  },
   async headers() {
     return [
       {
