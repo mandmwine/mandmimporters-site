@@ -1,0 +1,476 @@
+/* Template-05 single-wine sheet. US Letter portrait, print-safe. */
+
+.sheet {
+  --paper: #f7f3ea;
+  --ink: #1e1b18;
+  --mute: #6f675d;
+  --rule: #c9bfa9;
+  --accent: #6e2335;
+  --gold: #a88b57;
+  --body: "Inter", system-ui, sans-serif;
+  --display: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  position: relative;
+
+  /* US Letter at 96 DPI × 1.5 for crispness; actual print size is set below. */
+  width: 8.5in;
+  min-height: 11in;
+  padding: 0.6in 0.6in 0.5in;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 0.35in;
+}
+
+.sheet--screen {
+  margin: 24px auto;
+  box-shadow: 0 20px 60px rgba(30, 27, 24, 0.14);
+}
+
+/* --- Head: corner strip + title + map ------------------------------------- */
+
+.sheet__corner {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9pt;
+  letter-spacing: 0.22em;
+  color: var(--mute);
+  text-transform: uppercase;
+  padding-bottom: 2pt;
+  border-bottom: 1px solid var(--rule);
+}
+
+.sheet__title-row {
+  display: grid;
+  grid-template-columns: 1fr 2.2in;
+  gap: 0.3in;
+  align-items: start;
+}
+
+.sheet__vintage {
+  font-family: var(--display);
+  font-size: 36pt;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  margin-bottom: 6pt;
+}
+
+.sheet__wine-name {
+  font-family: var(--display);
+  font-size: 52pt;
+  font-weight: 500;
+  line-height: 0.95;
+  margin: 0 0 10pt;
+  letter-spacing: -0.005em;
+}
+
+.sheet__wine-sub {
+  font-family: var(--display);
+  font-size: 22pt;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0 0 18pt;
+  letter-spacing: 0.005em;
+}
+
+.sheet__rule {
+  display: flex;
+  align-items: center;
+  gap: 10pt;
+  margin-top: 8pt;
+}
+
+.sheet__rule-mark {
+  display: inline-block;
+  width: 42pt;
+  height: 1pt;
+  background: var(--gold);
+}
+
+.sheet__tagline {
+  font-size: 9pt;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* --- Map (top-right) ------------------------------------------------------ */
+
+.sheet__map {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6pt;
+}
+
+.sheet__map svg {
+  width: 100%;
+  max-width: 1.9in;
+  height: auto;
+  display: block;
+}
+
+.sheet__map-country {
+  fill: #ece5d6;
+  stroke: #cbbfa6;
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+.sheet__map-highlight {
+  fill: var(--accent);
+  opacity: 0.9;
+  stroke: #4e1824;
+  stroke-width: 0.6;
+}
+
+.sheet__map-city circle {
+  fill: var(--ink);
+}
+
+.sheet__map-city text {
+  font-size: 7pt;
+  fill: var(--ink);
+  font-family: var(--body);
+}
+
+.sheet__map figcaption {
+  text-align: center;
+  font-size: 8pt;
+  display: flex;
+  flex-direction: column;
+  gap: 2pt;
+}
+
+.sheet__map-caption-country {
+  letter-spacing: 0.3em;
+  color: var(--mute);
+}
+
+.sheet__map-caption-region {
+  font-family: var(--display);
+  font-size: 11pt;
+  color: var(--ink);
+}
+
+.sheet__map--placeholder {
+  min-height: 1.6in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mute);
+  font-size: 8pt;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 0.5pt dashed var(--rule);
+  border-radius: 4pt;
+}
+
+/* --- Section label (small-caps rule heading) ----------------------------- */
+
+.sheet__section-label {
+  font-size: 9pt;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin: 0 0 10pt;
+  padding-bottom: 4pt;
+  border-bottom: 0.5pt solid var(--rule);
+  font-weight: 600;
+}
+
+/* --- Scores row ----------------------------------------------------------- */
+
+.sheet__scores {
+  padding: 2pt 0;
+}
+
+.sheet__scores-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: 0.1in;
+  align-items: start;
+}
+
+.sheet__score {
+  position: relative;
+  text-align: left;
+  padding-left: 10pt;
+  border-left: 0.5pt solid var(--rule);
+}
+
+.sheet__score:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.sheet__score-num {
+  font-family: var(--display);
+  font-size: 44pt;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.sheet__score-label {
+  font-size: 10pt;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-top: 2pt;
+}
+
+.sheet__score-critic {
+  font-size: 8pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--mute);
+  margin-top: 4pt;
+  line-height: 1.3;
+}
+
+.sheet__score-vintage {
+  font-size: 7pt;
+  color: var(--mute);
+  margin-top: 3pt;
+  font-style: italic;
+}
+
+.sheet__scores--empty {
+  padding-top: 4pt;
+}
+
+.sheet__awaiting {
+  font-family: var(--display);
+  font-size: 18pt;
+  color: var(--mute);
+  margin: 10pt 0 0;
+  letter-spacing: 0.03em;
+}
+
+/* --- Body: left copy column + right bottle -------------------------------- */
+
+.sheet__body {
+  display: grid;
+  grid-template-columns: 1fr 2.3in;
+  gap: 0.3in;
+  align-items: start;
+}
+
+.sheet__body-col {
+  display: grid;
+  gap: 20pt;
+}
+
+.sheet__section {
+  break-inside: avoid;
+}
+
+.sheet__specs {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1.4in 1fr;
+  row-gap: 6pt;
+  column-gap: 14pt;
+  font-size: 10pt;
+}
+
+.sheet__spec {
+  display: contents;
+}
+
+.sheet__spec dt {
+  color: var(--mute);
+  font-weight: 500;
+}
+
+.sheet__spec dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.sheet__copy {
+  font-size: 10.5pt;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0;
+}
+
+.sheet__bottle {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 8pt;
+}
+
+.sheet__bottle img {
+  max-width: 100%;
+  max-height: 6.1in;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 24px rgba(30, 27, 24, 0.18));
+}
+
+.sheet__bottle-missing {
+  width: 1.6in;
+  height: 5in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 8pt;
+  color: var(--mute);
+  border: 0.5pt dashed var(--rule);
+  border-radius: 4pt;
+  padding: 0 10pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* --- Footer --------------------------------------------------------------- */
+
+.sheet__foot {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20pt;
+  padding-top: 10pt;
+  border-top: 0.5pt solid var(--rule);
+}
+
+.sheet__foot-left,
+.sheet__foot-right {
+  height: 1pt;
+  background: var(--gold);
+}
+
+.sheet__foot-brand {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4pt;
+}
+
+.sheet__brand-mark {
+  font-family: var(--display);
+  font-size: 18pt;
+  letter-spacing: 0.28em;
+  color: var(--ink);
+}
+
+.sheet__brand-sub {
+  font-size: 8pt;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* --- Preview chrome (admin page only) ------------------------------------ */
+
+.sheet-preview {
+  background: #38322c;
+  min-height: 100vh;
+  padding: 24px 16px 60px;
+}
+
+.sheet-preview__bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  max-width: 8.5in;
+  margin: 0 auto 16px;
+  color: #f7f3ea;
+  font-size: 13px;
+}
+
+.sheet-preview__bar a,
+.sheet-preview__bar button {
+  color: #f7f3ea;
+  background: transparent;
+  border: 1px solid rgba(247, 243, 234, 0.3);
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sheet-preview__bar a:hover,
+.sheet-preview__bar button:hover {
+  background: rgba(247, 243, 234, 0.08);
+}
+
+.sheet-preview__bar .group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* --- Print rules ---------------------------------------------------------- */
+
+@page {
+  size: 8.5in 11in;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: var(--paper);
+    margin: 0;
+  }
+  .sheet {
+    margin: 0;
+    box-shadow: none;
+    page-break-after: always;
+  }
+  .sheet-preview,
+  .sheet-preview__bar {
+    display: none !important;
+  }
+}
+
+/* Print-rendering mode (headless Chromium PDF). Match @media print exactly. */
+.sheet--print {
+  margin: 0;
+  box-shadow: none;
+}
+
+/* --- Responsive: compact view for iPad/phone preview --------------------- */
+
+@media (max-width: 820px) {
+  .sheet--screen {
+    width: 100%;
+    min-height: auto;
+    padding: 32px 20px;
+  }
+  .sheet__title-row {
+    grid-template-columns: 1fr;
+  }
+  .sheet__wine-name {
+    font-size: 38pt;
+  }
+  .sheet__wine-sub {
+    font-size: 18pt;
+  }
+  .sheet__scores-row {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 16pt;
+  }
+  .sheet__score {
+    border-left: none;
+    padding-left: 0;
+  }
+  .sheet__body {
+    grid-template-columns: 1fr;
+  }
+  .sheet__bottle img {
+    max-height: 4.2in;
+  }
+}

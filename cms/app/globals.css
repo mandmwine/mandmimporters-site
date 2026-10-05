@@ -61,6 +61,8 @@ h3 { font-size: 16px; font-family: var(--font-sans); font-weight: 600; margin-to
 .page-head { margin-bottom: 22px; }
 .page-head.row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
 .head-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.export-group { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border: 1px solid var(--rule); border-radius: var(--radius); background: #fff; }
 .crumbs { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
 .panel { background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 16px; }
 details.panel summary { cursor: pointer; font-weight: 600; }

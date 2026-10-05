@@ -4,11 +4,19 @@ const nextConfig: NextConfig = {
   // Served at mandmimporters.com/catalog-admin via a rewrite on the public site.
   basePath: "/catalog-admin",
   poweredByHeader: false,
-  serverExternalPackages: ["firebase-admin", "pg", "@google-cloud/cloud-sql-connector"],
-  // Include the SQL migration files in the serverless function bundle so
-  // the lazy migrate step in lib/db.ts can read them at runtime.
+  serverExternalPackages: [
+    "firebase-admin",
+    "pg",
+    "@google-cloud/cloud-sql-connector",
+    "puppeteer-core",
+    "@sparticuz/chromium",
+    "qrcode",
+    "@anthropic-ai/sdk",
+  ],
+  // Bundle the SQL migrations and sheet CSS into every serverless function so
+  // runtime readers (lib/db.ts, lib/sheet/html.tsx) can find them.
   outputFileTracingIncludes: {
-    "/**/*": ["./migrations/*.sql"],
+    "/**/*": ["./migrations/*.sql", "./lib/sheet/*.css"],
   },
   async headers() {
     return [

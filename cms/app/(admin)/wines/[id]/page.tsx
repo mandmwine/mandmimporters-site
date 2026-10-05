@@ -115,6 +115,17 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
         </div>
         <div className="head-side">
           <StatusBadge status={v.status} />
+          <div className="head-actions">
+            <Link className="btn primary" href={`/sheet/${id}`} target="_blank" rel="noreferrer">
+              Open sheet ↗
+            </Link>
+            <div className="export-group">
+              <span className="muted small">Export</span>
+              <a className="link small" href={`/catalog-admin/api/wines/${id}/pdf?preset=print`}>Print</a>
+              <a className="link small" href={`/catalog-admin/api/wines/${id}/pdf?preset=email`}>Email</a>
+              <a className="link small" href={`/catalog-admin/api/wines/${id}/pdf?preset=web`}>Web</a>
+            </div>
+          </div>
           {v.website_slug && (
             <a className="link small" href={`https://www.mandmimporters.com/wines/p/${v.website_slug}`} target="_blank" rel="noreferrer">
               Public page ↗
