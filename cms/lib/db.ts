@@ -32,28 +32,61 @@ async function useServiceAccountForGoogleCloud() {
   process.env.GOOGLE_APPLICATION_CREDENTIALS = file;
 }
 
-async function createPool(): Promise<Pool> {
+type ConnectorMod = {
+  Connector: new (opts?: unknown) => { getOptions: (o: Record<string, unknown>) => Promise<Record<string, unknown>> };
+};
+
+async function buildPoolConfig(database: string, max: number): Promise<pg.PoolConfig> {
   if (process.env.DATABASE_URL) {
-    return new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
+    return { connectionString: process.env.DATABASE_URL, max };
   }
-  const mod = (await import("@google-cloud/cloud-sql-connector")) as {
-    Connector: new (opts?: unknown) => { getOptions: (o: Record<string, unknown>) => Promise<Record<string, unknown>> };
-  };
+  const mod = (await import("@google-cloud/cloud-sql-connector")) as ConnectorMod;
   await useServiceAccountForGoogleCloud();
   const connector = new mod.Connector();
   const iam = process.env.DB_AUTH === "IAM";
-  const clientOpts = await connector.getOptions({
+  const clientOpts = (await connector.getOptions({
     instanceConnectionName: process.env.CLOUD_SQL_INSTANCE as string,
     ipType: "PUBLIC",
     ...(iam ? { authType: "IAM" } : {}),
-  });
-  return new pg.Pool({
+  })) as pg.PoolConfig;
+  return {
     ...clientOpts,
     user: process.env.DB_USER,
     ...(iam ? {} : { password: process.env.DB_PASSWORD }),
-    database: process.env.DB_NAME || "catalog",
-    max: 5,
-  });
+    database,
+    max,
+  };
+}
+
+// Firebase SQL Connect provisions the Cloud SQL instance but doesn't create the
+// application database. Connect to the default `postgres` database the first
+// time we come up and CREATE DATABASE <target> if it isn't there yet.
+async function ensureDatabaseExists(target: string): Promise<void> {
+  const bootstrapPool = new pg.Pool(await buildPoolConfig("postgres", 1));
+  try {
+    const existing = await bootstrapPool.query<{ datname: string }>("SELECT datname FROM pg_database WHERE datname = $1", [target]);
+    if (existing.rows.length === 0) {
+      console.log(`[db] creating database "${target}"`);
+      // CREATE DATABASE can't run in a transaction and doesn't take parameters, so quote-identify it.
+      await bootstrapPool.query(`CREATE DATABASE "${target.replace(/"/g, '""')}"`);
+    }
+  } finally {
+    await bootstrapPool.end();
+  }
+}
+
+async function createPool(): Promise<Pool> {
+  const target = process.env.DB_NAME || "catalog";
+  if (!process.env.DATABASE_URL) {
+    try {
+      await ensureDatabaseExists(target);
+    } catch (err) {
+      // If the target database already exists this still works; log and continue
+      // on anything else so one bad bootstrap doesn't take down the whole app.
+      console.error(`[db] bootstrap check failed, continuing: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return new pg.Pool(await buildPoolConfig(target, 5));
 }
 
 // Run pending SQL migrations exactly once per process, inside an advisory lock.
