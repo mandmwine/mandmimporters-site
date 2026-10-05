@@ -32,23 +32,22 @@ async function useServiceAccountForGoogleCloud() {
   process.env.GOOGLE_APPLICATION_CREDENTIALS = file;
 }
 
-type ConnectorMod = {
-  Connector: new (opts?: unknown) => { getOptions: (o: Record<string, unknown>) => Promise<Record<string, unknown>> };
-};
-
 async function buildPoolConfig(database: string, max: number): Promise<pg.PoolConfig> {
   if (process.env.DATABASE_URL) {
     return { connectionString: process.env.DATABASE_URL, max };
   }
-  const mod = (await import("@google-cloud/cloud-sql-connector")) as ConnectorMod;
+  const { Connector } = await import("@google-cloud/cloud-sql-connector");
   await useServiceAccountForGoogleCloud();
-  const connector = new mod.Connector();
+  const connector = new Connector();
   const iam = process.env.DB_AUTH === "IAM";
+  // The connector returns PoolConfig-shaped options. Shape matches pg at runtime; cast
+  // through unknown because its TypeScript definitions use a narrower branded type.
   const clientOpts = (await connector.getOptions({
     instanceConnectionName: process.env.CLOUD_SQL_INSTANCE as string,
     ipType: "PUBLIC",
     ...(iam ? { authType: "IAM" } : {}),
-  })) as pg.PoolConfig;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any)) as unknown as pg.PoolConfig;
   return {
     ...clientOpts,
     user: process.env.DB_USER,
