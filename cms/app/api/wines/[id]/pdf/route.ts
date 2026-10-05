@@ -60,9 +60,29 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     browser = await launchBrowser();
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0", timeout: 30_000 });
+    await page.setContent(html, { waitUntil: "load", timeout: 30_000 });
     // Give Google Fonts and the bottle image a chance to finish loading.
     await page.evaluateHandle("document.fonts.ready");
+    // One extra tick for images: wait for every <img> to settle.
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          const imgs = Array.from(document.images);
+          if (imgs.every((i) => i.complete)) return resolve();
+          let left = imgs.filter((i) => !i.complete).length;
+          const done = () => {
+            if (--left <= 0) resolve();
+          };
+          imgs.forEach((i) => {
+            if (!i.complete) {
+              i.addEventListener("load", done, { once: true });
+              i.addEventListener("error", done, { once: true });
+            }
+          });
+          // Hard cap so a 404 image doesn't block forever.
+          setTimeout(() => resolve(), 8000);
+        }),
+    );
 
     const pdfBuffer = await page.pdf({
       format: "letter",
