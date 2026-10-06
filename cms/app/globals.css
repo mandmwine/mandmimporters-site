@@ -451,3 +451,167 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 }
 
 .head-side { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* Phase 6 — Three-column wine edit workspace */
+.wine-head { margin-bottom: 14px; }
+
+.workspace {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 400px;
+  gap: 24px;
+  align-items: start;
+}
+.workspace--no-preview { grid-template-columns: 220px minmax(0, 1fr); }
+@media (max-width: 1200px) {
+  .workspace, .workspace--no-preview {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+  .workspace .workspace__preview { display: none; }
+}
+@media (max-width: 800px) {
+  .workspace, .workspace--no-preview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workspace__rail { display: none; }
+}
+
+.workspace__rail {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.rail-progress { display: flex; flex-direction: column; gap: 6px; }
+.rail-progress__bar {
+  width: 100%;
+  height: 6px;
+  background: var(--rule);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.rail-progress__bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 300ms ease;
+}
+
+.rail-nav { display: flex; flex-direction: column; gap: 2px; }
+.rail-nav__item {
+  all: unset;
+  display: grid;
+  grid-template-columns: 10px 1fr;
+  grid-template-rows: auto auto;
+  gap: 2px 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--ink);
+}
+.rail-nav__item:hover { background: var(--panel); }
+.rail-nav__item.active { background: var(--panel); font-weight: 600; }
+.rail-nav__dot {
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--rule);
+  margin-top: 7px;
+}
+.rail-nav__item--ok .rail-nav__dot { background: var(--ok); }
+.rail-nav__item--missing .rail-nav__dot { background: var(--err); }
+.rail-nav__item--warn .rail-nav__dot { background: var(--warn); }
+.rail-nav__item--info .rail-nav__dot { background: var(--muted); }
+.rail-nav__label { grid-row: 1; grid-column: 2; }
+.rail-nav__hint { grid-row: 2; grid-column: 2; }
+
+.rail-vintages__tabs {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.rail-vintages__tabs a {
+  padding: 5px 10px;
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-size: 13px;
+}
+.rail-vintages__tabs a:hover { background: var(--panel); text-decoration: none; }
+.rail-vintages__tabs a.active { background: var(--ink); color: #fff; font-weight: 500; }
+
+.workspace__main {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+.workspace__main > section { scroll-margin-top: 100px; }
+
+/* Live preview column */
+.workspace__preview {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+.preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.preview-head__right { display: inline-flex; align-items: center; gap: 6px; }
+
+.preview-frame {
+  flex: 1;
+  overflow: auto;
+  border-radius: 4px;
+  background: #efe9dd;
+  min-height: 400px;
+}
+.preview-frame__scale {
+  transform-origin: top left;
+  width: 816px;    /* letter width 8.5in @ 96dpi */
+  height: 1056px;  /* letter height 11in @ 96dpi */
+}
+.preview-frame__scale iframe {
+  width: 816px;
+  height: 1056px;
+  border: 0;
+  background: #fff;
+  display: block;
+}
+
+.preview-reopen {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 5;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  box-shadow: 0 6px 18px rgba(30, 27, 24, 0.18);
+}
+.preview-reopen:hover { background: var(--ink); }
+
+/* Embed mode for the sheet rendered in the iframe — kills outer padding and
+   drops the sheet's own drop-shadow + top margin so it sits flush. */
+.sheet-preview--embed { padding: 0; margin: 0; background: #fff; }
+.sheet-preview--embed .sheet--screen {
+  margin: 0;
+  box-shadow: none;
+}
+

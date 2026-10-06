@@ -30,7 +30,10 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
-          { key: "X-Frame-Options", value: "DENY" },
+          // SAMEORIGIN (not DENY) so the live-preview iframe on the wine edit page
+          // can embed its own /sheet/[id] route. External sites still cannot frame
+          // the admin.
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "same-origin" },
         ],

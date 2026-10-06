@@ -413,6 +413,8 @@ export async function saveScore(formData: FormData) {
     await audit(user.id, "score.create", { type: "wine_score", id: r!.id },
       { new: { wine_vintage_id: vintageId, critic: criticId, score: scoreText } });
   }
+  // Bump updated_at so the live preview reloads.
+  await query("UPDATE wine_vintages SET updated_at = now() WHERE id = $1", [vintageId]);
   revalidatePath(`/wines/${vintageId}`);
 }
 
@@ -427,6 +429,8 @@ export async function deleteScore(formData: FormData) {
   );
   if (!before) return;
   await query("DELETE FROM wine_scores WHERE id = $1", [scoreId]);
+  await query("UPDATE wine_vintages SET updated_at = now() WHERE id = $1",
+    [vintageId || before.wine_vintage_id]);
   await audit(user.id, "score.delete", { type: "wine_score", id: scoreId }, { old: before });
   revalidatePath(`/wines/${vintageId || before.wine_vintage_id}`);
 }
@@ -496,6 +500,8 @@ export async function replaceGrapes(formData: FormData) {
       [vintageId, msg],
     );
   }
+  // Bump the vintage's updated_at so the live-preview iframe knows to reload.
+  await query("UPDATE wine_vintages SET updated_at = now() WHERE id = $1", [vintageId]);
   await audit(user.id, "wine_vintage.grapes.update",
     { type: "wine_vintage", id: vintageId, field: "grapes" },
     { new: text }, { unknown: unknown.map((u) => u.name) });

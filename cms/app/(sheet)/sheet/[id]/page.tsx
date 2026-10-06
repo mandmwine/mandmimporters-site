@@ -1,5 +1,6 @@
-// Admin preview of the single-wine sheet. Opens from the wine detail page
-// in a new tab (user's request). Export buttons link to the PDF endpoint.
+// Admin preview of the single-wine sheet. Lives in its own route group so the
+// admin sidebar is NOT inherited — the live-preview iframe on the wine edit
+// page embeds this URL and shows only the sheet.
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
@@ -14,11 +15,11 @@ export default async function SheetPreview({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ mode?: string }>;
+  searchParams: Promise<{ mode?: string; embed?: string }>;
 }) {
   await requireUser();
   const { id } = await params;
-  const { mode } = await searchParams;
+  const { mode, embed } = await searchParams;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const data = await loadSheetData(id);
   if (!data) notFound();
@@ -26,6 +27,16 @@ export default async function SheetPreview({
   // ?mode=raw hides the preview chrome so the printed/exported view matches exactly.
   if (mode === "raw") {
     return <SingleWineSheet data={data} mode="print" />;
+  }
+
+  // ?embed=1 (used by the live-preview iframe) hides the top bar but keeps the
+  // screen rendering mode so links and tooltips still work.
+  if (embed === "1") {
+    return (
+      <div className="sheet-preview sheet-preview--embed">
+        <SingleWineSheet data={data} mode="screen" />
+      </div>
+    );
   }
 
   return (

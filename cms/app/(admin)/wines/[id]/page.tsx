@@ -9,6 +9,7 @@ import ScoresPanel, { type ScoreRow } from "@/components/ScoresPanel";
 import { EditableCopy, EditableGrapes, EditableTechnical } from "@/components/WineEditSections";
 import BottleImagePanel from "@/components/BottleImagePanel";
 import AIFieldButton from "@/components/AIFieldButton";
+import WineWorkspace, { type WorkspaceSection } from "@/components/WineWorkspace";
 
 export const dynamic = "force-dynamic";
 
@@ -121,6 +122,72 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
   const legacy = v.legacy as Record<string, unknown>;
   const openFlags = flags.filter((f) => f.status === "open");
 
+  // ----------------------------------------------------- completeness
+  const completenessChecks: { label: string; ok: boolean }[] = [
+    { label: "Vintage set", ok: Boolean(v.vintage_text) },
+    { label: "Mevushal recorded", ok: v.mevushal !== "unknown" },
+    { label: "Supervision recorded", ok: Boolean(supervision.length || v.supervision_display) },
+    { label: "Grape blend set", ok: grapes.length > 0 },
+    { label: "At least one score", ok: scores.length > 0 },
+    { label: "Tasting note", ok: Boolean(v.tasting_note) },
+    { label: "Bottle image", ok: Boolean(v.bottle_asset_id) },
+  ];
+  const filled = completenessChecks.filter((c) => c.ok).length;
+
+  const sections: WorkspaceSection[] = [
+    {
+      id: "technical",
+      label: "Technical",
+      state: (v.vintage_text && v.mevushal !== "unknown" && (supervision.length || v.supervision_display)) ? "ok" : "missing",
+      hint:
+        !v.vintage_text ? "No vintage" :
+        v.mevushal === "unknown" ? "Mevushal unknown" :
+        !supervision.length && !v.supervision_display ? "No supervision" :
+        undefined,
+    },
+    {
+      id: "grapes",
+      label: "Grapes",
+      state: grapes.length > 0 ? "ok" : "missing",
+      hint: grapes.length === 0 ? "Not set" : undefined,
+    },
+    {
+      id: "scores",
+      label: "Scores",
+      state: scores.length > 0 ? "ok" : "missing",
+      hint: scores.length === 0 ? "None added" : `${scores.length} score${scores.length === 1 ? "" : "s"}`,
+    },
+    {
+      id: "copy",
+      label: "Copy",
+      state: v.tasting_note
+        ? (v.tasting_note.length > 450 ? "warn" : "ok")
+        : "missing",
+      hint:
+        !v.tasting_note ? "No tasting note" :
+        v.tasting_note.length > 450 ? `${v.tasting_note.length} chars (long)` :
+        undefined,
+    },
+    {
+      id: "bottle",
+      label: "Bottle image",
+      state: v.bottle_asset_id ? "ok" : "missing",
+      hint: v.bottle_asset_id ? undefined : "Not uploaded",
+    },
+    {
+      id: "review",
+      label: "Review items",
+      state: openFlags.length === 0 ? "info" : openFlags.some((f) => f.severity === "error") ? "warn" : "info",
+      hint: openFlags.length === 0 ? undefined : `${openFlags.length} open`,
+    },
+    {
+      id: "sources",
+      label: "Sources",
+      state: provenance.length > 0 ? "info" : "info",
+      hint: provenance.length > 0 ? `${provenance.length} field${provenance.length === 1 ? "" : "s"}` : undefined,
+    },
+  ];
+
   const technicalSummary = (
     <dl className="specs">
       {facts.map(([k, val]) => (
@@ -174,12 +241,23 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
     wine_story: v.wine_story,
   };
 
+  const vintageTabs = (
+    <nav className="rail-vintages__tabs">
+      {siblings.map((s) => (
+        <Link key={s.id} href={`/wines/${s.id}`} className={s.id === id ? "active" : undefined}>
+          {s.vintage_text ?? "No vintage"}
+        </Link>
+      ))}
+      {canEdit && <AddVintageButton wineId={v.wine_id} hasExisting={siblings.length > 0} />}
+    </nav>
+  );
+
   return (
     <>
       <p className="crumbs">
         <Link href="/wines">Wines</Link> / {v.producer}
       </p>
-      <header className="page-head row">
+      <header className="page-head row wine-head">
         <div>
           <p className="eyebrow">{v.vintage_text ?? "Vintage not set"}</p>
           <h1>{v.display_name}</h1>
@@ -209,24 +287,22 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
         </div>
       </header>
 
-      <nav className="tabs">
-        {siblings.map((s) => (
-          <Link key={s.id} href={`/wines/${s.id}`} className={s.id === id ? "active" : undefined}>
-            {s.vintage_text ?? "No vintage"}
-          </Link>
-        ))}
-        {canEdit && (
-          <span className="tabs-aside">
-            <AddVintageButton wineId={v.wine_id} hasExisting={siblings.length > 0} />
-          </span>
-        )}
-      </nav>
-
-      <section className="split wide">
-        <div>
+      <WineWorkspace
+        sheetUrl={`/catalog-admin/sheet/${id}`}
+        version={new Date(v.updated_at).toISOString()}
+        sections={sections}
+        completeness={{ filled, total: completenessChecks.length }}
+        vintageTabs={vintageTabs}
+      >
+        <section id="sec-technical">
           <EditableTechnical v={editableVintage} summary={technicalSummary} canEdit={canEdit} />
-          <EditableGrapes vintageId={id} grapesText={grapesText} summary={grapesSummary} canEdit={canEdit} />
+        </section>
 
+        <section id="sec-grapes">
+          <EditableGrapes vintageId={id} grapesText={grapesText} summary={grapesSummary} canEdit={canEdit} />
+        </section>
+
+        <section id="sec-scores">
           <div className="panel">
             <div className="panel-head">
               <h2>Scores</h2>
@@ -245,7 +321,9 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
               canEdit={canEdit}
             />
           </div>
+        </section>
 
+        <section id="sec-copy">
           <EditableCopy
             v={editableVintage}
             summary={copySummary}
@@ -264,9 +342,9 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
               ) : null
             }
           />
-        </div>
+        </section>
 
-        <div>
+        <section id="sec-bottle">
           <div className="panel">
             <h2>Bottle image</h2>
             <BottleImagePanel
@@ -283,7 +361,9 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
               resolutionWarning={null}
             />
           </div>
+        </section>
 
+        <section id="sec-review">
           <div className="panel">
             <h2>Review items {openFlags.length > 0 && <span className="pill">{openFlags.length}</span>}</h2>
             {flags.length === 0 ? (
@@ -306,7 +386,9 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
               </ul>
             )}
           </div>
+        </section>
 
+        <section id="sec-sources">
           <div className="panel">
             <h2>Sources</h2>
             {provenance.length === 0 ? (
@@ -349,8 +431,8 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
               </dl>
             </details>
           )}
-        </div>
-      </section>
+        </section>
+      </WineWorkspace>
     </>
   );
 }
