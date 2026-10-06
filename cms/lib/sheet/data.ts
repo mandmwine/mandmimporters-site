@@ -22,6 +22,7 @@ export type SheetData = {
     biodynamic: boolean | null;
     website_slug: string | null;
     short_description: string | null;
+    qr_svg: string | null;        // inline <svg> for the Trade sheet QR
   };
   producer_note: string | null;
   location: {
@@ -138,6 +139,23 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
     bottle_image_url = path;
   }
 
+  // Pre-render the QR for the Trade sheet. Small/light but still readable at
+  // ~30pt wide when printed. Only generated when there's a public URL to point at.
+  let qr_svg: string | null = null;
+  if (v.website_slug) {
+    try {
+      const QRCode = (await import("qrcode")).default;
+      qr_svg = await QRCode.toString(`https://www.mandmimporters.com/wines/p/${v.website_slug}`, {
+        type: "svg",
+        margin: 0,
+        errorCorrectionLevel: "M",
+        color: { dark: "#1e1b18", light: "#00000000" },
+      });
+    } catch {
+      qr_svg = null;
+    }
+  }
+
   return {
     wine: {
       id: v.id,
@@ -158,6 +176,7 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
       biodynamic: v.biodynamic,
       website_slug: v.website_slug,
       short_description: v.short_description,
+      qr_svg,
     },
     producer_note: v.producer_note,
     location: {

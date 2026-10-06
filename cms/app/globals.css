@@ -184,6 +184,28 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   color: var(--warn);
 }
 .notice-warn ul li { margin: 2px 0; }
+
+/* Preflight page */
+.preflight-group { margin: 10px 0; }
+.preflight-group summary {
+  cursor: pointer;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.preflight-group summary::-webkit-details-marker { display: none; }
+.preflight-group summary::before { content: "▸"; font-size: 11px; color: var(--muted); margin-right: 4px; }
+.preflight-group[open] summary::before { content: "▾"; }
+.preflight-list { list-style: none; margin: 4px 0 8px 32px; padding: 0; font-size: 13px; }
+.preflight-list li { padding: 2px 0; border-bottom: 1px solid var(--rule); }
+.preflight-list li:last-child { border-bottom: 0; }
+
+/* Export preset list */
+.preset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.preset-list .btn { display: block; text-align: center; }
+.preset-list p { margin: 4px 0 0; }
 .notice { background: var(--ok-soft); color: var(--ok); padding: 10px 12px; border-radius: var(--radius); margin: 0; }
 .error { background: var(--err-soft); color: var(--err); padding: 10px 12px; border-radius: var(--radius); margin: 0; }
 .notice p, .error p { margin: 0 0 6px; }

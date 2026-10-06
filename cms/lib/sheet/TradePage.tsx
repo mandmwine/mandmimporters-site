@@ -1,5 +1,7 @@
 // Trade overview: dense portfolio sheet. 4 or 8 wines per page in a tight grid.
 // Bottle, name/vintage, region, blend, mevushal, top score, short note.
+// Each wine carries a small QR code linking to its public M&M page so buyers
+// can scan from a printed sheet.
 import type { SheetData } from "./data";
 
 export type TradeData = {
@@ -24,6 +26,9 @@ export function TradePage({ data }: { data: TradeData }) {
           const blend = w.grapes.map((g) => g.name).join(", ");
           const mevushal = w.wine.mevushal === "yes" ? "Mevushal" : null;
           const region = [w.location.appellation ?? w.location.region, w.location.country].filter(Boolean).join(", ");
+          const publicUrl = w.wine.website_slug
+            ? `https://www.mandmimporters.com/wines/p/${w.wine.website_slug}`
+            : null;
           return (
             <div className="trade__wine" key={w.wine.id}>
               <div className="trade__bottle-cell">
@@ -76,6 +81,9 @@ export function TradePage({ data }: { data: TradeData }) {
                 </dl>
                 {w.wine.short_description && <p className="trade__one-liner">{w.wine.short_description}</p>}
               </div>
+              {publicUrl && w.wine.qr_svg && (
+                <div className="trade__qr" aria-hidden="true" dangerouslySetInnerHTML={{ __html: w.wine.qr_svg }} />
+              )}
             </div>
           );
         })}

@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { SingleWineSheet } from "./SingleWineSheet";
 import type { SheetData } from "./data";
+import { inlineFontFaces } from "./fonts";
 
 let cachedCss: string | null = null;
 async function sheetCss(): Promise<string> {
@@ -19,18 +20,13 @@ export async function sheetHtml(data: SheetData): Promise<string> {
   // of a module that could be reached from client code.
   const { renderToStaticMarkup } = await import("react-dom/server");
   const body = renderToStaticMarkup(<SingleWineSheet data={data} mode="print" />);
-  const css = await sheetCss();
-  // Google Fonts stylesheet; the browser downloads the two families used by the sheet.
-  const fontLink =
-    "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap";
+  const [css, fontFaces] = await Promise.all([sheetCss(), inlineFontFaces()]);
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <title>${escapeHtml(data.wine.producer)} ${escapeHtml(data.wine.vintage_text ?? "")}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="${fontLink}" rel="stylesheet" />
+${fontFaces}
 <style>${css}
 html,body{margin:0;background:#f7f3ea;}
 </style>

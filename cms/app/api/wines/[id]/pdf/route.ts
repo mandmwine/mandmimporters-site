@@ -33,15 +33,17 @@ function filenameFor(data: Awaited<ReturnType<typeof loadSheetData>>, preset: Pr
   return `MM-${slug}${vintage}-${preset}.pdf`;
 }
 
-async function launchBrowser() {
+async function launchBrowser(preset: Preset) {
   // Vercel's Node runtime has no Chrome. @sparticuz/chromium provides a small build
   // that unpacks into /tmp on first use.
   const chromium = (await import("@sparticuz/chromium")).default;
   const puppeteer = await import("puppeteer-core");
   const executablePath = await chromium.executablePath();
+  // Pixel density is the main size/quality lever we have for Chromium PDF.
+  const scale = preset === "print" ? 2.0 : preset === "email" ? 1.4 : 1.0;
   return puppeteer.default.launch({
     args: chromium.args,
-    defaultViewport: { width: 1240, height: 1600, deviceScaleFactor: 2 },
+    defaultViewport: { width: 1240, height: 1600, deviceScaleFactor: scale },
     executablePath,
     headless: true,
   });
@@ -58,7 +60,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let browser;
   try {
-    browser = await launchBrowser();
+    browser = await launchBrowser(preset);
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load", timeout: 30_000 });
     // Give Google Fonts and the bottle image a chance to finish loading.

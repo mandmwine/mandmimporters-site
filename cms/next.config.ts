@@ -13,10 +13,16 @@ const nextConfig: NextConfig = {
     "qrcode",
     "@anthropic-ai/sdk",
   ],
-  // Bundle the SQL migrations and sheet CSS into every serverless function so
-  // runtime readers (lib/db.ts, lib/sheet/html.tsx) can find them.
+  // Bundle the SQL migrations, sheet CSS, and self-hosted font files into every
+  // serverless function so runtime readers (lib/db.ts, lib/sheet/html.tsx,
+  // lib/sheet/fonts.ts) can find them.
   outputFileTracingIncludes: {
-    "/**/*": ["./migrations/*.sql", "./lib/sheet/*.css"],
+    "/**/*": [
+      "./migrations/*.sql",
+      "./lib/sheet/*.css",
+      "./node_modules/@fontsource/inter/files/latin-{400,500,600}-normal.woff2",
+      "./node_modules/@fontsource/cormorant-garamond/files/latin-{500,600}-normal.woff2",
+    ],
   },
   async headers() {
     return [

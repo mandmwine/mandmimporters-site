@@ -9,6 +9,7 @@ import { loadSheetData, type SheetData } from "./data";
 import { SingleWineSheet } from "./SingleWineSheet";
 import { LineupPage } from "./LineupPage";
 import { TradePage } from "./TradePage";
+import { inlineFontFaces } from "./fonts";
 
 export type Preset = "print" | "email" | "web";
 
@@ -234,22 +235,24 @@ export async function catalogHtml(plan: CatalogPlan, preset: Preset): Promise<st
     parts[idx] = tocHtml;
   }
 
-  const fontLink =
-    "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap";
+  const fontFaces = await inlineFontFaces();
 
-  // Compression / size hint for the Web preset only: downscale images in-page.
-  const presetStyle = preset === "web"
-    ? ".sheet img, .lineup__bottle, .trade__bottle-cell img { image-rendering: auto; }"
-    : "";
+  // Preset-specific stylesheet tweaks. Email/web shrink huge images in-page
+  // to produce a smaller resulting PDF; Chromium's pdf engine respects the
+  // rendered pixel dimensions.
+  const presetStyle =
+    preset === "web"
+      ? ".sheet__bottle img, .lineup__bottle, .trade__bottle-cell img { max-height: 3.2in !important; image-rendering: auto; }"
+      : preset === "email"
+      ? ".sheet__bottle img, .lineup__bottle, .trade__bottle-cell img { max-height: 5in; }"
+      : "";
 
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <title>${escapeHtml(plan.catalog.name)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="${fontLink}" rel="stylesheet" />
+${fontFaces}
 <style>${css}
 html,body{margin:0;background:#f7f3ea;}
 ${presetStyle}

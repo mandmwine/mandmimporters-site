@@ -708,7 +708,17 @@
   grid-template-columns: 1in 1fr;
   gap: 8pt;
   align-items: start;
+  position: relative;
 }
+
+.trade__qr {
+  position: absolute;
+  bottom: 2pt;
+  right: 2pt;
+  width: 32pt;
+  height: 32pt;
+}
+.trade__qr svg { width: 100%; height: 100%; display: block; }
 
 .trade__grid--2 .trade__wine,
 .trade__grid--3 .trade__wine,

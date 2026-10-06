@@ -29,13 +29,22 @@ function fileSafe(name: string): string {
   return name.replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
-async function launchBrowser() {
+// Per-preset Chromium settings. The main lever we have for file size is the
+// deviceScaleFactor during rasterization: a 2× viewport doubles raster pixel
+// density, which keeps bitmaps sharp when printed but inflates PDF size. Web
+// uses 1× for the smallest file; email a middle ground; print the highest.
+const PRESET_SETTINGS: Record<Preset, { scale: number; margin: string }> = {
+  print: { scale: 2.0, margin: "0in" },
+  email: { scale: 1.4, margin: "0in" },
+  web: { scale: 1.0, margin: "0in" },
+};
+
+async function launchBrowser(preset: Preset) {
   const chromium = (await import("@sparticuz/chromium")).default;
   const puppeteer = await import("puppeteer-core");
-  // Email/web presets want smaller files, so we drop pixel density.
   return puppeteer.default.launch({
     args: chromium.args,
-    defaultViewport: { width: 1240, height: 1600, deviceScaleFactor: 2 },
+    defaultViewport: { width: 1240, height: 1600, deviceScaleFactor: PRESET_SETTINGS[preset].scale },
     executablePath: await chromium.executablePath(),
     headless: true,
   });
@@ -90,7 +99,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let browser;
   try {
-    browser = await launchBrowser();
+    browser = await launchBrowser(preset);
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load", timeout: 60_000 });
     await page.evaluateHandle("document.fonts.ready");

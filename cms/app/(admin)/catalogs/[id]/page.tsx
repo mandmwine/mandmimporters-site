@@ -138,14 +138,9 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
         </div>
         <div className="head-side">
           <div className="head-actions">
-            <a className="btn primary" href={`/catalog-admin/api/catalogs/${id}/export?preset=print`}>
-              Export Print PDF
-            </a>
-            <div className="export-group">
-              <span className="muted small">or</span>
-              <a className="link small" href={`/catalog-admin/api/catalogs/${id}/export?preset=email`}>Email</a>
-              <a className="link small" href={`/catalog-admin/api/catalogs/${id}/export?preset=web`}>Web</a>
-            </div>
+            <Link className="btn primary" href={`/catalogs/${id}/export`}>
+              Export →
+            </Link>
           </div>
         </div>
       </header>
