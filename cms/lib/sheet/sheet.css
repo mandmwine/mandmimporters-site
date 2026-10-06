@@ -60,11 +60,19 @@
   margin-bottom: 6pt;
 }
 
+.sheet__producer-eyebrow {
+  margin: 0 0 8pt;
+  font-size: 10pt;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
 .sheet__wine-name {
   font-family: var(--display);
-  font-size: 52pt;
+  font-size: 48pt;
   font-weight: 500;
-  line-height: 0.95;
+  line-height: 0.98;
   margin: 0 0 10pt;
   letter-spacing: -0.005em;
 }

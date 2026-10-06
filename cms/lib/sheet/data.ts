@@ -127,10 +127,16 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
     ...extraOlder.map((s) => ({ ...s, current_vintage: false })),
   ];
 
-  // Fall back to the public website bottle image when nothing else is set.
-  const bottle_image_url = v.website_slug
-    ? `https://www.mandmimporters.com/images/images/${v.website_slug}.jpg`
-    : null;
+  // Image resolution: use the actual URL the public website stores (preserved in
+  // wine_vintages.legacy.img at import time; a mix of .jpg, .png, .webp). Fall
+  // back to a bottle_asset_id lookup once the asset store is wired up.
+  let bottle_image_url: string | null = null;
+  const legacyImg = typeof v.legacy?.img === "string" ? (v.legacy.img as string) : null;
+  if (legacyImg) {
+    // Values look like "/images/images/aegerter-corton-vergennes.jpg?v=3" — keep the versioning.
+    const path = legacyImg.startsWith("http") ? legacyImg : `https://www.mandmimporters.com${legacyImg}`;
+    bottle_image_url = path;
+  }
 
   return {
     wine: {

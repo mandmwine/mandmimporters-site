@@ -279,13 +279,14 @@ export async function addVintage(formData: FormData) {
            carried_forward_fields)
          SELECT wine_id, $2, 'needs_review', display_title_override, location_id, mevushal,
                 supervision_display, aging_display, bottle_sizes, special_designation,
-                first_kosher_vintage, organic, biodynamic, tasting_note, winery_note_override,
+                FALSE AS first_kosher_vintage,   -- never carry forward; it is vintage-specific
+                organic, biodynamic, tasting_note, winery_note_override,
                 wine_story, food_pairing, short_description, catalog_note, bottle_asset_id,
                 bottle_family, bottle_scale_override, bottle_x_override, bottle_y_override,
                 map_asset_override_id, theme_override,
                 id,
                 ARRAY['mevushal','supervision_display','aging_display','bottle_sizes',
-                      'special_designation','first_kosher_vintage','organic','biodynamic',
+                      'special_designation','organic','biodynamic',
                       'tasting_note','food_pairing','grapes','location_id']::text[]
          FROM wine_vintages WHERE id = $1
          RETURNING id`,
@@ -441,11 +442,43 @@ async function resolveGrapeId(name: string, color?: string | null): Promise<stri
     [n],
   );
   if (existing) return existing.id;
-  const r = await one<{ id: string }>(
-    "INSERT INTO grapes (canonical_name, color) VALUES ($1, $2) RETURNING id",
-    [n, color ?? null],
-  );
-  return r?.id ?? null;
+  // Not auto-creating: a typo like "Cabarnet" would otherwise become a new canonical grape.
+  // Caller is responsible for recording a review flag.
+  return null;
+}
+
+// Levenshtein distance (small implementation; enough for one-off nearest-match look-ups).
+function dlev(a: string, b: string): number {
+  if (a === b) return 0;
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const row = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    let prev = i - 1;
+    row[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const next = Math.min(
+        row[j] + 1,
+        row[j - 1] + 1,
+        prev + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+      prev = row[j];
+      row[j] = next;
+    }
+  }
+  return row[n];
+}
+
+async function suggestGrape(name: string): Promise<string | null> {
+  const all = await query<{ canonical_name: string }>("SELECT canonical_name FROM grapes");
+  const n = name.toLowerCase();
+  let best: { name: string; d: number } | null = null;
+  for (const row of all) {
+    const d = dlev(n, row.canonical_name.toLowerCase());
+    if (d <= 2 && (!best || d < best.d)) best = { name: row.canonical_name, d };
+  }
+  return best?.name ?? null;
 }
 
 export async function replaceGrapes(formData: FormData) {
@@ -455,6 +488,7 @@ export async function replaceGrapes(formData: FormData) {
   // Comma-separated "60% Merlot, 40% Cabernet Franc" or just names.
   const text = s(formData, "grapes_text") ?? "";
   const parts = text.split(/\s*,\s*/).filter(Boolean);
+  const unknown: { name: string; suggestion: string | null }[] = [];
   await query("DELETE FROM wine_grapes WHERE wine_vintage_id = $1", [vintageId]);
   for (let i = 0; i < parts.length; i++) {
     const p = parts[i];
@@ -462,13 +496,30 @@ export async function replaceGrapes(formData: FormData) {
     const pct = m ? parseFloat(m[1]) : null;
     const name = m ? m[2].trim() : p.trim();
     const gid = await resolveGrapeId(name);
-    if (!gid) continue;
+    if (!gid) {
+      unknown.push({ name, suggestion: await suggestGrape(name) });
+      continue;
+    }
     await query(
       "INSERT INTO wine_grapes (wine_vintage_id, grape_id, percentage, display_order) VALUES ($1, $2, $3, $4) ON CONFLICT (wine_vintage_id, grape_id) DO UPDATE SET percentage = EXCLUDED.percentage, display_order = EXCLUDED.display_order",
       [vintageId, gid, pct, i],
     );
   }
-  await audit(user.id, "wine_vintage.grapes.update", { type: "wine_vintage", id: vintageId, field: "grapes" }, { new: text });
+  // Record each unknown grape as a review flag so the editor sees it (and can
+  // add the grape to the master list from the Grapes admin — not from here).
+  for (const u of unknown) {
+    const msg = u.suggestion
+      ? `Grape "${u.name}" is not in the master list. Did you mean "${u.suggestion}"?`
+      : `Grape "${u.name}" is not in the master list. Add it from Grapes admin before using it.`;
+    await query(
+      `INSERT INTO review_flags (entity_type, entity_id, flag_type, severity, message, field_name)
+       VALUES ('wine_vintage', $1, 'missing', 'warning', $2, 'grapes')`,
+      [vintageId, msg],
+    );
+  }
+  await audit(user.id, "wine_vintage.grapes.update",
+    { type: "wine_vintage", id: vintageId, field: "grapes" },
+    { new: text }, { unknown: unknown.map((u) => u.name) });
   revalidatePath(`/wines/${vintageId}`);
 }
 

@@ -5,17 +5,6 @@
 import type { SheetData } from "./data";
 import { renderRegionMap } from "./region-map";
 
-const PAIRING_TAGLINES: Record<string, string> = {
-  red: "Great wines bring people together",
-  white: "Clarity, light, and the pleasure of good company",
-  rose: "Softer afternoons, longer conversations",
-  sparkling: "Occasions worth marking",
-  dessert: "The slow close to a long table",
-  fortified: "Fireside, deliberate, unhurried",
-  orange: "Different grammar, same hospitality",
-  other: "Great wines bring people together",
-};
-
 function formatBlend(grapes: SheetData["grapes"]): string {
   if (!grapes.length) return "";
   const hasPct = grapes.some((g) => g.percentage !== null);
@@ -35,27 +24,32 @@ function regionAppellation(data: SheetData): string {
   return [appellation ?? region, country].filter(Boolean).join(", ");
 }
 
-function fullDesignation(data: SheetData): string {
+// Second-line composite: appellation + designation (DOCG, Grand Cru, Riserva...).
+function appellationDesignation(data: SheetData): string {
   const parts: string[] = [];
   if (data.location.appellation) parts.push(data.location.appellation);
   if (data.wine.special_designation) parts.push(data.wine.special_designation);
   return parts.join(" ");
 }
 
-// Soft "tagline" line under the title. Uses the category or a sensible default.
-function tagline(data: SheetData): string {
-  const cat = data.wine.category ?? "other";
-  return PAIRING_TAGLINES[cat] ?? PAIRING_TAGLINES.other;
+// Strip the producer prefix from a display name so the hero title shows the wine
+// alone — e.g. "Vallepicciola Chianti Classico Riserva" -> "Chianti Classico Riserva".
+function wineTitle(data: SheetData): string {
+  const name = (data.wine.canonical_name || data.wine.display_name || "").trim();
+  const producer = data.wine.producer.trim();
+  if (name.toLowerCase().startsWith(producer.toLowerCase() + " ")) {
+    return name.slice(producer.length).trim();
+  }
+  return name;
 }
 
 export function SingleWineSheet({ data, mode = "screen" }: { data: SheetData; mode?: "screen" | "print" }) {
   const map = renderRegionMap(data.location);
-  const designation = fullDesignation(data);
-  const subhead = regionAppellation(data);
+  const subhead = appellationDesignation(data) || regionAppellation(data);
   const scores = data.scores.slice(0, 4);
   const technical: [string, string | null][] = [
     ["Producer", data.wine.producer],
-    ["Region / Appellation", subhead || null],
+    ["Region / Appellation", regionAppellation(data) || null],
     ["Varietal", formatBlend(data.grapes) || null],
     ["Aging", data.wine.aging_display],
     ["Size", data.wine.bottle_sizes.join(", ") || null],
@@ -68,24 +62,24 @@ export function SingleWineSheet({ data, mode = "screen" }: { data: SheetData; mo
   if (data.wine.biodynamic) extras.push("Biodynamic");
   if (extras.length) technical.push(["Designations", extras.join(" · ")]);
 
-  const corner = tagline(data).toUpperCase();
+  const title = wineTitle(data);
 
   return (
     <article className={`sheet sheet--${mode}`} data-wine-id={data.wine.id}>
       <header className="sheet__head">
         <div className="sheet__corner">
           <span className="sheet__corner-left" aria-hidden="true" />
-          <span className="sheet__corner-right">{corner}</span>
+          <span className="sheet__corner-right" aria-hidden="true" />
         </div>
 
         <div className="sheet__title-row">
           <div className="sheet__title-col">
             <div className="sheet__vintage">{data.wine.vintage_text ?? "NV"}</div>
-            <h1 className="sheet__wine-name">{data.wine.producer}</h1>
-            <h2 className="sheet__wine-sub">{designation || data.wine.canonical_name}</h2>
+            <p className="sheet__producer-eyebrow">{data.wine.producer}</p>
+            <h1 className="sheet__wine-name">{title || data.wine.display_name}</h1>
+            {subhead && <h2 className="sheet__wine-sub">{subhead}</h2>}
             <div className="sheet__rule">
               <span className="sheet__rule-mark" />
-              <span className="sheet__tagline">{tagline(data)}</span>
             </div>
           </div>
           <div className="sheet__map-col">{map}</div>
