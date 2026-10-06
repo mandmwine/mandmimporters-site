@@ -5,6 +5,7 @@ import { requireAdmin, requireEditor, type Role } from "./auth";
 import { one, query } from "./db";
 import { audit } from "./audit";
 import { adminAuth } from "./firebase-admin";
+import { levenshtein } from "./text";
 
 // ---------------------------------------------------------------- review flags
 export async function setFlagStatus(formData: FormData) {
@@ -448,34 +449,12 @@ async function resolveGrapeId(name: string, color?: string | null): Promise<stri
 }
 
 // Levenshtein distance (small implementation; enough for one-off nearest-match look-ups).
-function dlev(a: string, b: string): number {
-  if (a === b) return 0;
-  const m = a.length, n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-  const row = Array.from({ length: n + 1 }, (_, i) => i);
-  for (let i = 1; i <= m; i++) {
-    let prev = i - 1;
-    row[0] = i;
-    for (let j = 1; j <= n; j++) {
-      const next = Math.min(
-        row[j] + 1,
-        row[j - 1] + 1,
-        prev + (a[i - 1] === b[j - 1] ? 0 : 1),
-      );
-      prev = row[j];
-      row[j] = next;
-    }
-  }
-  return row[n];
-}
-
 async function suggestGrape(name: string): Promise<string | null> {
   const all = await query<{ canonical_name: string }>("SELECT canonical_name FROM grapes");
   const n = name.toLowerCase();
   let best: { name: string; d: number } | null = null;
   for (const row of all) {
-    const d = dlev(n, row.canonical_name.toLowerCase());
+    const d = levenshtein(n, row.canonical_name.toLowerCase());
     if (d <= 2 && (!best || d < best.d)) best = { name: row.canonical_name, d };
   }
   return best?.name ?? null;
@@ -533,16 +512,6 @@ const SECTION_KINDS = [
   "wines", "producer_index", "contact", "back_cover",
 ] as const;
 type SectionKind = (typeof SECTION_KINDS)[number];
-
-function slug(text: string): string {
-  return text
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-}
 
 // Create a catalog from a bare name and (optionally) a starter list of wines.
 // Scaffolds the default section skeleton so the user doesn't start empty.
@@ -780,7 +749,5 @@ export async function setSectionRenderMode(formData: FormData) {
   await audit(user.id, "catalog_section.layout", { type: "catalog_section", id: sectionId, field: "layout" }, { new: mode });
   revalidatePath(`/catalogs/${row.catalog_id}`);
 }
-
-export { slug };
 
 
