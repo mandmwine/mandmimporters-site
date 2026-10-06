@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { query } from "@/lib/db";
 import { StatusBadge } from "@/components/Badge";
+import WineRowSelect, { SelectAllButton } from "@/components/WineRowSelect";
 
 export const dynamic = "force-dynamic";
 
@@ -110,6 +111,15 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
       <table className="table">
         <thead>
           <tr>
+            <th style={{ width: 44 }}>
+              <SelectAllButton
+                entries={rows.map((r) => ({
+                  id: r.vintage_id,
+                  label: `${r.display_name}${r.vintage_text ? ` ${r.vintage_text}` : ""}`,
+                  producer: r.producer,
+                }))}
+              />
+            </th>
             <th>Wine</th>
             <th>Vintage</th>
             <th>Appellation / region</th>
@@ -120,6 +130,13 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
         <tbody>
           {rows.map((r) => (
             <tr key={r.vintage_id}>
+              <td>
+                <WineRowSelect
+                  id={r.vintage_id}
+                  label={`${r.display_name}${r.vintage_text ? ` ${r.vintage_text}` : ""}`}
+                  producer={r.producer}
+                />
+              </td>
               <td>
                 <Link href={`/wines/${r.vintage_id}`} className="strong">{r.display_name}</Link>
                 <div className="muted small">{r.producer}{r.category ? ` · ${r.category}` : ""}</div>
@@ -134,7 +151,7 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
             </tr>
           ))}
           {rows.length === 0 && (
-            <tr><td colSpan={5} className="muted">No wines match these filters.</td></tr>
+            <tr><td colSpan={6} className="muted">No wines match these filters.</td></tr>
           )}
         </tbody>
       </table>
