@@ -779,4 +779,98 @@ export async function setBottleAsset(formData: FormData) {
   revalidatePath(`/sheet/${vintageId}`);
 }
 
+// ---------------------------------------------------------------- assets
+const ASSET_KINDS = ["bottle", "map", "logo", "photo", "document", "pdf", "other"] as const;
+type AssetKind = (typeof ASSET_KINDS)[number];
+
+export async function updateAssetMeta(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const before = await one<{ kind: string; file_name: string | null; metadata: Record<string, unknown> }>(
+    "SELECT kind, file_name, metadata FROM assets WHERE id = $1 AND deleted_at IS NULL",
+    [id],
+  );
+  if (!before) return;
+
+  const kindRaw = String(formData.get("kind") ?? "").trim();
+  const kind: AssetKind = (ASSET_KINDS as readonly string[]).includes(kindRaw)
+    ? (kindRaw as AssetKind)
+    : (before.kind as AssetKind);
+  const fileName = s(formData, "file_name") ?? before.file_name;
+  const altText = s(formData, "alt_text") ?? "";
+  const caption = s(formData, "caption") ?? "";
+  const credit = s(formData, "credit_line") ?? "";
+  const tagsCsv = s(formData, "tags") ?? "";
+  const tags = tagsCsv
+    ? tagsCsv.split(/[,;]/).map((t) => t.trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  const nextMeta = {
+    ...(before.metadata ?? {}),
+    alt_text: altText || undefined,
+    caption: caption || undefined,
+    credit_line: credit || undefined,
+    tags: tags.length ? tags : undefined,
+  };
+
+  await query(
+    `UPDATE assets SET kind = $2, file_name = $3, metadata = $4::jsonb WHERE id = $1`,
+    [id, kind, fileName, JSON.stringify(nextMeta)],
+  );
+  await audit(user.id, "asset.update", { type: "asset", id }, {
+    old: { kind: before.kind, file_name: before.file_name, metadata: before.metadata },
+    new: { kind, file_name: fileName, metadata: nextMeta },
+  });
+  revalidatePath(`/assets/${id}`);
+  revalidatePath("/assets");
+}
+
+export async function deleteAsset(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const asset = await one<{ id: string }>(
+    "SELECT id FROM assets WHERE id = $1 AND deleted_at IS NULL",
+    [id],
+  );
+  if (!asset) return;
+  await query("UPDATE assets SET deleted_at = now() WHERE id = $1", [id]);
+  await query("UPDATE wine_vintages SET bottle_asset_id = NULL WHERE bottle_asset_id = $1", [id]);
+  await audit(user.id, "asset.delete", { type: "asset", id });
+  revalidatePath("/assets");
+  redirect("/assets");
+}
+
+export async function bulkSetAssetKind(formData: FormData) {
+  const user = await requireEditor();
+  const kindRaw = String(formData.get("kind") ?? "").trim();
+  if (!(ASSET_KINDS as readonly string[]).includes(kindRaw)) return;
+  const idsCsv = String(formData.get("ids") ?? "");
+  const ids = idsCsv.split(",").map((s) => s.trim()).filter((s) => /^[0-9a-f-]{36}$/i.test(s));
+  if (ids.length === 0) return;
+  await query(
+    `UPDATE assets SET kind = $1 WHERE id = ANY($2::uuid[]) AND deleted_at IS NULL`,
+    [kindRaw, ids],
+  );
+  await audit(user.id, "asset.bulk_kind", { type: "asset", id: ids.join(",") }, { new: { kind: kindRaw, count: ids.length } });
+  revalidatePath("/assets");
+}
+
+export async function bulkDeleteAssets(formData: FormData) {
+  const user = await requireEditor();
+  const idsCsv = String(formData.get("ids") ?? "");
+  const ids = idsCsv.split(",").map((s) => s.trim()).filter((s) => /^[0-9a-f-]{36}$/i.test(s));
+  if (ids.length === 0) return;
+  await query(
+    `UPDATE assets SET deleted_at = now() WHERE id = ANY($1::uuid[]) AND deleted_at IS NULL`,
+    [ids],
+  );
+  await query(
+    `UPDATE wine_vintages SET bottle_asset_id = NULL WHERE bottle_asset_id = ANY($1::uuid[])`,
+    [ids],
+  );
+  await audit(user.id, "asset.bulk_delete", { type: "asset", id: ids.join(",") }, { new: { count: ids.length } });
+  revalidatePath("/assets");
+}
 

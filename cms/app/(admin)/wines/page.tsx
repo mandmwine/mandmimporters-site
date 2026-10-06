@@ -12,6 +12,7 @@ const MISSING: Record<string, string> = {
   supervision: "coalesce(v.supervision_display, '') = ''",
   tasting: "coalesce(v.tasting_note, '') = ''",
   scores: "NOT EXISTS (SELECT 1 FROM wine_scores s WHERE s.wine_vintage_id = v.id)",
+  bottle: "v.bottle_asset_id IS NULL",
 };
 
 type Row = {

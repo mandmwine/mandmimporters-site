@@ -8,6 +8,7 @@ type Counts = {
   needs_review: number; approved: number; published: number;
   no_vintage: number; no_mevushal: number; no_supervision: number;
   open_flags: number; conflicts: number; needs_map: number;
+  no_bottle: number; unused_assets: number; lowres_assets: number;
 };
 
 export default async function Dashboard() {
@@ -24,7 +25,13 @@ export default async function Dashboard() {
       (SELECT count(*) FROM wine_vintages WHERE deleted_at IS NULL AND coalesce(supervision_display,'') = '')::int AS no_supervision,
       (SELECT count(*) FROM review_flags WHERE status = 'open')::int AS open_flags,
       (SELECT count(*) FROM review_flags WHERE status = 'open' AND flag_type IN ('conflict','duplicate'))::int AS conflicts,
-      (SELECT count(*) FROM locations WHERE map_status <> 'approved')::int AS needs_map
+      (SELECT count(*) FROM locations WHERE map_status <> 'approved')::int AS needs_map,
+      (SELECT count(*) FROM wine_vintages WHERE deleted_at IS NULL AND bottle_asset_id IS NULL)::int AS no_bottle,
+      (SELECT count(*) FROM assets a
+         WHERE a.deleted_at IS NULL
+           AND NOT EXISTS (SELECT 1 FROM wine_assets wa WHERE wa.asset_id = a.id)
+           AND NOT EXISTS (SELECT 1 FROM wine_vintages v WHERE v.bottle_asset_id = a.id))::int AS unused_assets,
+      (SELECT count(*) FROM assets WHERE deleted_at IS NULL AND width_px IS NOT NULL AND width_px < 800)::int AS lowres_assets
   `);
   const byType = await query<{ flag_type: string; n: number }>(
     "SELECT flag_type, count(*)::int AS n FROM review_flags WHERE status = 'open' GROUP BY 1 ORDER BY 2 DESC",
@@ -41,6 +48,9 @@ export default async function Dashboard() {
     { label: "Mevushal not recorded", value: c.no_mevushal, href: "/wines?missing=mevushal" },
     { label: "Supervision not recorded", value: c.no_supervision, href: "/wines?missing=supervision" },
     { label: "Locations without an approved map", value: c.needs_map, href: "/review?type=map" },
+    { label: "Wines without a bottle image", value: c.no_bottle, href: "/wines?missing=bottle", tone: c.no_bottle > 0 ? "warn" : undefined },
+    { label: "Unused assets", value: c.unused_assets, href: "/assets?filter=unused" },
+    { label: "Low-resolution assets", value: c.lowres_assets, href: "/assets?filter=lowres", tone: c.lowres_assets > 0 ? "warn" : undefined },
   ];
 
   return (
