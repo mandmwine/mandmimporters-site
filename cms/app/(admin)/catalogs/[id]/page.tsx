@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { one, query } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import ConfirmSubmit from "@/components/ConfirmSubmit";
 import {
   addCatalogSection,
   deleteCatalog,
@@ -358,13 +359,7 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
               <h2>Archive</h2>
               <p className="small muted">Archives the catalog composition. Past exports remain downloadable.</p>
               <input type="hidden" name="id" value={id} />
-              <button className="link small" type="submit"
-                formNoValidate
-                onClick={(ev) => {
-                  if (!confirm("Archive this catalog?")) ev.preventDefault();
-                }}>
-                Archive catalog
-              </button>
+              <ConfirmSubmit message="Archive this catalog?">Archive catalog</ConfirmSubmit>
             </form>
           )}
         </div>
