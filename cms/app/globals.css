@@ -206,6 +206,76 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 .preset-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .preset-list .btn { display: block; text-align: center; }
 .preset-list p { margin: 4px 0 0; }
+
+/* Asset library + bottle picker */
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+}
+.asset-tile {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.asset-tile img {
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+  background: #efe9dd;
+  border-radius: 4px;
+}
+.asset-tile__meta { display: flex; flex-direction: column; gap: 2px; }
+
+.uploader { display: inline-flex; align-items: center; gap: 10px; }
+.uploader--compact .uploader__preview { display: none; }
+.uploader__preview { width: 48px; height: 48px; object-fit: contain; border: 1px solid var(--rule); border-radius: 4px; }
+.uploader label { cursor: pointer; }
+
+.bottle-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bottle-panel__preview {
+  background: #efe9dd;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  min-height: 220px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bottle-panel__preview img { max-width: 100%; max-height: 320px; object-fit: contain; }
+.bottle-panel__empty { color: var(--muted); font-size: 13px; }
+.bottle-panel__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bottle-library ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.bottle-library li { background: #efe9dd; border-radius: 4px; }
+.bottle-library li.selected { outline: 2px solid var(--accent); }
+.bottle-library button {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.bottle-library img { width: 100%; height: 90px; object-fit: contain; }
 .notice { background: var(--ok-soft); color: var(--ok); padding: 10px 12px; border-radius: var(--radius); margin: 0; }
 .error { background: var(--err-soft); color: var(--err); padding: 10px 12px; border-radius: var(--radius); margin: 0; }
 .notice p, .error p { margin: 0 0 6px; }

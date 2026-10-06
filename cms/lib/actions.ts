@@ -750,4 +750,33 @@ export async function setSectionRenderMode(formData: FormData) {
   revalidatePath(`/catalogs/${row.catalog_id}`);
 }
 
+// =============================================================================
+// Bottle image assignment
+// =============================================================================
+
+export async function setBottleAsset(formData: FormData) {
+  const user = await requireEditor();
+  const vintageId = String(formData.get("wine_vintage_id") ?? "");
+  const assetIdRaw = s(formData, "asset_id");
+  if (!/^[0-9a-f-]{36}$/i.test(vintageId)) return;
+  const assetId = assetIdRaw && /^[0-9a-f-]{36}$/i.test(assetIdRaw) ? assetIdRaw : null;
+
+  if (assetId) {
+    const asset = await one<{ id: string }>("SELECT id FROM assets WHERE id = $1 AND deleted_at IS NULL", [assetId]);
+    if (!asset) return;
+    await query(
+      `INSERT INTO wine_assets (wine_vintage_id, asset_id, role)
+       VALUES ($1, $2, 'bottle') ON CONFLICT DO NOTHING`,
+      [vintageId, assetId],
+    );
+  }
+  await query(
+    "UPDATE wine_vintages SET bottle_asset_id = $2, updated_at = now() WHERE id = $1",
+    [vintageId, assetId],
+  );
+  await audit(user.id, "wine_vintage.bottle_asset", { type: "wine_vintage", id: vintageId, field: "bottle_asset_id" }, { new: assetId });
+  revalidatePath(`/wines/${vintageId}`);
+  revalidatePath(`/sheet/${vintageId}`);
+}
+
 

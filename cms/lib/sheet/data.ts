@@ -60,6 +60,8 @@ type VintageRow = {
   website_slug: string | null;
   producer_note: string | null;
   legacy: Record<string, unknown>;
+  bottle_asset_id: string | null;
+  bottle_asset_path: string | null;
 };
 
 export async function loadSheetData(vintageId: string): Promise<SheetData | null> {
@@ -67,12 +69,14 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
     `SELECT v.id, v.wine_id, v.vintage_text, v.tasting_note, v.food_pairing, v.special_designation,
             v.supervision_display, v.mevushal, v.bottle_sizes, v.aging_display,
             v.first_kosher_vintage, v.organic, v.biodynamic, v.short_description, v.location_id,
-            v.legacy,
+            v.legacy, v.bottle_asset_id,
+            a.storage_path AS bottle_asset_path,
             w.display_name, w.canonical_name, w.category, w.website_slug,
             p.id AS producer_id, p.name AS producer, p.winery_summary_short AS producer_note
      FROM wine_vintages v
      JOIN wines w ON w.id = v.wine_id
      JOIN producers p ON p.id = w.producer_id
+     LEFT JOIN assets a ON a.id = v.bottle_asset_id AND a.deleted_at IS NULL
      WHERE v.id = $1 AND v.deleted_at IS NULL`,
     [vintageId],
   );
@@ -128,15 +132,27 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
     ...extraOlder.map((s) => ({ ...s, current_vintage: false })),
   ];
 
-  // Image resolution: use the actual URL the public website stores (preserved in
-  // wine_vintages.legacy.img at import time; a mix of .jpg, .png, .webp). Fall
-  // back to a bottle_asset_id lookup once the asset store is wired up.
+  // Image resolution priority:
+  //   1. Approved asset in our own store (bottle_asset_id)   — highest trust
+  //   2. The wine's imported website image (legacy.img)      — fallback
+  //   3. null (sheet shows a placeholder)
+  // When using an asset, we sign a URL fresh at render time so Chromium can
+  // fetch the bytes directly from Firebase Storage without going through our lambda.
   let bottle_image_url: string | null = null;
-  const legacyImg = typeof v.legacy?.img === "string" ? (v.legacy.img as string) : null;
-  if (legacyImg) {
-    // Values look like "/images/images/aegerter-corton-vergennes.jpg?v=3" — keep the versioning.
-    const path = legacyImg.startsWith("http") ? legacyImg : `https://www.mandmimporters.com${legacyImg}`;
-    bottle_image_url = path;
+  if (v.bottle_asset_path) {
+    try {
+      const { signedUrl } = await import("@/lib/storage");
+      bottle_image_url = await signedUrl(v.bottle_asset_path, 60);
+    } catch (err) {
+      console.warn("[sheet] signed URL failed", err);
+    }
+  }
+  if (!bottle_image_url) {
+    const legacyImg = typeof v.legacy?.img === "string" ? (v.legacy.img as string) : null;
+    if (legacyImg) {
+      const path = legacyImg.startsWith("http") ? legacyImg : `https://www.mandmimporters.com${legacyImg}`;
+      bottle_image_url = path;
+    }
   }
 
   // Pre-render the QR for the Trade sheet. Small/light but still readable at

@@ -7,6 +7,7 @@ import FlagButtons from "@/components/FlagButtons";
 import AddVintageButton from "@/components/AddVintageButton";
 import ScoresPanel, { type ScoreRow } from "@/components/ScoresPanel";
 import { EditableCopy, EditableGrapes, EditableTechnical } from "@/components/WineEditSections";
+import BottleImagePanel from "@/components/BottleImagePanel";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ type Vintage = {
   short_description: string | null; wine_story: string | null;
   first_kosher_vintage: boolean | null; organic: boolean | null; biodynamic: boolean | null;
   legacy: Record<string, unknown>; updated_at: Date;
+  bottle_asset_id: string | null;
   display_name: string; canonical_name: string; category: string | null; slug: string; website_slug: string | null;
   producer_id: string; producer: string; location_id: string | null;
 };
@@ -37,7 +39,7 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
     `SELECT v.id, v.wine_id, v.vintage_text, v.status, v.mevushal, v.supervision_display,
             v.aging_display, v.bottle_sizes, v.special_designation, v.tasting_note, v.food_pairing,
             v.short_description, v.wine_story, v.first_kosher_vintage, v.organic, v.biodynamic,
-            v.legacy, v.updated_at, v.location_id,
+            v.legacy, v.updated_at, v.location_id, v.bottle_asset_id,
             w.display_name, w.canonical_name, w.category, w.slug, w.website_slug, w.producer_id,
             p.name AS producer
      FROM wine_vintages v JOIN wines w ON w.id = v.wine_id JOIN producers p ON p.id = w.producer_id
@@ -46,7 +48,7 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
   );
   if (!v) notFound();
 
-  const [chain, siblings, grapes, scores, supervision, flags, provenance, criticOptions] = await Promise.all([
+  const [chain, siblings, grapes, scores, supervision, flags, provenance, criticOptions, recentBottles] = await Promise.all([
     query<{ type: string; name: string }>(
       `WITH RECURSIVE up AS (
          SELECT id, parent_id, type, name, 0 AS depth FROM locations WHERE id = $1
@@ -88,6 +90,10 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
       [id],
     ),
     query<{ canonical_name: string }>("SELECT canonical_name FROM critics ORDER BY canonical_name"),
+    query<{ id: string; file_name: string | null; width_px: number | null; height_px: number | null; mime_type: string | null }>(
+      `SELECT id, file_name, width_px, height_px, mime_type
+       FROM assets WHERE kind = 'bottle' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 24`,
+    ),
   ]);
 
   const loc = (t: string) => chain.find((c) => c.type === t)?.name;
@@ -236,6 +242,23 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
         </div>
 
         <div>
+          <div className="panel">
+            <h2>Bottle image</h2>
+            <BottleImagePanel
+              wineVintageId={id}
+              currentAssetId={v.bottle_asset_id}
+              recentAssets={recentBottles}
+              fallbackImage={
+                typeof v.legacy?.img === "string"
+                  ? (v.legacy.img as string).startsWith("http")
+                    ? (v.legacy.img as string)
+                    : `https://www.mandmimporters.com${v.legacy.img as string}`
+                  : null
+              }
+              resolutionWarning={null}
+            />
+          </div>
+
           <div className="panel">
             <h2>Review items {openFlags.length > 0 && <span className="pill">{openFlags.length}</span>}</h2>
             {flags.length === 0 ? (
