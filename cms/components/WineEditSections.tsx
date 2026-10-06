@@ -133,10 +133,12 @@ export function EditableCopy({
   v,
   summary,
   canEdit,
+  aiButtons,
 }: {
   v: EditableVintage;
   summary: React.ReactNode;
   canEdit: boolean;
+  aiButtons?: React.ReactNode;
 }) {
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -166,7 +168,7 @@ export function EditableCopy({
   }
 
   return (
-    <EditablePanel title="Copy" summary={summary} canEdit={canEdit}>
+    <EditablePanel title="Copy" summary={summary} canEdit={canEdit} rightSlot={aiButtons}>
       {(close) => (
         <form className="form-grid" onSubmit={submit(close)}>
           <label>

@@ -8,6 +8,7 @@ import AddVintageButton from "@/components/AddVintageButton";
 import ScoresPanel, { type ScoreRow } from "@/components/ScoresPanel";
 import { EditableCopy, EditableGrapes, EditableTechnical } from "@/components/WineEditSections";
 import BottleImagePanel from "@/components/BottleImagePanel";
+import AIFieldButton from "@/components/AIFieldButton";
 
 export const dynamic = "force-dynamic";
 
@@ -229,6 +230,13 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
           <div className="panel">
             <div className="panel-head">
               <h2>Scores</h2>
+              {canEdit && (
+                <AIFieldButton
+                  wineVintageId={id}
+                  field="scores"
+                  actions={["find_scores"]}
+                />
+              )}
             </div>
             <ScoresPanel
               vintageId={id}
@@ -238,7 +246,24 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
             />
           </div>
 
-          <EditableCopy v={editableVintage} summary={copySummary} canEdit={canEdit} />
+          <EditableCopy
+            v={editableVintage}
+            summary={copySummary}
+            canEdit={canEdit}
+            aiButtons={
+              canEdit ? (
+                <AIFieldButton
+                  wineVintageId={id}
+                  field="tasting_note"
+                  actions={
+                    v.tasting_note
+                      ? ["rewrite_voice", "condense", "tasting_note"]
+                      : ["tasting_note"]
+                  }
+                />
+              ) : null
+            }
+          />
         </div>
 
         <div>
