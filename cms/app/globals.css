@@ -1629,3 +1629,92 @@ kbd {
   }
 }
 
+/* ---------- Phase 13: Fill-everything button + AI proposals panel ---------- */
+
+.fill-everything-status {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+.fill-everything-status ul { margin: 0; padding: 0; }
+.fill-everything-status li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+.fill-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rule);
+  flex-shrink: 0;
+}
+.fill-dot--pending { background: var(--rule); }
+.fill-dot--running {
+  background: var(--accent);
+  animation: fill-pulse 1s ease-in-out infinite;
+}
+.fill-dot--done { background: #2a9b4f; }
+.fill-dot--error { background: #c0392b; }
+.fill-dot--skipped { background: transparent; border: 1px dashed var(--rule); }
+@keyframes fill-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.ai-proposals {
+  border-color: var(--accent);
+  border-left-width: 3px;
+  margin-bottom: 16px;
+}
+.ai-proposals .panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ai-proposals .panel-head h2 { color: var(--accent); }
+.ai-proposals ul { margin: 0; padding: 0; list-style: none; }
+.ai-proposals li { margin-top: 10px; }
+
+.ai-proposal-card {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ai-proposal-card--done {
+  padding: 8px 14px;
+  background: var(--panel);
+  color: var(--muted);
+}
+.ai-proposal-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ai-proposal-card__body p { margin: 0; }
+.ai-proposal-card__body dl { margin: 0; }
+.ai-proposal-card__sources summary { cursor: pointer; }
+.ai-proposal-card__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+

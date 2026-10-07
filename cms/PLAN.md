@@ -119,9 +119,27 @@ The SKU encodes country / producer / wine / size / vintage:
 4. **Trade PDF layout** shows the full price ladder so distributors see it
 5. **CSV export** includes the new columns
 
-### Phase 13 — "✦ Fill everything from AI" (your workflow)
+### Phase 13 — "✦ Fill everything from AI" (your workflow) — SHIPPED
 
-As described in Phase 11 §5. Big win.
+Done in this commit. On any wine page there is now a `✦ Fill everything from Claude` button next
+to the Open sheet action. One click fires four Claude proposals in parallel:
+
+1. **Draft tasting note** — from the wine's own data (skipped silently when a tasting note is already set)
+2. **Find critic scores** — Claude web search, filed as pending scores you approve on the scores panel
+3. **Fill vintage details** — Claude web search for aging, grape blend, mevushal status, and special designation. Only overwrites blank fields — it will never clobber something you set
+4. **Producer bio** — short, factual producer bio (skipped silently when the producer already has a `winery_summary_short`)
+
+Each proposal lands as its own card in the new **✦ Review AI proposals** panel at the top of
+the wine page. Accept / Reject per card. Nothing goes live until you accept it.
+
+Also in this commit:
+- `lib/ai.ts` now logs timing + input/output tokens for every Claude call, and surfaces the
+  Anthropic error message in both the server log and the AI dialog modal instead of failing silently
+- `proposeFindScores` now logs the count of scores returned ("find_scores <id>: 3 scores returned")
+  so a silent 0 is easy to tell from an API hiccup
+- `AIProposalReviewer` pretty-prints `find_scores` and `fill_vintage_details` as readable summaries
+  (critic / score / quote with a source link; aging / designation / mevushal / grapes dl) instead
+  of raw JSON — same accept flow
 
 ### Phase 14 — Maps bulk create
 

@@ -14,6 +14,8 @@ import SourcesPanel from "@/components/SourcesPanel";
 import CopyButton from "@/components/CopyButton";
 import UpdatedMeta from "@/components/UpdatedMeta";
 import StockPricePanel from "@/components/StockPricePanel";
+import FillEverythingButton from "@/components/FillEverythingButton";
+import AIProposalsPanel from "@/components/AIProposalsPanel";
 import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -86,7 +88,7 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
   );
   if (!v) notFound();
 
-  const [chain, siblings, grapes, scores, supervision, flags, provenance, criticOptions, recentBottles] = await Promise.all([
+  const [chain, siblings, grapes, scores, supervision, flags, provenance, criticOptions, recentBottles, producerMeta] = await Promise.all([
     query<{ type: string; name: string }>(
       `WITH RECURSIVE up AS (
          SELECT id, parent_id, type, name, 0 AS depth FROM locations WHERE id = $1
@@ -146,6 +148,10 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
     query<{ id: string; file_name: string | null; width_px: number | null; height_px: number | null; mime_type: string | null }>(
       `SELECT id, file_name, width_px, height_px, mime_type
        FROM assets WHERE kind = 'bottle' AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 24`,
+    ),
+    one<{ winery_summary_short: string | null }>(
+      "SELECT winery_summary_short FROM producers WHERE id = $1",
+      [v.producer_id],
     ),
   ]);
 
@@ -329,6 +335,15 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
             <Link className="btn primary" href={`/sheet/${id}`} target="_blank" rel="noreferrer">
               Open sheet ↗
             </Link>
+            {canEdit && (
+              <FillEverythingButton
+                wineVintageId={id}
+                producerId={v.producer_id}
+                skipTastingNote={Boolean(v.tasting_note)}
+                skipProducerBio={Boolean(producerMeta?.winery_summary_short)}
+                compact
+              />
+            )}
             <div className="export-group">
               <span className="muted small">Export</span>
               <a className="link small" href={`/catalog-admin/api/wines/${id}/pdf?preset=print`}>Print</a>
@@ -363,6 +378,8 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
           )}
         </div>
       </header>
+
+      {canEdit && <AIProposalsPanel wineVintageId={id} producerId={v.producer_id} />}
 
       <WineWorkspace
         sheetUrl={`/catalog-admin/sheet/${id}`}

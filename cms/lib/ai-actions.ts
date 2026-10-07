@@ -162,7 +162,7 @@ Rules:
 - Omit scores for barrel samples unless no other score exists for this vintage.
 - If you find nothing, return {"scores":[]}.
 - Do not fabricate. If uncertain, omit.`;
-  return propose({
+  const result = await propose({
     userId: user.id,
     action: "find_scores",
     entity: { type: "wine_vintage", id: vintageId, field: "scores" },
@@ -170,6 +170,103 @@ Rules:
     useSearch: true,
     model: "haiku",
     payload: data,
+  });
+  // Diagnostic: log the raw count so we can tell "silent 0" from a parse fail.
+  if (result.ok) {
+    try {
+      const parsed = JSON.parse(result.proposedText) as { scores?: unknown[] };
+      const n = Array.isArray(parsed.scores) ? parsed.scores.length : -1;
+      console.log(`[ai] find_scores ${vintageId}: ${n} scores returned`);
+    } catch {
+      console.warn(`[ai] find_scores ${vintageId}: non-JSON output (${result.proposedText.slice(0, 120)}…)`);
+    }
+  }
+  return result;
+}
+
+// -- Fill vintage details (aging / grapes / mevushal / designation) via web search --
+
+export async function proposeFillVintageDetails(formData: FormData): Promise<ProposeResult> {
+  const user = await requireEditor();
+  const vintageId = String(formData.get("wine_vintage_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(vintageId)) return { ok: false, error: "Not found" };
+  const data = await loadWineBrief(vintageId);
+  if (!data) return { ok: false, error: "Not found" };
+
+  const prompt = `Find the technical details for this specific kosher wine on the public internet.
+
+Wine: ${data.producer} — ${data.canonical_name} ${data.vintage_text ?? ""}
+Appellation: ${data.appellation ?? data.region ?? data.country ?? "unknown"}
+
+Preferred sources: the producer's own website, a reputable wine database (CellarTracker,
+Vinous, Wine-Searcher), or a trusted kosher-wine retailer (KosherWine.com, Royal Wine).
+
+Return your findings as JSON only, in this exact shape, with no commentary or markdown fences:
+{
+  "aging": "16 months in French oak",
+  "special_designation": "Reserva",
+  "mevushal": "no",
+  "grapes": [
+    {"name": "Tempranillo", "percentage": 90},
+    {"name": "Garnacha", "percentage": 10}
+  ],
+  "confidence": "high|medium|low",
+  "notes": "one short line explaining what came from where"
+}
+
+Rules:
+- Every field is optional. If you cannot find a specific value, omit the field entirely.
+- "mevushal" must be exactly "yes", "no", or omitted. Most kosher wines are not mevushal unless
+  explicitly labeled as such. Say "no" only when a trusted source confirms it is not mevushal.
+- "aging" should be short and specific (barrel type, duration). Omit instead of guessing.
+- "special_designation" is official text on the label — "Reserva", "Gran Reserva", "Crianza",
+  "Grand Cru", "Grand Cru Classé", etc. Omit if not applicable.
+- "grapes" percentages must sum to 100 when all varieties are known. Omit percentage when uncertain.
+  Use variety names in English (Tempranillo, Cabernet Sauvignon, not Tempranillos).
+- Do not fabricate. If nothing can be verified, return {}.`;
+  return propose({
+    userId: user.id,
+    action: "fill_vintage_details",
+    entity: { type: "wine_vintage", id: vintageId, field: "vintage_details" },
+    user: prompt,
+    useSearch: true,
+    model: "haiku",
+    payload: data,
+  });
+}
+
+// -- Short producer bio via web search --------------------------------------
+
+export async function proposeProducerBio(formData: FormData): Promise<ProposeResult> {
+  const user = await requireEditor();
+  const producerId = String(formData.get("producer_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(producerId)) return { ok: false, error: "Not found" };
+  const row = await one<{ name: string }>(
+    "SELECT name FROM producers WHERE id = $1",
+    [producerId],
+  );
+  if (!row) return { ok: false, error: "Not found" };
+
+  const prompt = `Write a short, factual bio of this kosher wine producer for the M & M Imports catalog.
+
+Producer: ${row.name}
+
+Research the winery on the public internet first. Then write 2–3 short sentences (around
+250–400 characters total) covering: where they are, who owns or founded the winery, what
+distinguishes their program (style, era founded, varietals, kosher certifying body if known).
+
+Rules:
+- Only state facts you have a source for. No marketing adjectives. No superlatives.
+- Do not fabricate names or dates. If you cannot find something, don't say it.
+- Return the bio only — no header, no citations in-line, no markdown.`;
+  return propose({
+    userId: user.id,
+    action: "producer_bio",
+    entity: { type: "producer", id: producerId, field: "winery_summary_short" },
+    user: prompt,
+    useSearch: true,
+    model: "haiku",
+    payload: { name: row.name },
   });
 }
 
@@ -194,6 +291,65 @@ export async function acceptProposal(formData: FormData) {
     const field = row.field_name;
     if (["tasting_note", "food_pairing", "short_description", "wine_story"].includes(field)) {
       await query(`UPDATE wine_vintages SET ${field} = $2, updated_at = now() WHERE id = $1`, [row.entity_id, row.output.text]);
+    } else if (field === "vintage_details") {
+      // Fill multiple fields from one web-search result. Only touch fields the
+      // user actually left blank — never overwrite editor-set values.
+      try {
+        const txt = row.output.text.trim().replace(/^```json\s*|\s*```$/g, "");
+        const payload = JSON.parse(txt) as {
+          aging?: string;
+          special_designation?: string;
+          mevushal?: "yes" | "no";
+          grapes?: Array<{ name?: string; percentage?: number }>;
+        };
+        const current = await one<{ aging_display: string | null; special_designation: string | null; mevushal: string }>(
+          "SELECT aging_display, special_designation, mevushal FROM wine_vintages WHERE id = $1",
+          [row.entity_id],
+        );
+        const sets: string[] = [];
+        const vals: unknown[] = [row.entity_id];
+        if (payload.aging && !current?.aging_display) {
+          vals.push(payload.aging);
+          sets.push(`aging_display = $${vals.length}`);
+        }
+        if (payload.special_designation && !current?.special_designation) {
+          vals.push(payload.special_designation);
+          sets.push(`special_designation = $${vals.length}`);
+        }
+        if (payload.mevushal && current?.mevushal === "unknown") {
+          vals.push(payload.mevushal);
+          sets.push(`mevushal = $${vals.length}`);
+        }
+        if (sets.length > 0) {
+          sets.push("updated_at = now()");
+          await query(`UPDATE wine_vintages SET ${sets.join(", ")} WHERE id = $1`, vals);
+        }
+        // Replace grapes only when the wine has none set yet.
+        if (Array.isArray(payload.grapes) && payload.grapes.length > 0) {
+          const existing = await query<{ grape_id: string }>(
+            "SELECT grape_id FROM wine_grapes WHERE wine_vintage_id = $1",
+            [row.entity_id],
+          );
+          if (existing.length === 0) {
+            let order = 0;
+            for (const g of payload.grapes) {
+              if (!g.name) continue;
+              const grapeId = await resolveGrape(g.name);
+              if (!grapeId) continue;
+              const pct = typeof g.percentage === "number" && g.percentage > 0 && g.percentage <= 100
+                ? g.percentage.toFixed(2) : null;
+              await query(
+                `INSERT INTO wine_grapes (wine_vintage_id, grape_id, percentage, display_order)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (wine_vintage_id, grape_id) DO NOTHING`,
+                [row.entity_id, grapeId, pct, order++],
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("[ai] vintage_details parse failed", err);
+      }
     } else if (field === "scores") {
       // Parse the JSON Claude returned and insert as pending scores, flagged
       // for the user to verify (they're still 'draft' until approved on the
@@ -326,5 +482,19 @@ async function resolveCritic(name: string): Promise<string | null> {
   );
   if (existing) return existing.id;
   const r = await one<{ id: string }>("INSERT INTO critics (canonical_name) VALUES ($1) RETURNING id", [n]);
+  return r?.id ?? null;
+}
+
+async function resolveGrape(name: string): Promise<string | null> {
+  const n = name.trim();
+  if (!n) return null;
+  const existing = await one<{ id: string }>(
+    `SELECT id FROM grapes
+     WHERE lower(canonical_name) = lower($1)
+        OR lower($1) = ANY(array(SELECT lower(unnest(aliases))))`,
+    [n],
+  );
+  if (existing) return existing.id;
+  const r = await one<{ id: string }>("INSERT INTO grapes (canonical_name) VALUES ($1) RETURNING id", [n]);
   return r?.id ?? null;
 }

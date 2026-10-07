@@ -53,23 +53,33 @@ export async function askClaude(opts: {
   temperature?: number;
 }): Promise<AIProposal> {
   const model = CLAUDE_MODELS[opts.model ?? "haiku"];
-  const res = await getClient().messages.create({
-    model,
-    max_tokens: opts.maxTokens ?? 1024,
-    temperature: opts.temperature ?? 0.6,
-    system: opts.system ?? HOUSE_VOICE,
-    messages: [{ role: "user", content: opts.user }],
-  });
-  const text = res.content
-    .map((p) => (p.type === "text" ? p.text : ""))
-    .join("")
-    .trim();
-  return {
-    text,
-    model,
-    input_tokens: res.usage.input_tokens,
-    output_tokens: res.usage.output_tokens,
-  };
+  const t0 = Date.now();
+  try {
+    const res = await getClient().messages.create({
+      model,
+      max_tokens: opts.maxTokens ?? 1024,
+      temperature: opts.temperature ?? 0.6,
+      system: opts.system ?? HOUSE_VOICE,
+      messages: [{ role: "user", content: opts.user }],
+    });
+    const text = res.content
+      .map((p) => (p.type === "text" ? p.text : ""))
+      .join("")
+      .trim();
+    const ms = Date.now() - t0;
+    console.log(`[ai] askClaude ${model} ok ${ms}ms in=${res.usage.input_tokens} out=${res.usage.output_tokens}`);
+    return {
+      text,
+      model,
+      input_tokens: res.usage.input_tokens,
+      output_tokens: res.usage.output_tokens,
+    };
+  } catch (err) {
+    const ms = Date.now() - t0;
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[ai] askClaude ${model} FAILED ${ms}ms: ${msg}`);
+    throw err;
+  }
 }
 
 // -- Web-search variant (used by Find Scores) --------------------------------
@@ -82,20 +92,29 @@ export async function askClaudeWithSearch(opts: {
   maxTokens?: number;
 }): Promise<AIProposal> {
   const model = CLAUDE_MODELS[opts.model ?? "haiku"];
-  const res = await getClient().messages.create({
-    model,
-    max_tokens: opts.maxTokens ?? 2048,
-    system: opts.system ?? HOUSE_VOICE,
-    tools: [
-      {
-        type: "web_search_20250305" as unknown as "custom",
-        name: "web_search",
-        max_uses: opts.maxUses ?? 4,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any,
-    ],
-    messages: [{ role: "user", content: opts.user }],
-  });
+  const t0 = Date.now();
+  let res;
+  try {
+    res = await getClient().messages.create({
+      model,
+      max_tokens: opts.maxTokens ?? 2048,
+      system: opts.system ?? HOUSE_VOICE,
+      tools: [
+        {
+          type: "web_search_20250305" as unknown as "custom",
+          name: "web_search",
+          max_uses: opts.maxUses ?? 4,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
+      ],
+      messages: [{ role: "user", content: opts.user }],
+    });
+  } catch (err) {
+    const ms = Date.now() - t0;
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[ai] askClaudeWithSearch ${model} FAILED ${ms}ms: ${msg}`);
+    throw err;
+  }
   const text = res.content
     .filter((p) => p.type === "text")
     .map((p) => (p.type === "text" ? p.text : ""))
@@ -113,6 +132,8 @@ export async function askClaudeWithSearch(opts: {
       }
     }
   }
+  const ms = Date.now() - t0;
+  console.log(`[ai] askClaudeWithSearch ${model} ok ${ms}ms in=${res.usage.input_tokens} out=${res.usage.output_tokens} citations=${web_results.length}`);
   return {
     text,
     model,
