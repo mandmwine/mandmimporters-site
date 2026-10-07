@@ -24,6 +24,15 @@ const nextConfig: NextConfig = {
       "./node_modules/@fontsource/cormorant-garamond/files/latin-{500,600}-normal.woff2",
     ],
   },
+  // The app is mounted under basePath=/catalog-admin, so hitting the bare
+  // Vercel preview URL (or any host without the main-site rewrite) at "/"
+  // would 404.  Redirect / → /catalog-admin so the preview URLs land somewhere
+  // useful.  basePath: false keeps the redirect's source at the real root.
+  async redirects() {
+    return [
+      { source: "/", destination: "/catalog-admin", permanent: false, basePath: false },
+    ];
+  },
   async headers() {
     return [
       {
