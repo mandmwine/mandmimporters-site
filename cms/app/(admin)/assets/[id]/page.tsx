@@ -5,6 +5,7 @@ import { one, query } from "@/lib/db";
 import AssetEditForm, { type AssetMeta } from "@/components/AssetEditForm";
 import AssetDeleteButton from "@/components/AssetDeleteButton";
 import AssetReplaceUploader from "@/components/AssetReplaceUploader";
+import AssetAltTextButton from "@/components/AssetAltTextButton";
 import CopyButton from "@/components/CopyButton";
 import UpdatedMeta from "@/components/UpdatedMeta";
 
@@ -142,6 +143,9 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
 
         <div className="asset-detail__meta">
           <AssetEditForm asset={metaForForm} canEdit={canEdit} />
+          {canEdit && (asset.kind === "bottle" || asset.kind === "map" || asset.kind === "photo" || asset.kind === "logo") && (
+            <AssetAltTextButton assetId={asset.id} existing={metaForForm.alt_text} />
+          )}
 
           <div className="panel">
             <div className="panel-head"><h2>Used by</h2></div>

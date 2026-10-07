@@ -270,6 +270,87 @@ Rules:
   });
 }
 
+// -- Draft alt-text for an asset by looking at the image --------------------
+// Phase 16 — one-click accessibility pass on the asset library. Pulls a short
+// signed URL for the image and sends it to Claude Haiku with a vision prompt.
+export async function proposeAssetAltText(formData: FormData): Promise<ProposeResult> {
+  const user = await requireEditor();
+  const assetId = String(formData.get("asset_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(assetId)) return { ok: false, error: "Not found" };
+  const row = await one<{ id: string; kind: string; storage_path: string; file_name: string | null; metadata: Record<string, unknown> | null }>(
+    "SELECT id, kind, storage_path, file_name, metadata FROM assets WHERE id = $1 AND deleted_at IS NULL",
+    [assetId],
+  );
+  if (!row) return { ok: false, error: "Asset not found" };
+
+  // Sign a short-lived URL so Anthropic can fetch the image bytes directly.
+  let signedImageUrl: string;
+  try {
+    const { signedUrl } = await import("./storage");
+    signedImageUrl = await signedUrl(row.storage_path, 10);
+  } catch (err) {
+    return { ok: false, error: `Could not sign asset URL: ${err instanceof Error ? err.message : String(err)}` };
+  }
+
+  if (!aiConfigured()) {
+    return { ok: false, error: "Set ANTHROPIC_API_KEY in Vercel to enable AI features." };
+  }
+  try {
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+    const t0 = Date.now();
+    const res = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 300,
+      system:
+        "You write alt-text for images in a kosher wine catalog's asset library. " +
+        "Alt-text is for screen readers and must describe what is actually in the image, " +
+        "concretely and briefly (one or two short sentences, under 200 characters). " +
+        "No marketing adjectives, no interpretation. If the image is a bottle, say what " +
+        "you can read on the label and what the bottle looks like (shape, closure, foil). " +
+        "If it is a map, name what the map depicts. If it is a photo of a place or person, " +
+        "describe what is visible. Return the alt-text only, no quotes, no prefix.",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: { type: "url", url: signedImageUrl } as unknown as { type: "url"; url: string },
+            },
+            {
+              type: "text",
+              text: `This image is tagged "${row.kind}" in the catalog. Filename: ${row.file_name ?? "(none)"}. Write the alt-text.`,
+            },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ] as any,
+        },
+      ],
+    });
+    const text = res.content.map((p) => (p.type === "text" ? p.text : "")).join("").trim();
+    const ms = Date.now() - t0;
+    console.log(`[ai] alt_text ${assetId} ok ${ms}ms in=${res.usage.input_tokens} out=${res.usage.output_tokens} len=${text.length}`);
+    const rowOut = await one<{ id: string }>(
+      `INSERT INTO ai_actions
+         (user_id, action, entity_type, entity_id, field_name, input, output, model, status)
+       VALUES ($1, 'alt_text', 'asset', $2, 'alt_text', $3, $4, $5, 'proposed')
+       RETURNING id`,
+      [
+        user.id, assetId,
+        JSON.stringify({ prompt: "alt-text from image", kind: row.kind }),
+        JSON.stringify({ text, web_results: [] }),
+        res.model,
+      ],
+    );
+    await audit(user.id, "ai.alt_text.proposed", { type: "asset", id: assetId });
+    return { ok: true, id: rowOut!.id, proposedText: text };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[ai] alt_text failed", msg);
+    return { ok: false, error: msg };
+  }
+}
+
 // -- Accept a proposal: apply its text to the entity's field -----------------
 
 export async function acceptProposal(formData: FormData) {
@@ -376,6 +457,14 @@ export async function acceptProposal(formData: FormData) {
     }
   } else if (row.entity_type === "producer" && row.field_name === "winery_summary_short") {
     await query("UPDATE producers SET winery_summary_short = $2, updated_at = now() WHERE id = $1", [row.entity_id, row.output.text]);
+  } else if (row.entity_type === "asset" && row.field_name === "alt_text") {
+    // Merge into assets.metadata without clobbering caption/credit_line/tags.
+    await query(
+      `UPDATE assets
+         SET metadata = jsonb_set(coalesce(metadata, '{}'::jsonb), '{alt_text}', to_jsonb($2::text))
+       WHERE id = $1`,
+      [row.entity_id, row.output.text],
+    );
   }
 
   await query("UPDATE ai_actions SET status = 'accepted', decided_at = now() WHERE id = $1", [id]);

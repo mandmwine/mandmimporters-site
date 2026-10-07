@@ -191,15 +191,43 @@ Depends on Phase 12 pricing schema; now live.
 - Per-wine PDF export (not catalog-driven) ships no prices by default — Trade
   pricing lives on the Catalog pass, which is correct for distributor sheets.
 
-### Phase 16 — Follow‑ups from the roadmap
+### Phase 16 — Roadmap miscellany — SHIPPED
 
-Lower priority but on deck:
-- Clone a catalog (1 server action)
-- Password / email gate on share links (small schema add)
-- Per‑recipient trackable share links
-- Alt‑text generation via Claude on asset library
-- Buyer‑builds‑their‑own‑PDF on `/share/catalog`
-- Add producer/wine search bar inline on `/wines/import` preview to help resolve typos
+Four separate top-10 items landed in this one commit:
+
+**1. Clone a catalog.** New `cloneCatalog` server action duplicates composition
+(sections + items + settings) under a new name. Export history, share links,
+and recipient data stay with the original — a copy is a fresh slate. `Clone
+this catalog` button on the catalog detail page, inline form for the new name.
+
+**2. Password-protected share links.** `catalog_shares` picks up `password_hash`
++ `password_set_at` (migration 0005). Password hashing is scrypt-N14r8p1 via
+`lib/sharePassword.ts` (Node built-in `crypto.scryptSync`, no new dep). The
+share-create form has a new `Passphrase` field. On the public share page, if
+`password_hash` is set the viewer sees a passphrase gate; `/share/catalog/
+<token>/unlock` verifies, sets a 30-day httpOnly cookie scoped to that one
+share, and redirects back. Changing the password invalidates every outstanding
+cookie because the cookie value is `sha256(token + password_hash)`.
+
+**3. Per-recipient trackable share links.** `catalog_shares.recipient_name`
+and `recipient_email` columns (same migration). Create form has new recipient
+fields; the share-list row shows `For <name> · email · N views · last 2d ago`
+so the owner can tell which buyer actually opened the catalog. Named plus
+password combined means one buyer, one gated link, one audit trail.
+
+**4. Buyer-builds-their-own-PDF.** A `Download PDF` button on the public share
+page now proxies to `/share/catalog/<token>/pdf?preset=email`. Same gate as the
+share view (token + unlock cookie); recipient_email is recorded in the audit
+event alongside the byte count. Catalog pricing/stock settings carry through,
+so a shared Trade catalog downloads with its full ladder.
+
+**5. Claude alt-text on the asset library.** `proposeAssetAltText` sends the
+image to Claude Haiku vision with a strict "describe what's actually in the
+image, under 200 chars, no marketing" system prompt. One-click `✦ Draft alt-
+text from image` button on each asset's detail page; the proposal lands as an
+`ai_actions` row the editor Accepts to merge into `assets.metadata.alt_text`.
+`acceptProposal` grew a new branch for `entity_type = asset` that uses
+`jsonb_set` so caption / credit_line / tags stay intact.
 
 ---
 

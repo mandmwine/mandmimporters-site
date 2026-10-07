@@ -5,6 +5,7 @@ import { one, query } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import CatalogSharePanel, { type Share } from "@/components/CatalogSharePanel";
+import CloneCatalogButton from "@/components/CloneCatalogButton";
 import CatalogSectionsReorder, { type SectionRow as DragSectionRow } from "@/components/CatalogSectionsReorder";
 import CatalogItemsReorder, { type CatalogItemRow } from "@/components/CatalogItemsReorder";
 import CopyButton from "@/components/CopyButton";
@@ -109,7 +110,9 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
     ),
     query<Share>(
       `SELECT s.id, s.token, s.label, s.created_at, s.expires_at, s.revoked_at,
-              s.view_count, s.last_viewed_at, u.email AS created_by_email
+              s.view_count, s.last_viewed_at, u.email AS created_by_email,
+              s.recipient_name, s.recipient_email,
+              (s.password_hash IS NOT NULL) AS has_password
          FROM catalog_shares s
          LEFT JOIN users u ON u.id = s.created_by
          WHERE s.catalog_id = $1
@@ -325,6 +328,17 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
             basePath={shareBase}
             canEdit={canEdit}
           />
+
+          {canEdit && (
+            <div className="panel">
+              <h2>Duplicate</h2>
+              <p className="small muted">
+                Make a working copy. Sections, items and pricing settings carry over; exports,
+                shares and recipients stay with this catalog.
+              </p>
+              <CloneCatalogButton catalogId={id} suggestedName={`${c.name} (copy)`} />
+            </div>
+          )}
 
           {canEdit && (
             <form action={deleteCatalog} className="panel">

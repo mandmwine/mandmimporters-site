@@ -1592,6 +1592,12 @@ export async function createCatalogShare(formData: FormData): Promise<{ ok: bool
   const catalogId = String(formData.get("catalog_id") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(catalogId)) return { ok: false, message: "Bad catalog id." };
   const label = s(formData, "label");
+  const recipientName = s(formData, "recipient_name");
+  const recipientEmail = (s(formData, "recipient_email") ?? "").toLowerCase().trim() || null;
+  if (recipientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+    return { ok: false, message: "Invalid recipient email." };
+  }
+  const password = (s(formData, "password") ?? "").trim();
   const expiresRaw = s(formData, "expires_at");
   const expiresAt = expiresRaw ? new Date(expiresRaw) : null;
   if (expiresAt && Number.isNaN(expiresAt.getTime())) {
@@ -1601,16 +1607,90 @@ export async function createCatalogShare(formData: FormData): Promise<{ ok: bool
   const exists = await one("SELECT id FROM catalogs WHERE id = $1", [catalogId]);
   if (!exists) return { ok: false, message: "Catalog not found." };
 
+  // Hash the password if one was supplied — see lib/sharePassword.ts for format.
+  let passwordHash: string | null = null;
+  if (password) {
+    if (password.length < 4) return { ok: false, message: "Password must be at least 4 characters." };
+    const { hashSharePassword } = await import("./sharePassword");
+    passwordHash = hashSharePassword(password);
+  }
+
   const token = newShareToken();
   await query(
-    `INSERT INTO catalog_shares (catalog_id, token, label, created_by, expires_at)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [catalogId, token, label, user.id, expiresAt],
+    `INSERT INTO catalog_shares
+       (catalog_id, token, label, created_by, expires_at,
+        recipient_name, recipient_email, password_hash, password_set_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $8 IS NULL THEN NULL ELSE now() END)`,
+    [catalogId, token, label, user.id, expiresAt, recipientName, recipientEmail, passwordHash],
   );
   await audit(user.id, "catalog_share.create", { type: "catalog", id: catalogId },
-    { new: { token: token.slice(0, 6) + "…", label, expires_at: expiresAt?.toISOString() ?? null } });
+    { new: {
+        token: token.slice(0, 6) + "…",
+        label,
+        recipient_email: recipientEmail,
+        recipient_name: recipientName,
+        has_password: Boolean(passwordHash),
+        expires_at: expiresAt?.toISOString() ?? null,
+    } });
   revalidatePath(`/catalogs/${catalogId}`);
   return { ok: true, token };
+}
+
+// Clone a catalog's composition (sections + items) under a new name. Export
+// history, shares and settings do NOT carry over — a copy is a fresh slate
+// the editor can rework without touching the original's run of exports.
+export async function cloneCatalog(formData: FormData): Promise<{ ok: boolean; id?: string; message?: string }> {
+  const user = await requireEditor();
+  const sourceId = String(formData.get("catalog_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(sourceId)) return { ok: false, message: "Bad catalog id." };
+  const nameOverride = (s(formData, "name") ?? "").trim();
+
+  const source = await one<{ id: string; name: string; season: string | null; render_mode: string; cover_theme: string | null; settings: Record<string, unknown> }>(
+    "SELECT id, name, season, render_mode, cover_theme, settings FROM catalogs WHERE id = $1",
+    [sourceId],
+  );
+  if (!source) return { ok: false, message: "Catalog not found." };
+
+  const newName = nameOverride || `${source.name} (copy)`;
+  const created = await one<{ id: string }>(
+    `INSERT INTO catalogs (name, season, render_mode, cover_theme, settings, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+    [newName, source.season, source.render_mode, source.cover_theme, source.settings ?? {}, user.id],
+  );
+  const newId = created!.id;
+
+  // Walk sections → build an id map so items land under the right new sections.
+  const sections = await query<{ id: string; kind: string; title: string | null; position: number; settings: Record<string, unknown> }>(
+    "SELECT id, kind, title, position, settings FROM catalog_sections WHERE catalog_id = $1 ORDER BY position",
+    [sourceId],
+  );
+  const idMap = new Map<string, string>();
+  for (const sec of sections) {
+    const r = await one<{ id: string }>(
+      `INSERT INTO catalog_sections (catalog_id, kind, title, position, settings)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+      [newId, sec.kind, sec.title, sec.position, sec.settings ?? {}],
+    );
+    idMap.set(sec.id, r!.id);
+  }
+  const items = await query<{ section_id: string | null; wine_vintage_id: string; position: number; render_mode_override: string | null; settings: Record<string, unknown> }>(
+    "SELECT section_id, wine_vintage_id, position, render_mode_override, settings FROM catalog_items WHERE catalog_id = $1 ORDER BY position",
+    [sourceId],
+  );
+  for (const it of items) {
+    await query(
+      `INSERT INTO catalog_items (catalog_id, section_id, wine_vintage_id, position, render_mode_override, settings)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [newId, it.section_id ? idMap.get(it.section_id) ?? null : null, it.wine_vintage_id, it.position, it.render_mode_override, it.settings ?? {}],
+    );
+  }
+
+  await audit(user.id, "catalog.clone", { type: "catalog", id: newId }, undefined, {
+    source_id: sourceId, sections: sections.length, items: items.length,
+  });
+  revalidatePath("/catalogs");
+  revalidatePath(`/catalogs/${newId}`);
+  return { ok: true, id: newId };
 }
 
 export async function revokeCatalogShare(formData: FormData) {
