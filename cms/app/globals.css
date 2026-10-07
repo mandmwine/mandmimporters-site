@@ -615,3 +615,100 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   box-shadow: none;
 }
 
+/* Phase 7 — Map library */
+.badge--approved { background: var(--ok-soft); color: var(--ok); }
+.badge--draft    { background: var(--warn-soft); color: var(--warn); }
+.badge--needs_map { background: var(--err-soft); color: var(--err); }
+
+.maps-countries { display: flex; flex-direction: column; gap: 18px; }
+
+.map-detail {
+  display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: 20px; align-items: start;
+}
+@media (max-width: 960px) { .map-detail { grid-template-columns: 1fr; } }
+.map-detail__preview { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.map-detail__side { display: flex; flex-direction: column; gap: 16px; }
+
+.map-preview {
+  background: #efe9dd;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+}
+.map-preview svg {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+}
+.map-preview .map-feature {
+  fill: #fffdf8;
+  stroke: var(--muted);
+  stroke-width: 0.5;
+}
+.map-preview .map-feature--highlight {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 0.8;
+}
+
+.map-drafts { gap: 14px; }
+.map-draft {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 14px;
+  padding: 10px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.map-draft__preview { width: 180px; }
+.map-draft__meta { display: flex; flex-direction: column; gap: 6px; }
+.map-actions { display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+.map-uploader__tabs {
+  display: flex; gap: 6px; margin-bottom: 12px;
+}
+.map-uploader__tabs button {
+  all: unset;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+.map-uploader__tabs button.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.map-uploader textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
+}
+.map-uploader code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--panel);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.ok { color: var(--ok); }
+
+/* Sheet GeoJSON map styling (also used by region-map.tsx) */
+.sheet__map .map-feature {
+  fill: #fffdf8;
+  stroke: var(--mute, #6f675d);
+  stroke-width: 0.5;
+}
+.sheet__map .map-feature--highlight {
+  fill: var(--accent-soft, #f3e6e8);
+  stroke: var(--accent, #6e2335);
+  stroke-width: 0.8;
+}
+

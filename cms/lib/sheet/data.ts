@@ -1,6 +1,8 @@
 // Shared data loader for the single-wine sheet renderer and the PDF exporter.
 // Returns everything the Template 05 layout needs in one shot.
 import { one, query } from "@/lib/db";
+import { loadApprovedMapForLocation } from "@/lib/maps/db";
+import type { GeoMap } from "@/lib/sheet/region-map";
 
 export type SheetData = {
   wine: {
@@ -34,6 +36,7 @@ export type SheetData = {
   grapes: { name: string; percentage: string | null }[];
   scores: { critic: string | null; short_label: string | null; score_text: string; award_text: string | null; quote: string | null; vintage_text: string | null; current_vintage: boolean }[];
   bottle_image_url: string | null;
+  geoMap: GeoMap | null;
 };
 
 type VintageRow = {
@@ -204,5 +207,38 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
     grapes,
     scores,
     bottle_image_url,
+    geoMap: await resolveGeoMap(v.location_id, {
+      country: loc("country"),
+      region: loc("region"),
+      subregion: loc("subregion"),
+      appellation: loc("appellation"),
+    }),
+  };
+}
+
+// Resolve the deepest approved map that covers this wine's location. The
+// returned GeoMap carries both the GeoJSON (for the renderer) and the name
+// to highlight — the most specific location on the chain that matches a
+// feature in the GeoJSON. If no approved map covers the chain, returns null
+// and the sheet falls back to the hand-drawn country outline.
+async function resolveGeoMap(
+  locationId: string | null,
+  chain: { country: string | null; region: string | null; subregion: string | null; appellation: string | null },
+): Promise<GeoMap | null> {
+  if (!locationId) return null;
+  const picked = await loadApprovedMapForLocation(locationId);
+  if (!picked || !picked.geojson) return null;
+  // Highlight the deepest name we have that exists in the GeoJSON. We just
+  // pass the preferred ordering to the renderer; it does the name match itself.
+  const highlight =
+    chain.appellation ??
+    chain.subregion ??
+    chain.region ??
+    chain.country ??
+    picked.location_name;
+  return {
+    geojson: picked.geojson,
+    location_name: picked.location_name,
+    highlight,
   };
 }

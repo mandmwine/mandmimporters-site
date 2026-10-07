@@ -16,12 +16,17 @@ export function LineupPage({ data }: { data: LineupData }) {
   const wines = data.wines.slice(0, 6);
   const first = wines[0];
   const location = first?.location ?? { country: null, region: null, subregion: null, appellation: null };
-  const map = renderRegionMap({
-    country: location.country,
-    region: location.region,
-    subregion: null,       // Lineup zooms out to the region, not the appellation
-    appellation: null,
-  });
+  const map = renderRegionMap(
+    {
+      country: location.country,
+      region: location.region,
+      subregion: null,       // Lineup zooms out to the region, not the appellation
+      appellation: null,
+    },
+    // Fall back to the single-wine map if a region-level GeoJSON has been
+    // approved for one of these wines; the renderer re-highlights the region.
+    first?.geoMap ?? null,
+  );
 
   return (
     <article className="sheet sheet--print lineup" data-count={wines.length}>

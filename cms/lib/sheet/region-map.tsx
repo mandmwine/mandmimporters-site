@@ -1,17 +1,23 @@
-// Minimal "refined cartography" renderer for the sheet's top-right map.
-// Country outlines are hand-drawn SVG viewBoxes with a single highlight region.
-// Starts with the countries in the current portfolio; adding a region is one entry here.
+// Region map renderer for the single-wine sheet.
+//
+// Two layers:
+//   1. GeoJSON (new): when an approved map_asset for the wine's location (or
+//      any location above it in the hierarchy) exists, we render its GeoJSON
+//      through lib/maps/render.ts, highlighting the wine's actual location by
+//      name.  Loaded by lib/sheet/data.ts and passed in as `geoMap`.
+//   2. Hand-drawn fallback (old): if no GeoJSON is approved yet, we fall back
+//      to the hand-drawn country outlines in HAND_DRAWN below.  As the editor
+//      approves more maps the hand-drawn layer fades away on its own.
+import { renderMap, type GeoCollection, type GeoFeature } from "@/lib/maps/render";
 
 type MapDef = {
   viewBox: string;
-  outline: string;            // whole country outline path
-  highlights?: Record<string, string>; // region/appellation highlight paths
-  cities?: Record<string, [number, number]>; // optional reference-city markers
+  outline: string;
+  highlights?: Record<string, string>;
+  cities?: Record<string, [number, number]>;
 };
 
-// Coordinates are hand-tuned to match the reference's "chalk sketch" style
-// and will be refined with GeoJSON data in a later pass.
-const MAPS: Record<string, MapDef> = {
+const HAND_DRAWN: Record<string, MapDef> = {
   Italy: {
     viewBox: "0 0 240 300",
     outline:
@@ -74,28 +80,62 @@ const MAPS: Record<string, MapDef> = {
   },
 };
 
-export function renderRegionMap(location: {
+type LocationFacts = {
   country: string | null;
   region: string | null;
   subregion: string | null;
   appellation: string | null;
-}) {
+};
+
+export type GeoMap = {
+  geojson: GeoCollection;
+  location_name: string;      // the location this map covers (e.g. "Tuscany")
+  highlight: string | null;   // name of the specific sub-feature to highlight
+};
+
+export function renderRegionMap(location: LocationFacts, geoMap?: GeoMap | null) {
+  // 1. GeoJSON map (preferred) ------------------------------------------
+  if (geoMap) {
+    const r = renderMap(geoMap.geojson, {
+      width: 320,
+      padding: 0.04,
+      highlightName: geoMap.highlight ?? null,
+    });
+    if (r.svg) {
+      const captionTop = location.country ?? geoMap.location_name;
+      const captionSub = geoMap.highlight ?? location.region ?? geoMap.location_name;
+      return (
+        <figure className="sheet__map sheet__map--geo">
+          <svg
+            viewBox={r.viewBox}
+            xmlns="http://www.w3.org/2000/svg"
+            aria-label={`Map of ${geoMap.location_name}${geoMap.highlight ? ` highlighting ${geoMap.highlight}` : ""}`}
+            dangerouslySetInnerHTML={{ __html: r.svg }}
+          />
+          <figcaption>
+            <span className="sheet__map-caption-country">{captionTop?.toUpperCase() ?? ""}</span>
+            <span className="sheet__map-caption-region">{captionSub ?? ""}</span>
+          </figcaption>
+        </figure>
+      );
+    }
+  }
+
+  // 2. Hand-drawn fallback ----------------------------------------------
   const country = location.country;
-  if (!country || !MAPS[country]) {
+  if (!country || !HAND_DRAWN[country]) {
     return (
       <div className="sheet__map sheet__map--placeholder">
         <span>{location.region ?? country ?? "Region map"}</span>
       </div>
     );
   }
-  const def = MAPS[country];
-  // Pick the most specific highlight that we have geometry for.
+  const def = HAND_DRAWN[country];
   const highlightKey =
     (location.appellation && def.highlights?.[location.appellation]) ? location.appellation :
     (location.subregion && def.highlights?.[location.subregion]) ? location.subregion :
     (location.region && def.highlights?.[location.region]) ? location.region :
     null;
-
   const highlightLabel = highlightKey ?? location.region ?? country;
 
   return (
@@ -119,3 +159,6 @@ export function renderRegionMap(location: {
     </figure>
   );
 }
+
+// Re-export the GeoFeature type so callers importing from here get both pieces.
+export type { GeoFeature };

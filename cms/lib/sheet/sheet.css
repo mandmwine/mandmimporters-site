@@ -180,6 +180,21 @@
   border-radius: 4pt;
 }
 
+/* GeoJSON-rendered maps (lib/maps/render.ts). The feature classes come from
+   the server-rendered SVG; everything else is in the sheet palette. */
+.sheet__map--geo .map-feature {
+  fill: #ece5d6;
+  stroke: #cbbfa6;
+  stroke-width: 0.5;
+  stroke-linejoin: round;
+}
+.sheet__map--geo .map-feature--highlight {
+  fill: var(--accent);
+  opacity: 0.9;
+  stroke: #4e1824;
+  stroke-width: 0.6;
+}
+
 /* --- Section label (small-caps rule heading) ----------------------------- */
 
 .sheet__section-label {

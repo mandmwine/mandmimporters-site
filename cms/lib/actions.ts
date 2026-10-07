@@ -880,3 +880,139 @@ export async function bulkDeleteAssets(formData: FormData) {
   revalidatePath("/assets");
 }
 
+// ---------------------------------------------------------------- maps
+// A `map_asset` is a GeoJSON FeatureCollection scoped to one location. Each
+// location can have several versions; one is approved at a time. The sheet
+// walks up the location chain and picks the deepest approved map.
+function parseGeoJson(raw: string): { ok: true; geo: unknown } | { ok: false; error: string } {
+  const text = raw.trim();
+  if (!text) return { ok: false, error: "GeoJSON is empty." };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return { ok: false, error: "Not valid JSON." };
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return { ok: false, error: "Expected a JSON object." };
+  }
+  const obj = parsed as { type?: unknown; features?: unknown; geometry?: unknown; properties?: unknown };
+  if (obj.type === "FeatureCollection" && Array.isArray(obj.features) && obj.features.length > 0) {
+    return { ok: true, geo: parsed };
+  }
+  if (obj.type === "Feature" && obj.geometry) {
+    // Wrap a bare Feature in a FeatureCollection so the renderer always sees one.
+    return { ok: true, geo: { type: "FeatureCollection", features: [parsed] } };
+  }
+  if ((obj.type === "Polygon" || obj.type === "MultiPolygon") && Array.isArray((obj as { coordinates?: unknown }).coordinates)) {
+    return {
+      ok: true,
+      geo: {
+        type: "FeatureCollection",
+        features: [{ type: "Feature", properties: {}, geometry: parsed }],
+      },
+    };
+  }
+  return { ok: false, error: "Expected a FeatureCollection, Feature, Polygon, or MultiPolygon." };
+}
+
+export async function createMapVersion(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const locationId = String(formData.get("location_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(locationId)) return { ok: false, message: "Invalid location." };
+  const raw = String(formData.get("geojson") ?? "");
+  const parsed = parseGeoJson(raw);
+  if (!parsed.ok) return { ok: false, message: parsed.error };
+
+  const loc = await one<{ id: string }>("SELECT id FROM locations WHERE id = $1", [locationId]);
+  if (!loc) return { ok: false, message: "Location not found." };
+
+  const existing = await one<{ max: number | null }>(
+    "SELECT max(version) AS max FROM map_assets WHERE location_id = $1",
+    [locationId],
+  );
+  const nextVersion = (existing?.max ?? 0) + 1;
+
+  const row = await one<{ id: string }>(
+    `INSERT INTO map_assets (location_id, version, status, geojson)
+     VALUES ($1, $2, 'draft', $3::jsonb) RETURNING id`,
+    [locationId, nextVersion, JSON.stringify(parsed.geo)],
+  );
+  await audit(user.id, "map.create", { type: "map_asset", id: row!.id }, { new: { location_id: locationId, version: nextVersion } });
+  revalidatePath("/maps");
+  revalidatePath(`/maps/${locationId}`);
+  return { ok: true };
+}
+
+export async function approveMapVersion(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ id: string; location_id: string; version: number }>(
+    "SELECT id, location_id, version FROM map_assets WHERE id = $1",
+    [id],
+  );
+  if (!row) return;
+  // Retire any currently approved map for this location.
+  await query(
+    "UPDATE map_assets SET status = 'retired' WHERE location_id = $1 AND status = 'approved' AND id <> $2",
+    [row.location_id, id],
+  );
+  await query(
+    "UPDATE map_assets SET status = 'approved', approved_by = $2, approved_at = now() WHERE id = $1",
+    [id, user.id],
+  );
+  await query(
+    "UPDATE locations SET map_status = 'approved', updated_at = now() WHERE id = $1",
+    [row.location_id],
+  );
+  await audit(user.id, "map.approve", { type: "map_asset", id }, { new: { version: row.version } });
+  revalidatePath("/maps");
+  revalidatePath(`/maps/${row.location_id}`);
+}
+
+export async function retireMapVersion(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ id: string; location_id: string; status: string }>(
+    "SELECT id, location_id, status FROM map_assets WHERE id = $1",
+    [id],
+  );
+  if (!row) return;
+  await query("UPDATE map_assets SET status = 'retired' WHERE id = $1", [id]);
+  // If no approved version remains, flag the location as draft (not deleted).
+  const stillApproved = await one(
+    "SELECT 1 FROM map_assets WHERE location_id = $1 AND status = 'approved'",
+    [row.location_id],
+  );
+  if (!stillApproved) {
+    await query(
+      "UPDATE locations SET map_status = 'draft', updated_at = now() WHERE id = $1 AND map_status = 'approved'",
+      [row.location_id],
+    );
+  }
+  await audit(user.id, "map.retire", { type: "map_asset", id });
+  revalidatePath("/maps");
+  revalidatePath(`/maps/${row.location_id}`);
+}
+
+export async function deleteMapVersion(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ id: string; location_id: string; status: string }>(
+    "SELECT id, location_id, status FROM map_assets WHERE id = $1",
+    [id],
+  );
+  if (!row) return;
+  if (row.status === "approved") {
+    // Approving a different version is required before deletion; refuse quietly.
+    return;
+  }
+  await query("DELETE FROM map_assets WHERE id = $1", [id]);
+  await audit(user.id, "map.delete", { type: "map_asset", id });
+  revalidatePath("/maps");
+  revalidatePath(`/maps/${row.location_id}`);
+}
+

@@ -47,7 +47,7 @@ export default async function Dashboard() {
     { label: "Vintage missing", value: c.no_vintage, href: "/wines?missing=vintage", tone: "warn" },
     { label: "Mevushal not recorded", value: c.no_mevushal, href: "/wines?missing=mevushal" },
     { label: "Supervision not recorded", value: c.no_supervision, href: "/wines?missing=supervision" },
-    { label: "Locations without an approved map", value: c.needs_map, href: "/review?type=map" },
+    { label: "Locations without an approved map", value: c.needs_map, href: "/maps?status=needs_map" },
     { label: "Wines without a bottle image", value: c.no_bottle, href: "/wines?missing=bottle", tone: c.no_bottle > 0 ? "warn" : undefined },
     { label: "Unused assets", value: c.unused_assets, href: "/assets?filter=unused" },
     { label: "Low-resolution assets", value: c.lowres_assets, href: "/assets?filter=lowres", tone: c.lowres_assets > 0 ? "warn" : undefined },

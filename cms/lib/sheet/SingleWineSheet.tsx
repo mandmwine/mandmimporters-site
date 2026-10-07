@@ -44,7 +44,7 @@ function wineTitle(data: SheetData): string {
 }
 
 export function SingleWineSheet({ data, mode = "screen" }: { data: SheetData; mode?: "screen" | "print" }) {
-  const map = renderRegionMap(data.location);
+  const map = renderRegionMap(data.location, data.geoMap);
   const subhead = appellationDesignation(data) || regionAppellation(data);
   const scores = data.scores.slice(0, 4);
   const technical: [string, string | null][] = [
