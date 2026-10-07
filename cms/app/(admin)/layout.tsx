@@ -4,6 +4,7 @@ import Nav from "@/components/Nav";
 import SignOut from "@/components/SignOut";
 import { SelectionProvider } from "@/components/SelectionProvider";
 import SelectionBar from "@/components/SelectionBar";
+import CommandPalette from "@/components/CommandPalette";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <main className="content">{children}</main>
       </div>
       <SelectionBar existingCatalogs={catalogs} />
+      <CommandPalette />
     </SelectionProvider>
   );
 }

@@ -3,6 +3,7 @@ import { query } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { SeverityBadge } from "@/components/Badge";
 import FlagButtons from "@/components/FlagButtons";
+import { ReviewBulkBar, ReviewSelectAll, ReviewSelectCheckbox } from "@/components/ReviewBulk";
 
 export const dynamic = "force-dynamic";
 
@@ -90,11 +91,29 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
         <Link href={qs({ status: status === "open" ? "closed" : "" })}>{status === "open" ? "Show closed" : "Show open"}</Link>
       </nav>
 
+      {canEdit && <ReviewBulkBar />}
+
       <table className="table">
+        <thead>
+          <tr>
+            {canEdit && (
+              <th style={{ width: 36 }}>
+                <ReviewSelectAll ids={rows.map((r) => r.id)} />
+              </th>
+            )}
+            <th style={{ width: 90 }}>Severity</th>
+            <th>Issue</th>
+          </tr>
+        </thead>
         <tbody>
           {rows.map((f) => (
             <tr key={f.id}>
-              <td style={{ width: 90 }}><SeverityBadge severity={f.severity} /></td>
+              {canEdit && (
+                <td>
+                  <ReviewSelectCheckbox id={f.id} label={f.message} />
+                </td>
+              )}
+              <td><SeverityBadge severity={f.severity} /></td>
               <td>
                 {f.entity_type === "wine_vintage" ? (
                   <Link href={`/wines/${f.entity_id}`} className="strong">{f.label}</Link>
@@ -110,7 +129,9 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
               </td>
             </tr>
           ))}
-          {rows.length === 0 && <tr><td className="muted">Nothing here.</td></tr>}
+          {rows.length === 0 && (
+            <tr><td colSpan={canEdit ? 3 : 2} className="muted empty-state">Nothing here.</td></tr>
+          )}
         </tbody>
       </table>
       {rows.length === 300 && <p className="muted small">Showing the first 300. Narrow the filters to see more.</p>}

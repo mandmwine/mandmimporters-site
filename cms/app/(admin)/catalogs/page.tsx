@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { query } from "@/lib/db";
 import NewCatalogForm from "./NewCatalogForm";
+import ClickableRow from "@/components/ClickableRow";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function CatalogsPage() {
               <p className="muted">No catalogs yet. Create your first on the right.</p>
             </div>
           ) : (
-            <table className="table">
+            <table className="table table-rows">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -52,7 +53,7 @@ export default async function CatalogsPage() {
               </thead>
               <tbody>
                 {rows.map((c) => (
-                  <tr key={c.id}>
+                  <ClickableRow key={c.id} href={`/catalogs/${c.id}`}>
                     <td>
                       <Link href={`/catalogs/${c.id}`} className="strong">{c.name}</Link>
                       {c.season && <div className="muted small">{c.season}</div>}
@@ -63,7 +64,7 @@ export default async function CatalogsPage() {
                     <td className="small muted">
                       {c.last_export_at ? new Date(c.last_export_at).toLocaleDateString("en-US") : "—"}
                     </td>
-                  </tr>
+                  </ClickableRow>
                 ))}
               </tbody>
             </table>

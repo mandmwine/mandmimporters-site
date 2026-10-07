@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { query } from "@/lib/db";
+import ClickableRow from "@/components/ClickableRow";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function ProducersPage() {
         <h1>Producers</h1>
         <p className="muted">{rows.length} producers. Click a name to edit the winery story, website, supervision and sources.</p>
       </header>
-      <table className="table">
+      <table className="table table-rows">
         <thead>
           <tr>
             <th>Producer</th>
@@ -32,7 +33,7 @@ export default async function ProducersPage() {
         </thead>
         <tbody>
           {rows.map((p) => (
-            <tr key={p.id}>
+            <ClickableRow key={p.id} href={`/producers/${p.id}`}>
               <td><Link href={`/producers/${p.id}`} className="strong">{p.name}</Link></td>
               <td>{p.place && p.place !== p.country ? `${p.place}, ` : ""}{p.country}</td>
               <td className="right">{p.wines}</td>
@@ -40,7 +41,7 @@ export default async function ProducersPage() {
               <td className="right small">
                 <Link href={`/wines?q=${encodeURIComponent(p.name)}`} className="link">Wines →</Link>
               </td>
-            </tr>
+            </ClickableRow>
           ))}
         </tbody>
       </table>

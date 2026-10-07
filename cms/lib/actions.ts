@@ -9,6 +9,24 @@ import { adminAuth } from "./firebase-admin";
 import { levenshtein } from "./text";
 
 // ---------------------------------------------------------------- review flags
+export async function bulkSetFlagStatus(formData: FormData) {
+  const user = await requireEditor();
+  const status = String(formData.get("status") ?? "");
+  if (!["resolved", "dismissed", "open"].includes(status)) return;
+  const idsCsv = String(formData.get("ids") ?? "");
+  const ids = idsCsv.split(",").map((x) => x.trim()).filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+  if (ids.length === 0) return;
+  await query(
+    `UPDATE review_flags SET status = $2,
+       resolved_by = CASE WHEN $2 = 'open' THEN NULL ELSE $3::uuid END,
+       resolved_at = CASE WHEN $2 = 'open' THEN NULL ELSE now() END
+     WHERE id = ANY($1::uuid[])`,
+    [ids, status, user.id],
+  );
+  await audit(user.id, `flag.bulk_${status}`, { type: "review_flag", id: ids.join(",") }, { new: { count: ids.length } });
+  revalidatePath("/review");
+}
+
 export async function setFlagStatus(formData: FormData) {
   const user = await requireEditor();
   const id = String(formData.get("id") ?? "");
@@ -655,6 +673,68 @@ export async function moveCatalogSection(formData: FormData) {
   revalidatePath(`/catalogs/${row.catalog_id}`);
 }
 
+// Rewrite the full position order for all sections of a catalog. Called by
+// the drag-to-reorder UI. The payload is a comma-separated list of section IDs
+// in their new order.
+export async function reorderCatalogSections(formData: FormData) {
+  const user = await requireEditor();
+  const catalogId = String(formData.get("catalog_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(catalogId)) return;
+  const idsCsv = String(formData.get("ids") ?? "");
+  const ids = idsCsv.split(",").map((x) => x.trim()).filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+  if (ids.length === 0) return;
+  const checkOwnership = await query<{ id: string }>(
+    "SELECT id FROM catalog_sections WHERE catalog_id = $1 AND id = ANY($2::uuid[])",
+    [catalogId, ids],
+  );
+  const owned = new Set(checkOwnership.map((r) => r.id));
+  for (let i = 0; i < ids.length; i++) {
+    if (!owned.has(ids[i])) continue;
+    await query("UPDATE catalog_sections SET position = $2 WHERE id = $1", [ids[i], i]);
+  }
+  await audit(user.id, "catalog.reorder_sections", { type: "catalog", id: catalogId }, { new: { count: ids.length } });
+  revalidatePath(`/catalogs/${catalogId}`);
+}
+
+export async function reorderCatalogItems(formData: FormData) {
+  const user = await requireEditor();
+  const catalogId = String(formData.get("catalog_id") ?? "");
+  const sectionId = String(formData.get("section_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(catalogId)) return;
+  const idsCsv = String(formData.get("ids") ?? "");
+  const ids = idsCsv.split(",").map((x) => x.trim()).filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+  if (ids.length === 0) return;
+  // Verify every item belongs to this catalog.  The section id is optional —
+  // if present we also move the item into that section.
+  const owned = await query<{ id: string }>(
+    "SELECT id FROM catalog_items WHERE catalog_id = $1 AND id = ANY($2::uuid[])",
+    [catalogId, ids],
+  );
+  const ownedSet = new Set(owned.map((r) => r.id));
+  // Figure out this section's position-base so items from different sections
+  // keep increasing positions across the whole catalog (positions are catalog-wide).
+  const basePos = sectionId && /^[0-9a-f-]{36}$/i.test(sectionId)
+    ? (await one<{ min: number | null }>(
+        "SELECT min(position) AS min FROM catalog_items WHERE catalog_id = $1 AND section_id = $2",
+        [catalogId, sectionId],
+      ))?.min ?? 0
+    : 0;
+  for (let i = 0; i < ids.length; i++) {
+    if (!ownedSet.has(ids[i])) continue;
+    const pos = basePos + i;
+    if (sectionId && /^[0-9a-f-]{36}$/i.test(sectionId)) {
+      await query(
+        "UPDATE catalog_items SET position = $2, section_id = $3 WHERE id = $1",
+        [ids[i], pos, sectionId],
+      );
+    } else {
+      await query("UPDATE catalog_items SET position = $2 WHERE id = $1", [ids[i], pos]);
+    }
+  }
+  await audit(user.id, "catalog.reorder_items", { type: "catalog", id: catalogId }, { new: { count: ids.length, section_id: sectionId || null } });
+  revalidatePath(`/catalogs/${catalogId}`);
+}
+
 export async function deleteCatalogSection(formData: FormData) {
   const user = await requireEditor();
   const id = String(formData.get("id") ?? "");
@@ -784,6 +864,42 @@ export async function setBottleAsset(formData: FormData) {
   await audit(user.id, "wine_vintage.bottle_asset", { type: "wine_vintage", id: vintageId, field: "bottle_asset_id" }, { new: assetId });
   revalidatePath(`/wines/${vintageId}`);
   revalidatePath(`/sheet/${vintageId}`);
+}
+
+// ---------------------------------------------------------------- single-field autosave
+// Save one allow-listed text field on a wine vintage. Used by the autosave
+// textarea in the Copy panel so the user can type freely and the save
+// happens in the background.
+const AUTOSAVE_WINE_VINTAGE_FIELDS = new Set([
+  "tasting_note", "food_pairing", "short_description", "wine_story",
+  "aging_display", "supervision_display", "special_designation",
+]);
+
+export async function autosaveWineVintageField(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  const field = String(formData.get("field") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Bad id." };
+  if (!AUTOSAVE_WINE_VINTAGE_FIELDS.has(field)) {
+    return { ok: false, message: `Field "${field}" is not autosaveable here.` };
+  }
+  const value = s(formData, "value");
+  const before = await one<Record<string, unknown>>(
+    `SELECT ${field} AS v FROM wine_vintages WHERE id = $1`,
+    [id],
+  );
+  if (!before) return { ok: false, message: "Vintage not found." };
+  if (before.v === value) return { ok: true };
+  await query(
+    `UPDATE wine_vintages SET ${field} = $2, updated_at = now() WHERE id = $1`,
+    [id, value],
+  );
+  await audit(user.id, `wine_vintage.${field}`,
+    { type: "wine_vintage", id, field },
+    { old: before.v, new: value });
+  revalidatePath(`/wines/${id}`);
+  revalidatePath(`/sheet/${id}`);
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------- assets

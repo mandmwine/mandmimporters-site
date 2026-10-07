@@ -133,7 +133,7 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
         </thead>
         <tbody>
           {rows.map((r) => (
-            <ClickableRow key={r.vintage_id} href={`/catalog-admin/wines/${r.vintage_id}`}>
+            <ClickableRow key={r.vintage_id} href={`/wines/${r.vintage_id}`}>
               <td>
                 <WineRowSelect
                   id={r.vintage_id}

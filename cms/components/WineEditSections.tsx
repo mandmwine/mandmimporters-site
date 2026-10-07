@@ -1,8 +1,9 @@
 "use client";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateWineVintage, replaceGrapes } from "@/lib/actions";
+import { autosaveWineVintageField, updateWineVintage, replaceGrapes } from "@/lib/actions";
 import EditablePanel from "./EditablePanel";
+import AutosaveTextarea from "./AutosaveTextarea";
 
 export type EditableVintage = {
   id: string;
@@ -167,17 +168,39 @@ export function EditableCopy({
     };
   }
 
+  function autosaveField(field: "tasting_note" | "food_pairing" | "wine_story") {
+    return async (next: string) => {
+      const fd = new FormData();
+      fd.set("id", v.id);
+      fd.set("field", field);
+      fd.set("value", next);
+      return autosaveWineVintageField(fd);
+    };
+  }
+
   return (
     <EditablePanel title="Copy" summary={summary} canEdit={canEdit} rightSlot={aiButtons}>
       {(close) => (
         <form className="form-grid" onSubmit={submit(close)}>
           <label>
             Tasting note
-            <textarea name="tasting_note" rows={5} defaultValue={v.tasting_note ?? ""} placeholder="2–5 lines at normal body size." />
+            <AutosaveTextarea
+              name="tasting_note"
+              rows={5}
+              initialValue={v.tasting_note ?? ""}
+              placeholder="2–5 lines at normal body size."
+              save={autosaveField("tasting_note")}
+              maxWarnAt={450}
+            />
           </label>
           <label>
             Food pairing
-            <textarea name="food_pairing" rows={3} defaultValue={v.food_pairing ?? ""} />
+            <AutosaveTextarea
+              name="food_pairing"
+              rows={3}
+              initialValue={v.food_pairing ?? ""}
+              save={autosaveField("food_pairing")}
+            />
           </label>
           <label>
             Short description
@@ -185,13 +208,19 @@ export function EditableCopy({
           </label>
           <label>
             Wine story (long form, not shown on standard sheet)
-            <textarea name="wine_story" rows={4} defaultValue={v.wine_story ?? ""} />
+            <AutosaveTextarea
+              name="wine_story"
+              rows={4}
+              initialValue={v.wine_story ?? ""}
+              save={autosaveField("wine_story")}
+            />
           </label>
           <div className="form-actions">
             <button className="btn primary" type="submit" disabled={pending}>
-              {pending ? "Saving…" : "Save copy"}
+              {pending ? "Saving…" : "Save other fields"}
             </button>
-            <button className="link" type="button" onClick={close} disabled={pending}>Cancel</button>
+            <button className="link" type="button" onClick={close} disabled={pending}>Close</button>
+            <span className="small muted">Long-text fields save automatically.</span>
           </div>
         </form>
       )}

@@ -31,6 +31,26 @@ export default function EditablePanel({
     first?.focus();
   }, [open]);
 
+  // Cmd/Ctrl+S saves the panel in focus by firing a submit on its form.
+  useEffect(() => {
+    if (!open || !bodyRef.current) return;
+    const body = bodyRef.current;
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        // Only intercept if focus is inside this panel.
+        const el = document.activeElement as HTMLElement | null;
+        if (!el || !body.contains(el)) return;
+        const form = body.querySelector("form");
+        if (!form) return;
+        e.preventDefault();
+        // requestSubmit() runs validation and fires onSubmit the normal way.
+        form.requestSubmit();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
     <div className="panel">
       <div className="panel-head">

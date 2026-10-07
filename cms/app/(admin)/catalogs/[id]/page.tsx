@@ -5,15 +5,12 @@ import { one, query } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import CatalogSharePanel, { type Share } from "@/components/CatalogSharePanel";
+import CatalogSectionsReorder, { type SectionRow as DragSectionRow } from "@/components/CatalogSectionsReorder";
+import CatalogItemsReorder, { type CatalogItemRow } from "@/components/CatalogItemsReorder";
 import {
   addCatalogSection,
   deleteCatalog,
-  deleteCatalogSection,
-  moveCatalogItem,
-  moveCatalogSection,
-  removeCatalogItem,
   renameCatalog,
-  setSectionRenderMode,
 } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
@@ -68,13 +65,6 @@ const KIND_LABEL: Record<string, string> = {
   producer_index: "Producer Index",
   contact: "Contact",
   back_cover: "Back Cover",
-};
-
-const LAYOUT_LABEL: Record<string, string> = {
-  detailed: "Detailed (one per page)",
-  lineup: "Lineup (2–6 per page)",
-  trade: "Trade overview (dense)",
-  compact: "Compact portfolio",
 };
 
 export default async function CatalogDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -177,62 +167,21 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
         <div>
           <div className="panel">
             <h2>Sections</h2>
-            <p className="small muted">Sections render in the order below. Each wines-section can use a different layout.</p>
-            <ol className="section-list">
-              {sections.map((s, i) => {
-                const layout = (s.settings?.layout as string) ?? "detailed";
-                const sectionWines = items.filter((it) => it.section_id === s.id).length;
-                return (
-                  <li key={s.id}>
-                    <div className="section-row">
-                      <div>
-                        <strong>{KIND_LABEL[s.kind] ?? s.kind}</strong>
-                        {s.title && s.title !== s.kind && <span className="muted"> · {s.title}</span>}
-                        {s.kind === "wines" && (
-                          <div className="muted small">
-                            {sectionWines} wine{sectionWines === 1 ? "" : "s"} · layout: {LAYOUT_LABEL[layout] ?? layout}
-                          </div>
-                        )}
-                      </div>
-                      {canEdit && (
-                        <div className="inline-actions">
-                          {i > 0 && (
-                            <form action={moveCatalogSection} className="inline">
-                              <input type="hidden" name="id" value={s.id} />
-                              <input type="hidden" name="direction" value="up" />
-                              <button className="link small">↑</button>
-                            </form>
-                          )}
-                          {i < sections.length - 1 && (
-                            <form action={moveCatalogSection} className="inline">
-                              <input type="hidden" name="id" value={s.id} />
-                              <input type="hidden" name="direction" value="down" />
-                              <button className="link small">↓</button>
-                            </form>
-                          )}
-                          {s.kind === "wines" && (
-                            <form action={setSectionRenderMode} className="inline">
-                              <input type="hidden" name="id" value={s.id} />
-                              <select name="mode" defaultValue={layout}>
-                                <option value="detailed">Detailed</option>
-                                <option value="lineup">Lineup</option>
-                                <option value="trade">Trade</option>
-                                <option value="compact">Compact</option>
-                              </select>
-                              <button className="link small">Set</button>
-                            </form>
-                          )}
-                          <form action={deleteCatalogSection} className="inline">
-                            <input type="hidden" name="id" value={s.id} />
-                            <button className="link small muted">Delete</button>
-                          </form>
-                        </div>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
+            <p className="small muted">
+              {canEdit ? "Drag the handle to reorder. " : ""}
+              Each wines-section can use a different layout.
+            </p>
+            <CatalogSectionsReorder
+              catalogId={id}
+              canEdit={canEdit}
+              sections={sections.map<DragSectionRow>((s) => ({
+                id: s.id,
+                kind: s.kind,
+                title: s.title,
+                layout: (s.settings?.layout as string) ?? "detailed",
+                wine_count: items.filter((it) => it.section_id === s.id).length,
+              }))}
+            />
             {canEdit && (
               <form action={addCatalogSection} className="inline-form" style={{ marginTop: 12 }}>
                 <input type="hidden" name="catalog_id" value={id} />
@@ -252,58 +201,20 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
             {items.length === 0 ? (
               <p className="muted">No wines yet. Go to <Link href="/wines">Wines</Link>, select some, then click "Add to existing" in the selection bar.</p>
             ) : (
-              <table className="table compact">
-                <thead>
-                  <tr>
-                    <th style={{ width: 36 }}>#</th>
-                    <th>Wine</th>
-                    <th>Vintage</th>
-                    <th>Status</th>
-                    {canEdit && <th></th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((it, i) => (
-                    <tr key={it.id}>
-                      <td className="muted">{i + 1}</td>
-                      <td>
-                        <Link className="strong" href={`/wines/${it.wine_vintage_id}`}>{it.wine_name}</Link>
-                        <div className="muted small">
-                          {it.producer}
-                          {!it.has_image && <span className="warn-text"> · no image</span>}
-                          {it.flag_count > 0 && <span className="warn-text"> · {it.flag_count} open flag{it.flag_count === 1 ? "" : "s"}</span>}
-                        </div>
-                      </td>
-                      <td>{it.vintage_text ?? <span className="missing">no vintage</span>}</td>
-                      <td className="small muted">—</td>
-                      {canEdit && (
-                        <td className="right">
-                          <span className="inline-actions">
-                            {i > 0 && (
-                              <form action={moveCatalogItem} className="inline">
-                                <input type="hidden" name="id" value={it.id} />
-                                <input type="hidden" name="direction" value="up" />
-                                <button className="link small">↑</button>
-                              </form>
-                            )}
-                            {i < items.length - 1 && (
-                              <form action={moveCatalogItem} className="inline">
-                                <input type="hidden" name="id" value={it.id} />
-                                <input type="hidden" name="direction" value="down" />
-                                <button className="link small">↓</button>
-                              </form>
-                            )}
-                            <form action={removeCatalogItem} className="inline">
-                              <input type="hidden" name="id" value={it.id} />
-                              <button className="link small muted">Remove</button>
-                            </form>
-                          </span>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <CatalogItemsReorder
+                catalogId={id}
+                canEdit={canEdit}
+                items={items.map<CatalogItemRow>((it) => ({
+                  id: it.id,
+                  wine_vintage_id: it.wine_vintage_id,
+                  wine_name: it.wine_name,
+                  producer: it.producer,
+                  vintage_text: it.vintage_text,
+                  has_image: it.has_image,
+                  flag_count: it.flag_count,
+                  section_id: it.section_id,
+                }))}
+              />
             )}
           </div>
         </div>
