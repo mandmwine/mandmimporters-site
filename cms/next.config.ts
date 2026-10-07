@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
       "./lib/sheet/*.css",
       "./node_modules/@fontsource/inter/files/latin-{400,500,600}-normal.woff2",
       "./node_modules/@fontsource/cormorant-garamond/files/latin-{500,600}-normal.woff2",
+      // @sparticuz/chromium ships a brotli-compressed Chromium binary and
+      // supporting files under its own bin/ folder. Next's bundle tracer
+      // doesn't see those because they're loaded at runtime by puppeteer-core,
+      // so we include them explicitly in every serverless function that might
+      // need to render a PDF.
+      "./node_modules/@sparticuz/chromium/bin/**/*",
     ],
   },
   // The app is mounted under basePath=/catalog-admin, so hitting the bare

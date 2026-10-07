@@ -1676,3 +1676,197 @@ export async function importFromDropbox(formData: FormData): Promise<{ ok: boole
   revalidatePath("/dropbox");
   return { ok: true, results };
 }
+
+// ---------------------------------------------------------------- CSV import wines
+import type { ImportSummary, ImportRowOutcome } from "./csvImport";
+
+function parseMevushal(v: string | undefined): "yes" | "no" | "unknown" {
+  const t = (v ?? "").trim().toLowerCase();
+  if (t === "yes" || t === "y" || t === "true" || t === "1") return "yes";
+  if (t === "no"  || t === "n" || t === "false" || t === "0") return "no";
+  return "unknown";
+}
+
+function parseSizes(v: string | undefined): string[] {
+  if (!v) return [];
+  return v.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+}
+
+async function findOrCreateProducer(name: string, userId: string): Promise<string | null> {
+  const t = name.trim();
+  if (!t) return null;
+  const existing = await one<{ id: string }>(
+    "SELECT id FROM producers WHERE lower(name) = lower($1) AND deleted_at IS NULL",
+    [t],
+  );
+  if (existing) return existing.id;
+  const base = t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+  let slug = base; let n = 2;
+  while (await one("SELECT 1 FROM producers WHERE slug = $1", [slug])) {
+    slug = `${base}-${n++}`;
+  }
+  const row = await one<{ id: string }>(
+    "INSERT INTO producers (name, slug) VALUES ($1, $2) RETURNING id",
+    [t, slug],
+  );
+  await audit(userId, "producer.import_create", { type: "producer", id: row!.id }, { new: { name: t, source: "csv" } });
+  return row!.id;
+}
+
+async function findOrCreateWine(producerId: string, displayName: string, category: string | null, userId: string): Promise<string | null> {
+  const existing = await one<{ id: string }>(
+    "SELECT id FROM wines WHERE producer_id = $1 AND lower(display_name) = lower($2) AND deleted_at IS NULL",
+    [producerId, displayName],
+  );
+  if (existing) return existing.id;
+  const base = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+  let slug = base; let n = 2;
+  while (await one("SELECT 1 FROM wines WHERE slug = $1", [slug])) {
+    slug = `${base}-${n++}`;
+  }
+  const row = await one<{ id: string }>(
+    `INSERT INTO wines (producer_id, canonical_name, display_name, slug, category)
+     VALUES ($1, $2, $2, $3, $4) RETURNING id`,
+    [producerId, displayName, slug, category],
+  );
+  await audit(userId, "wine.import_create", { type: "wine", id: row!.id }, { new: { producer_id: producerId, display_name: displayName, source: "csv" } });
+  return row!.id;
+}
+
+export async function runWineCsvImport(formData: FormData): Promise<{ ok: boolean; summary?: ImportSummary; message?: string }> {
+  const user = await requireEditor();
+  const csvText = String(formData.get("csv") ?? "");
+  const dryRun = formData.get("dry_run") === "1";
+  if (!csvText.trim()) return { ok: false, message: "CSV is empty." };
+
+  const { parseCsv, resolveHeaders } = await import("./csvImport");
+  const parsed = parseCsv(csvText);
+  if (parsed.rows.length === 0) return { ok: false, message: "No rows in CSV." };
+  const headers = resolveHeaders(parsed.headers);
+  if (!headers.producer || !headers.wine) {
+    return { ok: false, message: `Need Producer and Wine columns (got ${parsed.headers.join(", ")}).` };
+  }
+
+  const outcomes: ImportRowOutcome[] = [];
+  const summary: ImportSummary = { created: 0, updated: 0, skipped: 0, failed: 0, outcomes };
+
+  for (let i = 0; i < parsed.rows.length; i++) {
+    const line = i + 2; // header is line 1
+    const r = parsed.rows[i];
+    try {
+      const producerName = headers.producer ? r[headers.producer] : "";
+      const wineName = headers.wine ? r[headers.wine] : "";
+      if (!producerName || !wineName) {
+        outcomes.push({ line, status: "skipped", reason: "Missing producer or wine name" });
+        summary.skipped++;
+        continue;
+      }
+      const vintageText = headers.vintage ? r[headers.vintage]?.trim() || null : null;
+      const category = headers.category ? r[headers.category]?.trim().toLowerCase() || null : null;
+      const mevushal = headers.mevushal ? parseMevushal(r[headers.mevushal]) : "unknown";
+      const supervision = headers.supervision ? r[headers.supervision]?.trim() || null : null;
+      const aging = headers.aging ? r[headers.aging]?.trim() || null : null;
+      const sizes = headers.sizes ? parseSizes(r[headers.sizes]) : [];
+      const status = headers.status ? r[headers.status]?.trim() || null : null;
+      const tastingNote = headers.tasting_note ? r[headers.tasting_note]?.trim() || null : null;
+      const foodPairing = headers.food_pairing ? r[headers.food_pairing]?.trim() || null : null;
+      const shortDesc = headers.short_description ? r[headers.short_description]?.trim() || null : null;
+
+      if (dryRun) {
+        const existingProd = await one<{ id: string }>("SELECT id FROM producers WHERE lower(name) = lower($1) AND deleted_at IS NULL", [producerName]);
+        const existingWine = existingProd
+          ? await one<{ id: string }>("SELECT id FROM wines WHERE producer_id = $1 AND lower(display_name) = lower($2) AND deleted_at IS NULL", [existingProd.id, wineName])
+          : null;
+        const existingVintage = existingWine
+          ? await one<{ id: string }>(
+              "SELECT id FROM wine_vintages WHERE wine_id = $1 AND coalesce(vintage_text,'') = coalesce($2,'') AND deleted_at IS NULL",
+              [existingWine.id, vintageText],
+            )
+          : null;
+        if (existingVintage) {
+          outcomes.push({ line, status: "updated", wine_id: existingWine!.id, vintage_id: existingVintage.id, changed: [] });
+          summary.updated++;
+        } else {
+          outcomes.push({ line, status: "created", wine_id: existingWine?.id ?? "new", vintage_id: "new" });
+          summary.created++;
+        }
+        continue;
+      }
+
+      const producerId = await findOrCreateProducer(producerName, user.id);
+      if (!producerId) throw new Error("Could not resolve producer");
+      const wineId = await findOrCreateWine(producerId, wineName, category, user.id);
+      if (!wineId) throw new Error("Could not resolve wine");
+
+      const existingVintage = await one<{
+        id: string; mevushal: string; supervision_display: string | null; aging_display: string | null;
+        bottle_sizes: string[]; status: string;
+        tasting_note: string | null; food_pairing: string | null; short_description: string | null;
+      }>(
+        "SELECT id, mevushal, supervision_display, aging_display, bottle_sizes, status, tasting_note, food_pairing, short_description FROM wine_vintages WHERE wine_id = $1 AND coalesce(vintage_text,'') = coalesce($2,'') AND deleted_at IS NULL",
+        [wineId, vintageText],
+      );
+
+      const nextStatus = status && ["draft", "needs_review", "approved", "published", "discontinued"].includes(status)
+        ? status : (existingVintage?.status ?? "draft");
+
+      if (existingVintage) {
+        const changed: string[] = [];
+        const patch: Record<string, unknown> = {};
+        function set<K extends string>(field: K, next: unknown, prev: unknown) {
+          if (next !== null && next !== undefined && JSON.stringify(next) !== JSON.stringify(prev)) {
+            patch[field] = next;
+            changed.push(field);
+          }
+        }
+        if (headers.mevushal) set("mevushal", mevushal, existingVintage.mevushal);
+        if (headers.supervision) set("supervision_display", supervision, existingVintage.supervision_display);
+        if (headers.aging) set("aging_display", aging, existingVintage.aging_display);
+        if (headers.sizes && sizes.length) set("bottle_sizes", sizes, existingVintage.bottle_sizes);
+        if (headers.status) set("status", nextStatus, existingVintage.status);
+        if (headers.tasting_note) set("tasting_note", tastingNote, existingVintage.tasting_note);
+        if (headers.food_pairing) set("food_pairing", foodPairing, existingVintage.food_pairing);
+        if (headers.short_description) set("short_description", shortDesc, existingVintage.short_description);
+
+        if (changed.length === 0) {
+          outcomes.push({ line, status: "skipped", reason: "No changes vs existing row" });
+          summary.skipped++;
+          continue;
+        }
+        const sets = changed.map((f, idx) => `${f} = $${idx + 2}`).join(", ");
+        const values = changed.map((f) => patch[f]);
+        await query(
+          `UPDATE wine_vintages SET ${sets}, updated_at = now() WHERE id = $1`,
+          [existingVintage.id, ...values],
+        );
+        await audit(user.id, "wine_vintage.csv_update",
+          { type: "wine_vintage", id: existingVintage.id },
+          { new: patch, changed });
+        outcomes.push({ line, status: "updated", wine_id: wineId, vintage_id: existingVintage.id, changed });
+        summary.updated++;
+      } else {
+        const row = await one<{ id: string }>(
+          `INSERT INTO wine_vintages
+             (wine_id, vintage_text, status, mevushal, supervision_display, aging_display,
+              bottle_sizes, tasting_note, food_pairing, short_description)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+          [wineId, vintageText, nextStatus, mevushal, supervision, aging,
+           sizes, tastingNote, foodPairing, shortDesc],
+        );
+        await audit(user.id, "wine_vintage.csv_create",
+          { type: "wine_vintage", id: row!.id },
+          { new: { wine_id: wineId, vintage_text: vintageText, source: "csv" } });
+        outcomes.push({ line, status: "created", wine_id: wineId, vintage_id: row!.id });
+        summary.created++;
+      }
+    } catch (err) {
+      outcomes.push({ line, status: "failed", reason: err instanceof Error ? err.message : String(err) });
+      summary.failed++;
+    }
+  }
+
+  if (!dryRun) {
+    revalidatePath("/wines");
+  }
+  return { ok: true, summary };
+}
