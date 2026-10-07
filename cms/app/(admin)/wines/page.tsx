@@ -9,6 +9,8 @@ import PerPageChooser from "@/components/PerPageChooser";
 import FilterChips, { type Chip } from "@/components/FilterChips";
 import SavedViews from "@/components/SavedViews";
 import { loadSavedViews } from "@/lib/savedViews";
+import JumpToPage from "@/components/JumpToPage";
+import ListKeyboardNav from "@/components/ListKeyboardNav";
 
 export const dynamic = "force-dynamic";
 
@@ -192,13 +194,15 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {rows.map((r, idx) => (
             <ClickableRow key={r.vintage_id} href={`/wines/${r.vintage_id}`}>
               <td>
                 <WineRowSelect
                   id={r.vintage_id}
                   label={`${r.display_name}${r.vintage_text ? ` ${r.vintage_text}` : ""}`}
                   producer={r.producer}
+                  index={idx}
+                  entries={entries}
                 />
               </td>
               <td>
@@ -239,8 +243,11 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
           <span className="muted">Page {page} of {pages}</span>
           {page < pages ? <Link href={link(page + 1)}>Next →</Link> : <span className="muted">Next →</span>}
           {page < pages ? <Link href={link(pages)}>Last »</Link> : <span className="muted">Last »</span>}
+          <JumpToPage pages={pages} />
         </nav>
       )}
+
+      <ListKeyboardNav rowSelector="tbody tr.row-clickable" />
     </>
   );
 }

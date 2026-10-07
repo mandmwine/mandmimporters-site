@@ -8,6 +8,8 @@ import CommandPalette from "@/components/CommandPalette";
 import ShortcutHelp from "@/components/ShortcutHelp";
 import ThemeToggle from "@/components/ThemeToggle";
 import UndoToastProvider from "@/components/UndoToast";
+import SessionWatcher from "@/components/SessionWatcher";
+import BackToTop from "@/components/BackToTop";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +47,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <SelectionBar existingCatalogs={catalogs} />
       <CommandPalette />
       <ShortcutHelp />
+      <SessionWatcher />
+      <BackToTop />
     </SelectionProvider>
   );
 }

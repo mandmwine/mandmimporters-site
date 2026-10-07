@@ -1,13 +1,19 @@
 "use client";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 type Entry = { id: string; label: string; producer?: string };
 type Ctx = {
   selected: Entry[];
   toggle(e: Entry): void;
+  addMany(es: Entry[]): void;
+  removeMany(ids: string[]): void;
   clear(): void;
   has(id: string): boolean;
   count: number;
+  // Shift-click helper: remembers the last toggled row index per page so a
+  // subsequent shift-click can select the range in between.
+  recordLastIndex(index: number): void;
+  getLastIndex(): number | null;
 };
 
 const SelectionCtx = createContext<Ctx | null>(null);
@@ -16,8 +22,8 @@ const KEY = "mm-catalog:selected-wines";
 export function SelectionProvider({ children }: { children: React.ReactNode }) {
   const [selected, setSelected] = useState<Entry[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const lastIndex = useRef<number | null>(null);
 
-  // Load once from localStorage; try/catch for private windows.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
@@ -44,13 +50,26 @@ export function SelectionProvider({ children }: { children: React.ReactNode }) {
           prev.some((x) => x.id === e.id) ? prev.filter((x) => x.id !== e.id) : [...prev, e],
         );
       },
+      addMany(es) {
+        setSelected((prev) => {
+          const have = new Set(prev.map((x) => x.id));
+          return [...prev, ...es.filter((e) => !have.has(e.id))];
+        });
+      },
+      removeMany(ids) {
+        const kill = new Set(ids);
+        setSelected((prev) => prev.filter((x) => !kill.has(x.id)));
+      },
       clear() {
         setSelected([]);
+        lastIndex.current = null;
       },
       has(id) {
         return selected.some((x) => x.id === id);
       },
       count: selected.length,
+      recordLastIndex(i) { lastIndex.current = i; },
+      getLastIndex() { return lastIndex.current; },
     }),
     [selected],
   );

@@ -1401,6 +1401,62 @@ kbd {
 }
 .saved-views__row:not(:last-child) { border-bottom: 1px dashed var(--rule); }
 
+/* Pass 5 — session watcher, back to top, jump to page, list keyboard focus */
+.session-warning {
+  position: fixed;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--warn);
+  color: #fff;
+  border-radius: 999px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+  z-index: 100;
+  font-size: 13px;
+}
+.session-warning .link { color: rgba(255,255,255,0.9); }
+.session-warning .btn.primary { background: #fff; color: var(--warn); border-color: #fff; }
+
+.back-to-top {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  padding: 8px 14px;
+  background: var(--ink);
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(30, 27, 24, 0.18);
+  z-index: 70;
+}
+.back-to-top:hover { background: var(--accent); }
+
+.jump-to-page { display: inline-flex; align-items: center; }
+.jump-to-page label { display: inline-flex; align-items: center; gap: 6px; }
+.jump-to-page input {
+  width: 60px;
+  padding: 3px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font: inherit;
+  text-align: center;
+}
+
+/* Keyboard-focused list row (set by ListKeyboardNav via browser focus state) */
+.table-rows tbody tr.row-clickable:focus,
+.table-rows tbody tr.row-clickable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  background: var(--accent-soft);
+}
+
 /* Phase 5 — Dropbox browser */
 .dropbox-browser { display: flex; flex-direction: column; gap: 10px; }
 .dropbox-crumbs {

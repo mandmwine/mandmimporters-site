@@ -2,38 +2,69 @@
 import { useEffect, useRef } from "react";
 import { useSelection } from "./SelectionProvider";
 
+type Entry = { id: string; label: string; producer?: string };
+
 export default function WineRowSelect({
   id,
   label,
   producer,
+  index,
+  entries,
 }: {
   id: string;
   label: string;
   producer?: string;
+  // Optional, enables shift-click range select.
+  index?: number;
+  entries?: Entry[];
 }) {
   const sel = useSelection();
   const checked = sel.has(id);
+
+  function onClick(e: React.MouseEvent<HTMLInputElement>) {
+    e.stopPropagation();
+    // Shift-click: select the range from the last toggled row to this one.
+    if (e.shiftKey && typeof index === "number" && entries) {
+      const prev = sel.getLastIndex();
+      if (prev !== null && prev !== index) {
+        const [a, b] = prev < index ? [prev, index] : [index, prev];
+        const range = entries.slice(a, b + 1);
+        // If this row would end up checked, add the whole range; otherwise
+        // deselect it. (Match macOS Finder.)
+        if (!checked) sel.addMany(range);
+        else sel.removeMany(range.map((r) => r.id));
+        sel.recordLastIndex(index);
+        e.preventDefault();   // we handled it manually
+        return;
+      }
+    }
+    // Normal click: let the onChange toggle, record the index.
+    if (typeof index === "number") sel.recordLastIndex(index);
+  }
+
   return (
     <input
       type="checkbox"
       aria-label={`Select ${label}`}
       checked={checked}
-      onClick={(e) => e.stopPropagation()}
-      onChange={() => sel.toggle({ id, label, producer })}
+      onClick={onClick}
+      onChange={(ev) => {
+        // onChange only fires for plain clicks; shift-click branch returned early.
+        if (!ev.nativeEvent || !(ev.nativeEvent as MouseEvent).shiftKey) {
+          sel.toggle({ id, label, producer });
+        }
+      }}
       className="row-select"
     />
   );
 }
 
 // Real tri-state checkbox for the table header.
-// - Empty → clicking selects every row on this page
-// - Full  → clicking deselects every row on this page
-// - Partial → indeterminate dash; clicking selects the rest
 export function SelectAllCheckbox({
   entries,
   idPrefix = "sa",
 }: {
-  entries: { id: string; label: string; producer?: string }[];
+  entries: Entry[];
   idPrefix?: string;
 }) {
   const sel = useSelection();
@@ -47,11 +78,8 @@ export function SelectAllCheckbox({
   }, [some]);
 
   function toggleAll() {
-    if (allHere || some) {
-      entries.forEach((e) => sel.has(e.id) && sel.toggle(e));
-    } else {
-      entries.forEach((e) => !sel.has(e.id) && sel.toggle(e));
-    }
+    if (allHere || some) sel.removeMany(entries.map((e) => e.id));
+    else sel.addMany(entries);
   }
 
   const id = `${idPrefix}-select-all`;

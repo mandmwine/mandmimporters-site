@@ -17,6 +17,11 @@ export default function SelectionBar({ existingCatalogs }: { existingCatalogs: C
 
   if (sel.count === 0) return null;
 
+  function exportCsv() {
+    const ids = sel.selected.map((s) => s.id).join(",");
+    window.location.href = `/catalog-admin/api/wines/export?ids=${encodeURIComponent(ids)}`;
+  }
+
   function submitCreate(e: React.FormEvent) {
     e.preventDefault();
     const fd = new FormData();
@@ -60,6 +65,9 @@ export default function SelectionBar({ existingCatalogs }: { existingCatalogs: C
               Add to existing
             </button>
           )}
+          <button className="btn" type="button" onClick={exportCsv} title="Export the selected wines as a CSV file">
+            Export CSV
+          </button>
           <Link className="btn" href={`/catalogs`}>
             All catalogs
           </Link>

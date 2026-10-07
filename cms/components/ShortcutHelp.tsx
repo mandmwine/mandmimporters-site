@@ -26,7 +26,10 @@ const SHORTCUTS: { group: string; rows: Row[] }[] = [
     rows: [
       { keys: ["Click row"], what: "Open the record (except on controls)" },
       { keys: ["Click column"], what: "Sort by that column, click again to flip, third to clear" },
-      { keys: ["Shift+Click"], what: "(coming) select a range" },
+      { keys: ["Shift+Click"], what: "Select a range of rows between two clicks" },
+      { keys: ["J", "↓"], what: "Focus the next row" },
+      { keys: ["K", "↑"], what: "Focus the previous row" },
+      { keys: ["Enter"], what: "Open the focused row" },
     ],
   },
   {
