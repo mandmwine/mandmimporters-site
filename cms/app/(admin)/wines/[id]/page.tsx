@@ -16,6 +16,7 @@ import UpdatedMeta from "@/components/UpdatedMeta";
 import StockPricePanel from "@/components/StockPricePanel";
 import FillEverythingButton from "@/components/FillEverythingButton";
 import AIProposalsPanel from "@/components/AIProposalsPanel";
+import ArchiveWineButton from "@/components/ArchiveWineButton";
 import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -490,6 +491,25 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
             )}
           </div>
         </section>
+
+        {canEdit && (
+          <section id="sec-archive">
+            <div className="panel">
+              <h2>Archive</h2>
+              <p className="small muted">
+                Archiving soft-deletes — the record stays in the database and you can restore it
+                from the <Link href="/wines/archived">Archived wines</Link> list. Public pages and
+                catalogs stop showing it immediately.
+              </p>
+              <ArchiveWineButton
+                wineId={v.wine_id}
+                vintageId={id}
+                vintageCount={siblings.length}
+                wineDisplayName={v.display_name}
+              />
+            </div>
+          </section>
+        )}
 
         <section id="sec-sources">
           <SourcesPanel

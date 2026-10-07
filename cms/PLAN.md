@@ -191,6 +191,35 @@ Depends on Phase 12 pricing schema; now live.
 - Per-wine PDF export (not catalog-driven) ships no prices by default — Trade
   pricing lives on the Catalog pass, which is correct for distributor sheets.
 
+### Phase 17 — Reconcile from inventory + archive — SHIPPED
+
+Two user-asked additions on top of the shipped roadmap:
+
+**1. Inventory importer can now auto-create missing wines.** A new "Create
+missing wines" checkbox on the inventory import page. When on, any row whose
+SKU / name doesn't match an existing vintage is turned into a draft
+producer / wine / vintage. The producer is matched by longest-prefix against
+existing producers ("Chateau Teyssier 2021" → existing "Chateau Teyssier"
+producer, new vintage); if no prefix matches, the first 1–3 words become
+a new producer name. The wine name is whatever's left of the Item column
+after the producer, with the trailing vintage year stripped. The dry-run
+preview shows exactly which rows would be created before you confirm.
+
+**2. Archive wine, vintage, or producer with easy restore.** Three new
+server actions mirror the existing deleteProducer:
+
+- `archiveWineVintage` — soft-delete one vintage, other vintages keep going
+- `archiveWine` — soft-delete the wine + every vintage under it
+- `unarchiveWineVintage` / `unarchiveWine` / `unarchiveProducer` —
+  restore, cascading up to re-activate parent rows if they were cascaded
+
+A new "Archive" section on every wine detail page offers both options
+(archive this vintage · archive whole wine) with a two-click confirm.
+The /wines index gets an "Archived" link in the header; /wines/archived
+lists each archived wine with its archived-at date and a Restore button.
+Same for /producers/archived. All actions are editor-level; audit events
+are stamped on every archive and restore.
+
 ### Phase 16 — Roadmap miscellany — SHIPPED
 
 Four separate top-10 items landed in this one commit:

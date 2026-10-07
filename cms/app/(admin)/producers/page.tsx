@@ -36,9 +36,14 @@ export default async function ProducersPage({
   );
   return (
     <>
-      <header className="page-head">
-        <h1>Producers</h1>
-        <p className="muted">{rows.length} producers. Click a name to edit the winery story, website, supervision and sources.</p>
+      <header className="page-head row">
+        <div>
+          <h1>Producers</h1>
+          <p className="muted">{rows.length} producers. Click a name to edit the winery story, website, supervision and sources.</p>
+        </div>
+        <div className="head-side">
+          <Link href="/producers/archived" className="link small">Archived</Link>
+        </div>
       </header>
       <table className="table table-rows">
         <thead>

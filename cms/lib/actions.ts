@@ -2163,6 +2163,90 @@ export async function runWineCsvImport(formData: FormData): Promise<{ ok: boolea
 }
 
 // ---------------------------------------------------------------- producer delete
+// Archive a single wine_vintage. Soft-delete only — row stays, deleted_at
+// gets a timestamp so queries exclude it. Editor allowed; admins can unarchive.
+export async function archiveWineVintage(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Invalid id." };
+  const row = await one<{ id: string; wine_id: string; vintage_text: string | null }>(
+    "SELECT id, wine_id, vintage_text FROM wine_vintages WHERE id = $1 AND deleted_at IS NULL",
+    [id],
+  );
+  if (!row) return { ok: false, message: "Vintage not found or already archived." };
+  await query("UPDATE wine_vintages SET deleted_at = now(), updated_at = now() WHERE id = $1", [id]);
+  await audit(user.id, "wine_vintage.archive", { type: "wine_vintage", id },
+    { old: { wine_id: row.wine_id, vintage_text: row.vintage_text } });
+  revalidatePath("/wines");
+  revalidatePath(`/wines/${id}`);
+  return { ok: true };
+}
+
+export async function unarchiveWineVintage(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Invalid id." };
+  const row = await one<{ id: string; wine_id: string }>(
+    "SELECT id, wine_id FROM wine_vintages WHERE id = $1 AND deleted_at IS NOT NULL",
+    [id],
+  );
+  if (!row) return { ok: false, message: "Vintage not found or not archived." };
+  // Also need the parent wine + producer to be alive — restore them if they were cascaded.
+  await query("UPDATE wines SET deleted_at = NULL, updated_at = now() WHERE id = (SELECT wine_id FROM wine_vintages WHERE id = $1) AND deleted_at IS NOT NULL", [id]);
+  await query("UPDATE producers SET deleted_at = NULL, updated_at = now() WHERE id = (SELECT producer_id FROM wines WHERE id = (SELECT wine_id FROM wine_vintages WHERE id = $1)) AND deleted_at IS NOT NULL", [id]);
+  await query("UPDATE wine_vintages SET deleted_at = NULL, updated_at = now() WHERE id = $1", [id]);
+  await audit(user.id, "wine_vintage.unarchive", { type: "wine_vintage", id });
+  revalidatePath("/wines");
+  revalidatePath(`/wines/${id}`);
+  return { ok: true };
+}
+
+// Archive an entire wine (soft-delete the wine + all its vintages). Editor.
+export async function archiveWine(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Invalid id." };
+  const row = await one<{ display_name: string; vintage_count: number }>(
+    `SELECT w.display_name,
+       (SELECT count(*)::int FROM wine_vintages v WHERE v.wine_id = w.id AND v.deleted_at IS NULL) AS vintage_count
+     FROM wines w WHERE w.id = $1 AND w.deleted_at IS NULL`,
+    [id],
+  );
+  if (!row) return { ok: false, message: "Wine not found or already archived." };
+  await query("UPDATE wine_vintages SET deleted_at = now(), updated_at = now() WHERE wine_id = $1 AND deleted_at IS NULL", [id]);
+  await query("UPDATE wines SET deleted_at = now(), updated_at = now() WHERE id = $1", [id]);
+  await audit(user.id, "wine.archive", { type: "wine", id },
+    { old: { display_name: row.display_name, vintage_count: row.vintage_count } });
+  revalidatePath("/wines");
+  revalidatePath(`/wines/${id}`);
+  return { ok: true };
+}
+
+export async function unarchiveWine(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Invalid id." };
+  await query("UPDATE producers SET deleted_at = NULL, updated_at = now() WHERE id = (SELECT producer_id FROM wines WHERE id = $1) AND deleted_at IS NOT NULL", [id]);
+  await query("UPDATE wines SET deleted_at = NULL, updated_at = now() WHERE id = $1", [id]);
+  await query("UPDATE wine_vintages SET deleted_at = NULL, updated_at = now() WHERE wine_id = $1 AND deleted_at IS NOT NULL", [id]);
+  await audit(user.id, "wine.unarchive", { type: "wine", id });
+  revalidatePath("/wines");
+  return { ok: true };
+}
+
+export async function unarchiveProducer(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Invalid id." };
+  await query("UPDATE producers SET deleted_at = NULL, updated_at = now() WHERE id = $1", [id]);
+  await query("UPDATE wines SET deleted_at = NULL, updated_at = now() WHERE producer_id = $1 AND deleted_at IS NOT NULL", [id]);
+  await query("UPDATE wine_vintages SET deleted_at = NULL, updated_at = now() WHERE wine_id IN (SELECT id FROM wines WHERE producer_id = $1) AND deleted_at IS NOT NULL", [id]);
+  await audit(user.id, "producer.unarchive", { type: "producer", id });
+  revalidatePath("/producers");
+  revalidatePath("/wines");
+  return { ok: true };
+}
+
 export async function deleteProducer(formData: FormData): Promise<{ ok: boolean; message?: string }> {
   const user = await requireAdmin();   // destructive — admin only
   const id = String(formData.get("id") ?? "");
@@ -2247,6 +2331,123 @@ function splitNameAndVintage(name: string): { display: string; vintage: string |
   return { display: name.trim(), vintage: null };
 }
 
+// Phase 17 — longest-prefix producer match. Walks the list of alive producers
+// and returns the one whose name is a prefix of `itemName` (case-insensitive).
+// If multiple match, the longest wins — "Chateau Teyssier Prestige" beats
+// "Chateau Teyssier". A null return means caller should treat the first few
+// words of the item name as a new producer.
+async function matchProducerPrefix(itemName: string): Promise<{ id: string; name: string } | null> {
+  const lower = itemName.toLowerCase().trim();
+  const prods = await query<{ id: string; name: string }>(
+    "SELECT id, name FROM producers WHERE deleted_at IS NULL ORDER BY length(name) DESC",
+  );
+  for (const p of prods) {
+    const n = p.name.toLowerCase();
+    if (lower === n || lower.startsWith(n + " ") || lower.startsWith(n + ",")) return p;
+  }
+  return null;
+}
+
+// Create a producer / wine / vintage from one inventory row when the match
+// failed. Called only when the importer runs with create_missing=1.
+async function createVintageFromInventoryRow(opts: {
+  sku: string | null;
+  name: string;
+  vintage: string | null;
+  packSize: number | null;
+  userId: string;
+}): Promise<{ id: string; wine_id: string; producer_id: string }> {
+  const matched = await matchProducerPrefix(opts.name);
+  let producerId: string;
+  let producerName: string;
+  let remainder: string;
+
+  if (matched) {
+    producerId = matched.id;
+    producerName = matched.name;
+    remainder = opts.name.slice(matched.name.length).replace(/^[\s,:-]+/, "").trim();
+  } else {
+    // No existing producer prefix — guess from the first 1–3 words.
+    const parts = opts.name.split(/\s+/);
+    const take = Math.min(3, parts.length);
+    producerName = parts.slice(0, take).join(" ").replace(/,$/, "").trim();
+    remainder = parts.slice(take).join(" ").replace(/^[\s,:-]+/, "").trim();
+    // The producers_name_idx is partial (WHERE deleted_at IS NULL), so
+    // ON CONFLICT would need the partial-index predicate repeated — safer to
+    // SELECT first and INSERT only if no row exists.
+    const existingProd = await one<{ id: string }>(
+      "SELECT id FROM producers WHERE lower(name) = lower($1) AND deleted_at IS NULL",
+      [producerName],
+    );
+    if (existingProd) {
+      producerId = existingProd.id;
+    } else {
+      const slug = producerName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      const prodRow = await one<{ id: string }>(
+        `INSERT INTO producers (name, slug) VALUES ($1, $2) RETURNING id`,
+        [producerName, slug || "producer-" + Math.random().toString(36).slice(2, 8)],
+      );
+      producerId = prodRow!.id;
+    }
+  }
+
+  // Wine display_name: whatever's left of the Item string after the producer,
+  // with any trailing vintage year stripped. If nothing's left, fall back to
+  // the producer name itself.
+  const wineBase = remainder || producerName;
+  const { display: wineDisplay } = splitNameAndVintage(wineBase);
+  const wineSlug = (wineDisplay || "wine").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  // Find existing wine under this producer, create otherwise.
+  const existingWine = await one<{ id: string }>(
+    "SELECT id FROM wines WHERE producer_id = $1 AND lower(display_name) = lower($2) AND deleted_at IS NULL",
+    [producerId, wineDisplay],
+  );
+  let wineId: string;
+  if (existingWine) {
+    wineId = existingWine.id;
+  } else {
+    // wines.slug is UNIQUE NOT NULL — try the natural slug first, suffix on collision.
+    const baseSlug = `${producerName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${wineSlug}`.slice(0, 170);
+    let slugTry = baseSlug || "wine";
+    let attempt = 0;
+    // Guard against a bizarre loop.
+    while (attempt < 20) {
+      const taken = await one<{ id: string }>("SELECT id FROM wines WHERE slug = $1", [slugTry]);
+      if (!taken) break;
+      attempt++;
+      slugTry = `${baseSlug}-${attempt}`;
+    }
+    const w = await one<{ id: string }>(
+      `INSERT INTO wines (producer_id, display_name, canonical_name, slug)
+       VALUES ($1, $2, $2, $3) RETURNING id`,
+      [producerId, wineDisplay, slugTry],
+    );
+    wineId = w!.id;
+  }
+
+  // Vintage: if the row carries one, use it; otherwise null (NV).
+  const existingVin = await one<{ id: string }>(
+    "SELECT id FROM wine_vintages WHERE wine_id = $1 AND coalesce(vintage_text, '') = coalesce($2, '') AND deleted_at IS NULL",
+    [wineId, opts.vintage],
+  );
+  let vintageId: string;
+  if (existingVin) {
+    vintageId = existingVin.id;
+  } else {
+    const v = await one<{ id: string }>(
+      `INSERT INTO wine_vintages (wine_id, vintage_text, status, sku, pack_size)
+       VALUES ($1, $2, 'draft', $3, $4) RETURNING id`,
+      [wineId, opts.vintage, opts.sku, opts.packSize],
+    );
+    vintageId = v!.id;
+    await audit(opts.userId, "wine_vintage.create_from_inventory",
+      { type: "wine_vintage", id: vintageId },
+      { new: { producer: producerName, wine: wineDisplay, vintage: opts.vintage, sku: opts.sku } });
+  }
+  return { id: vintageId, wine_id: wineId, producer_id: producerId };
+}
+
 async function findVintageBySkuOrName(
   sku: string | null,
   displayName: string | null,
@@ -2288,6 +2489,9 @@ export async function importInventoryXlsx(formData: FormData): Promise<{ ok: boo
   const user = await requireEditor();
   const file = formData.get("file");
   const dryRun = formData.get("dry_run") === "1";
+  // Phase 17 opt-in: when true, rows that didn't match an existing vintage
+  // get a producer / wine / vintage auto-created from the row's "Item" column.
+  const createMissing = formData.get("create_missing") === "1";
   if (!(file instanceof File)) return { ok: false, message: "No file uploaded." };
   const bytes = await file.arrayBuffer();
 
@@ -2321,18 +2525,41 @@ export async function importInventoryXlsx(formData: FormData): Promise<{ ok: boo
     // Guess the vintage by splitting off the trailing year on the name.
     const { display, vintage } = name ? splitNameAndVintage(name) : { display: "", vintage: null };
     try {
-      const found = await findVintageBySkuOrName(sku, display || null, vintage);
+      let found = await findVintageBySkuOrName(sku, display || null, vintage);
+      let didCreate = false;
+
       if (!found) {
-        summary.skipped++;
-        summary.outcomes.push({
-          line, sku, name, vintage,
-          status: "skipped",
-          reason: `No matching wine (try adjusting producer/wine name on the record)`,
+        if (!createMissing || !name) {
+          summary.skipped++;
+          summary.outcomes.push({
+            line, sku, name, vintage,
+            status: "skipped",
+            reason: createMissing
+              ? "No item name to create from"
+              : `No matching wine — tick "Create missing" to auto-create a draft`,
+          });
+          continue;
+        }
+        if (dryRun) {
+          // Preview: don't touch the DB, just report what would happen.
+          summary.created++;
+          summary.outcomes.push({
+            line, sku, name, vintage,
+            status: "created",
+            reason: "would create new producer/wine/vintage",
+          });
+          continue;
+        }
+        const created = await createVintageFromInventoryRow({
+          sku, name: display || name, vintage, packSize, userId: user.id,
         });
-        continue;
+        found = { id: created.id, wine_id: created.wine_id };
+        didCreate = true;
+        summary.created++;
+      } else {
+        if (sku) summary.matched_by_sku++;
+        else summary.matched_by_name++;
       }
-      if (sku) summary.matched_by_sku++;
-      else summary.matched_by_name++;
 
       if (dryRun) {
         summary.outcomes.push({ line, sku, name, vintage, status: "matched" });
@@ -2351,8 +2578,8 @@ export async function importInventoryXlsx(formData: FormData): Promise<{ ok: boo
          WHERE id = $1`,
         [found.id, sku, packSize, available ?? onHand ?? null, allocated, inbound],
       );
-      summary.updated++;
-      summary.outcomes.push({ line, sku, name, vintage, status: "updated" });
+      if (!didCreate) summary.updated++;
+      summary.outcomes.push({ line, sku, name, vintage, status: didCreate ? "created" : "updated" });
     } catch (err) {
       summary.failed++;
       summary.outcomes.push({ line, sku, name, vintage, status: "failed", reason: err instanceof Error ? err.message : String(err) });
@@ -2363,7 +2590,15 @@ export async function importInventoryXlsx(formData: FormData): Promise<{ ok: boo
     revalidatePath("/wines");
     await audit(user.id, "inventory.import",
       { type: "system", id: "inventory_import" },
-      { new: { matched_by_sku: summary.matched_by_sku, matched_by_name: summary.matched_by_name, updated: summary.updated, skipped: summary.skipped, failed: summary.failed } });
+      { new: {
+          matched_by_sku: summary.matched_by_sku,
+          matched_by_name: summary.matched_by_name,
+          updated: summary.updated,
+          created: summary.created,
+          skipped: summary.skipped,
+          failed: summary.failed,
+          create_missing_enabled: createMissing,
+      } });
   }
   return { ok: true, summary };
 }

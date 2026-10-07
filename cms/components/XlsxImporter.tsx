@@ -35,6 +35,9 @@ export default function XlsxImporter({
   const [preview, setPreview] = useState<Summary | null>(null);
   const [result, setResult] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Phase 17: for the inventory importer, let the editor opt in to
+  // auto-creating any wine_vintage whose SKU / name doesn't match a current row.
+  const [createMissing, setCreateMissing] = useState(false);
   const [pending, start] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -53,6 +56,7 @@ export default function XlsxImporter({
     const fd = new FormData();
     fd.set("file", file);
     fd.set("dry_run", "1");
+    if (kind === "inventory" && createMissing) fd.set("create_missing", "1");
     start(async () => {
       const r = await action(fd);
       if (!r.ok) { setError(r.message ?? "Preview failed"); return; }
@@ -65,6 +69,7 @@ export default function XlsxImporter({
     setError(null); setResult(null);
     const fd = new FormData();
     fd.set("file", file);
+    if (kind === "inventory" && createMissing) fd.set("create_missing", "1");
     start(async () => {
       const r = await action(fd);
       if (!r.ok) { setError(r.message ?? "Import failed"); return; }
@@ -79,9 +84,10 @@ export default function XlsxImporter({
   }
 
   const summary = result ?? preview;
-  const bySection: Record<string, Outcome[]> = { failed: [], updated: [], matched: [], skipped: [] };
+  const bySection: Record<string, Outcome[]> = { failed: [], created: [], skipped: [], updated: [], matched: [] };
   for (const o of summary?.outcomes ?? []) {
     const bucket = o.status === "failed" ? "failed"
+                : o.status === "created" ? "created"
                 : o.status === "skipped" ? "skipped"
                 : o.status === "matched" ? "matched"
                 : "updated";
@@ -120,13 +126,30 @@ export default function XlsxImporter({
             </div>
           </div>
           <p className="small muted">{Math.round(file.size / 1024)} KB</p>
+          {kind === "inventory" && (
+            <label className="form-checkbox" style={{ marginTop: 10 }}>
+              <input
+                type="checkbox"
+                checked={createMissing}
+                onChange={(e) => { setCreateMissing(e.target.checked); setPreview(null); setResult(null); }}
+                disabled={pending}
+              />
+              Create missing wines
+              <span className="small muted" style={{ marginLeft: 6 }}>
+                Rows with no matching SKU or name get a new draft producer / wine / vintage added, filled in from the Item column.
+              </span>
+            </label>
+          )}
           <div className="form-actions">
             <button type="button" className="btn" onClick={runPreview} disabled={pending}>
               {pending && !result ? "Previewing…" : "Preview"}
             </button>
             {preview && (
               <button type="button" className="btn primary" onClick={runImport} disabled={pending}>
-                {pending ? "Importing…" : `Import ${preview.updated + preview.created} rows`}
+                {pending
+                  ? "Importing…"
+                  : `Import ${preview.updated} update${preview.updated === 1 ? "" : "s"}` +
+                    (preview.created > 0 ? ` + ${preview.created} new` : "")}
               </button>
             )}
           </div>
@@ -142,12 +165,15 @@ export default function XlsxImporter({
             {" "}{summary.matched_by_sku} matched by SKU ·
             {" "}{summary.matched_by_name} matched by name ·
             {" "}<strong>{summary.updated}</strong> {result ? "written" : "will write"} ·
+            {summary.created > 0 && (
+              <> <strong className="ok-text">{summary.created}</strong> {result ? "created" : "will create"} ·</>
+            )}
             {" "}{summary.skipped} skipped ·
             {" "}{summary.failed > 0
                 ? <span className="warn-text">{summary.failed} failed</span>
                 : <>{summary.failed} failed</>}
           </p>
-          {(["failed", "skipped", "updated", "matched"] as const).map((bucket) => {
+          {(["failed", "created", "skipped", "updated", "matched"] as const).map((bucket) => {
             const list = bySection[bucket];
             if (list.length === 0) return null;
             return (

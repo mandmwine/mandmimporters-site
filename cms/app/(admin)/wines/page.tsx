@@ -151,6 +151,9 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
           <Link href="/wines/import" className="btn small" title="Bulk-edit wines from a spreadsheet">
             Import CSV
           </Link>
+          <Link href="/wines/archived" className="link small" title="Restore archived wines">
+            Archived
+          </Link>
           <PerPageChooser current={per} />
         </div>
       </header>
