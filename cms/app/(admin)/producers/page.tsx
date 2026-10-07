@@ -18,19 +18,28 @@ export default async function ProducersPage() {
     <>
       <header className="page-head">
         <h1>Producers</h1>
-        <p className="muted">{rows.length} producers. Producer stories and logos are added in a later phase.</p>
+        <p className="muted">{rows.length} producers. Click a name to edit the winery story, website, supervision and sources.</p>
       </header>
       <table className="table">
         <thead>
-          <tr><th>Producer</th><th>Region</th><th className="right">Wines</th><th className="right">Open flags</th></tr>
+          <tr>
+            <th>Producer</th>
+            <th>Region</th>
+            <th className="right">Wines</th>
+            <th className="right">Open flags</th>
+            <th />
+          </tr>
         </thead>
         <tbody>
           {rows.map((p) => (
             <tr key={p.id}>
-              <td><Link href={`/wines?q=${encodeURIComponent(p.name)}`} className="strong">{p.name}</Link></td>
+              <td><Link href={`/producers/${p.id}`} className="strong">{p.name}</Link></td>
               <td>{p.place && p.place !== p.country ? `${p.place}, ` : ""}{p.country}</td>
               <td className="right">{p.wines}</td>
               <td className="right">{p.open_flags || "—"}</td>
+              <td className="right small">
+                <Link href={`/wines?q=${encodeURIComponent(p.name)}`} className="link">Wines →</Link>
+              </td>
             </tr>
           ))}
         </tbody>

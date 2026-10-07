@@ -1016,3 +1016,256 @@ export async function deleteMapVersion(formData: FormData) {
   revalidatePath(`/maps/${row.location_id}`);
 }
 
+// ---------------------------------------------------------------- producers
+type ProducerRow = {
+  id: string;
+  name: string;
+  short_name: string | null;
+  slug: string;
+  website: string | null;
+  winery_summary_short: string | null;
+  winery_story_long: string | null;
+  default_supervision_display: string | null;
+  country_location_id: string | null;
+  primary_location_id: string | null;
+  active: boolean;
+};
+
+export async function updateProducer(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const before = await one<ProducerRow>(
+    `SELECT id, name, short_name, slug, website, winery_summary_short, winery_story_long,
+            default_supervision_display, country_location_id, primary_location_id, active
+       FROM producers WHERE id = $1`,
+    [id],
+  );
+  if (!before) return;
+
+  const name = (s(formData, "name") ?? before.name).slice(0, 240);
+  const next = {
+    name,
+    short_name: s(formData, "short_name"),
+    website: s(formData, "website"),
+    winery_summary_short: s(formData, "winery_summary_short"),
+    winery_story_long: s(formData, "winery_story_long"),
+    default_supervision_display: s(formData, "default_supervision_display"),
+    country_location_id: /^[0-9a-f-]{36}$/i.test(String(formData.get("country_location_id") ?? ""))
+      ? String(formData.get("country_location_id"))
+      : null,
+    primary_location_id: /^[0-9a-f-]{36}$/i.test(String(formData.get("primary_location_id") ?? ""))
+      ? String(formData.get("primary_location_id"))
+      : null,
+    active: formData.get("active") !== "false",
+  };
+
+  await query(
+    `UPDATE producers SET
+       name = $2, short_name = $3, website = $4,
+       winery_summary_short = $5, winery_story_long = $6,
+       default_supervision_display = $7,
+       country_location_id = $8, primary_location_id = $9,
+       active = $10, updated_at = now()
+     WHERE id = $1`,
+    [id, next.name, next.short_name, next.website,
+     next.winery_summary_short, next.winery_story_long,
+     next.default_supervision_display,
+     next.country_location_id, next.primary_location_id, next.active],
+  );
+  await audit(user.id, "producer.update", { type: "producer", id }, {
+    old: {
+      name: before.name, short_name: before.short_name, website: before.website,
+      winery_summary_short: before.winery_summary_short, winery_story_long: before.winery_story_long,
+      default_supervision_display: before.default_supervision_display,
+      country_location_id: before.country_location_id, primary_location_id: before.primary_location_id,
+      active: before.active,
+    },
+    new: next,
+  });
+  revalidatePath(`/producers/${id}`);
+  revalidatePath("/producers");
+}
+
+// ---------------------------------------------------------------- provenance
+// Verify / reject / mark-current actions for field_provenance rows.
+// Verify: the editor has checked the raw value against the cited source.
+// Reject: the raw value is wrong (does not match the source or the field).
+// Resolve conflict: pick the authoritative row for a (entity, field) pair —
+//   the chosen row becomes is_current=true and verified; the others go to
+//   is_current=false. The entity table's own value is NOT changed from here;
+//   use the Replace button to also push the raw value into the field.
+export async function verifyProvenance(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ entity_type: string; entity_id: string; field_name: string }>(
+    "SELECT entity_type, entity_id, field_name FROM field_provenance WHERE id = $1",
+    [id],
+  );
+  if (!row) return;
+  await query(
+    `UPDATE field_provenance SET verification_status = 'verified', verified_at = now(), verified_by = $2
+       WHERE id = $1`,
+    [id, user.id],
+  );
+  await audit(user.id, "provenance.verify", { type: "field_provenance", id, field: row.field_name });
+  revalidatePath(`/wines/${row.entity_id}`);
+  revalidatePath(`/producers/${row.entity_id}`);
+}
+
+export async function rejectProvenance(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ entity_type: string; entity_id: string; field_name: string }>(
+    "SELECT entity_type, entity_id, field_name FROM field_provenance WHERE id = $1",
+    [id],
+  );
+  if (!row) return;
+  await query(
+    `UPDATE field_provenance SET verification_status = 'rejected', is_current = false,
+         verified_at = now(), verified_by = $2
+       WHERE id = $1`,
+    [id, user.id],
+  );
+  await audit(user.id, "provenance.reject", { type: "field_provenance", id, field: row.field_name });
+  revalidatePath(`/wines/${row.entity_id}`);
+  revalidatePath(`/producers/${row.entity_id}`);
+}
+
+export async function resolveProvenanceConflict(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ entity_type: string; entity_id: string; field_name: string }>(
+    "SELECT entity_type, entity_id, field_name FROM field_provenance WHERE id = $1",
+    [id],
+  );
+  if (!row) return;
+  // Mark every other provenance row for the same (entity, field) non-current.
+  await query(
+    `UPDATE field_provenance SET is_current = false
+       WHERE entity_type = $1 AND entity_id = $2 AND field_name = $3 AND id <> $4`,
+    [row.entity_type, row.entity_id, row.field_name, id],
+  );
+  // The chosen row becomes current + verified.
+  await query(
+    `UPDATE field_provenance SET is_current = true, verification_status = 'verified',
+         verified_at = now(), verified_by = $2
+       WHERE id = $1`,
+    [id, user.id],
+  );
+  // Any open 'conflict' review flag for this entity+field gets resolved too.
+  await query(
+    `UPDATE review_flags SET status = 'resolved', resolved_by = $1, resolved_at = now()
+       WHERE entity_type = $2 AND entity_id = $3 AND field_name = $4
+         AND flag_type = 'conflict' AND status = 'open'`,
+    [user.id, row.entity_type, row.entity_id, row.field_name],
+  );
+  await audit(user.id, "provenance.resolve_conflict",
+    { type: "field_provenance", id, field: row.field_name });
+  revalidatePath(`/wines/${row.entity_id}`);
+  revalidatePath(`/producers/${row.entity_id}`);
+}
+
+// Push a provenance row's raw_value into the entity's own column.  Only a
+// small, hand-curated allow-list of fields is wired up — pushing a value into
+// a numeric or JSON column would corrupt it.
+const PUSHABLE_WINE_VINTAGE_FIELDS = new Set([
+  "tasting_note", "food_pairing", "aging_display", "supervision_display",
+  "special_designation", "short_description", "wine_story", "vintage_text",
+]);
+const PUSHABLE_PRODUCER_FIELDS = new Set([
+  "name", "short_name", "website", "winery_summary_short", "winery_story_long",
+  "default_supervision_display",
+]);
+
+export async function pushProvenanceValue(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Bad id." };
+  const row = await one<{ entity_type: string; entity_id: string; field_name: string; raw_value: string | null }>(
+    "SELECT entity_type, entity_id, field_name, raw_value FROM field_provenance WHERE id = $1",
+    [id],
+  );
+  if (!row) return { ok: false, message: "Provenance row not found." };
+  const value = row.raw_value;
+  if (value === null) return { ok: false, message: "This source row has no raw value to push." };
+
+  if (row.entity_type === "wine_vintage" && PUSHABLE_WINE_VINTAGE_FIELDS.has(row.field_name)) {
+    await query(
+      `UPDATE wine_vintages SET ${row.field_name} = $2, updated_at = now() WHERE id = $1`,
+      [row.entity_id, value],
+    );
+  } else if (row.entity_type === "producer" && PUSHABLE_PRODUCER_FIELDS.has(row.field_name)) {
+    await query(
+      `UPDATE producers SET ${row.field_name} = $2, updated_at = now() WHERE id = $1`,
+      [row.entity_id, value],
+    );
+  } else {
+    return { ok: false, message: `Field "${row.field_name}" cannot be auto-replaced from here. Edit it manually.` };
+  }
+  // Mark the source row verified + current.
+  await query(
+    `UPDATE field_provenance SET is_current = true, verification_status = 'verified',
+         verified_at = now(), verified_by = $2
+       WHERE id = $1`,
+    [id, user.id],
+  );
+  await audit(user.id, "provenance.push",
+    { type: row.entity_type, id: row.entity_id, field: row.field_name },
+    { new: value });
+  revalidatePath(`/wines/${row.entity_id}`);
+  revalidatePath(`/producers/${row.entity_id}`);
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------- sources
+const SOURCE_TYPES = [
+  "mm_catalog", "mm_website", "tech_sheet", "producer_website",
+  "appellation_authority", "critic_review", "import_document",
+  "winery_correspondence", "other",
+] as const;
+
+export async function attachSource(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const entityType = String(formData.get("entity_type") ?? "");
+  const entityId = String(formData.get("entity_id") ?? "");
+  const fieldName = s(formData, "field_name");
+  const sourceType = String(formData.get("source_type") ?? "");
+  const title = s(formData, "title");
+  const url = s(formData, "url");
+  const rawValue = s(formData, "raw_value");
+  const notes = s(formData, "notes");
+
+  if (!["wine_vintage", "producer"].includes(entityType)) {
+    return { ok: false, message: "Unknown entity type." };
+  }
+  if (!/^[0-9a-f-]{36}$/i.test(entityId)) return { ok: false, message: "Bad id." };
+  if (!(SOURCE_TYPES as readonly string[]).includes(sourceType)) {
+    return { ok: false, message: "Choose a source type." };
+  }
+  if (!title) return { ok: false, message: "Give the source a title." };
+  if (!fieldName) return { ok: false, message: "Specify which field this source backs." };
+
+  const srcRow = await one<{ id: string }>(
+    `INSERT INTO sources (source_type, title, url, added_by)
+       VALUES ($1, $2, $3, $4) RETURNING id`,
+    [sourceType, title, url, user.id],
+  );
+  await one<{ id: string }>(
+    `INSERT INTO field_provenance
+       (entity_type, entity_id, field_name, raw_value, source_id, verification_status, is_current, notes)
+     VALUES ($1, $2, $3, $4, $5, 'unverified', true, $6) RETURNING id`,
+    [entityType, entityId, fieldName, rawValue, srcRow!.id, notes],
+  );
+  await audit(user.id, "source.attach",
+    { type: entityType, id: entityId, field: fieldName },
+    { new: { source_type: sourceType, title, url } });
+  revalidatePath(`/wines/${entityId}`);
+  revalidatePath(`/producers/${entityId}`);
+  return { ok: true };
+}
+
+

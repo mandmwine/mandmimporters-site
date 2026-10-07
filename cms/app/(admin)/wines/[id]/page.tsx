@@ -10,6 +10,7 @@ import { EditableCopy, EditableGrapes, EditableTechnical } from "@/components/Wi
 import BottleImagePanel from "@/components/BottleImagePanel";
 import AIFieldButton from "@/components/AIFieldButton";
 import WineWorkspace, { type WorkspaceSection } from "@/components/WineWorkspace";
+import SourcesPanel from "@/components/SourcesPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -85,10 +86,25 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
        ORDER BY status = 'open' DESC, CASE severity WHEN 'error' THEN 0 WHEN 'warning' THEN 1 ELSE 2 END, created_at`,
       [id],
     ),
-    query<{ field_name: string; raw_value: string | null; verification_status: string; verified_at: Date | null; title: string | null; source_locator: string | null }>(
-      `SELECT fp.field_name, fp.raw_value, fp.verification_status, fp.verified_at, s.title, fp.source_locator
-       FROM field_provenance fp LEFT JOIN sources s ON s.id = fp.source_id
-       WHERE fp.entity_type = 'wine_vintage' AND fp.entity_id = $1 AND fp.is_current ORDER BY fp.field_name`,
+    query<{
+      id: string; field_name: string; raw_value: string | null;
+      verification_status: "unverified" | "verified" | "conflict" | "rejected";
+      verified_at: Date | null; verified_by_email: string | null; is_current: boolean;
+      source_title: string | null; source_url: string | null; source_type: string | null;
+      source_locator: string | null; conflict_count: number;
+    }>(
+      `SELECT fp.id, fp.field_name, fp.raw_value, fp.verification_status, fp.verified_at,
+              fp.is_current, fp.source_locator,
+              u.email AS verified_by_email,
+              s.title AS source_title, s.url AS source_url, s.source_type AS source_type,
+              (SELECT count(*)::int FROM field_provenance x
+                 WHERE x.entity_type = fp.entity_type AND x.entity_id = fp.entity_id
+                   AND x.field_name = fp.field_name AND x.id <> fp.id AND x.is_current) AS conflict_count
+       FROM field_provenance fp
+       LEFT JOIN sources s ON s.id = fp.source_id
+       LEFT JOIN users u ON u.id = fp.verified_by
+       WHERE fp.entity_type = 'wine_vintage' AND fp.entity_id = $1
+       ORDER BY fp.field_name, fp.is_current DESC, fp.verification_status, fp.created_at DESC`,
       [id],
     ),
     query<{ canonical_name: string }>("SELECT canonical_name FROM critics ORDER BY canonical_name"),
@@ -389,31 +405,19 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
         </section>
 
         <section id="sec-sources">
-          <div className="panel">
-            <h2>Sources</h2>
-            {provenance.length === 0 ? (
-              <p className="muted">No source recorded.</p>
-            ) : (
-              <table className="table compact">
-                <tbody>
-                  {provenance.map((p, i) => (
-                    <tr key={i}>
-                      <td>{p.field_name.replace(/_/g, " ")}</td>
-                      <td className="small">
-                        {p.raw_value ?? "—"}
-                        <div className="muted">{p.title}</div>
-                      </td>
-                      <td className="small">
-                        {p.verification_status === "verified" && p.verified_at
-                          ? `Verified ${new Date(p.verified_at).toLocaleDateString("en-US")}`
-                          : <span className="missing">{p.verification_status}</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          <SourcesPanel
+            entityType="wine_vintage"
+            entityId={id}
+            rows={provenance}
+            canEdit={canEdit}
+            fieldSuggestions={[
+              "vintage_text", "mevushal", "supervision_display",
+              "aging_display", "special_designation", "tasting_note",
+              "food_pairing", "short_description", "wine_story",
+              "grapes", "scores", "bottle_sizes",
+              "first_kosher_vintage", "organic", "biodynamic",
+            ]}
+          />
 
           {Object.keys(legacy).length > 0 && (
             <details className="panel">

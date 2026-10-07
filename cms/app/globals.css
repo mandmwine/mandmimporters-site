@@ -712,3 +712,79 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   stroke-width: 0.8;
 }
 
+/* Phase 8 — Source verification panel */
+.prov-list { display: flex; flex-direction: column; gap: 14px; }
+.prov-field {
+  padding: 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.prov-field--conflict {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+}
+.prov-field__label {
+  text-transform: capitalize;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.prov-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.prov-row {
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.prov-row--verified { border-left: 3px solid var(--ok); }
+.prov-row--conflict { border-left: 3px solid var(--warn); }
+.prov-row--rejected { border-left: 3px solid var(--err); opacity: 0.65; }
+.prov-row--unverified { border-left: 3px solid var(--muted); }
+.prov-row--stale { opacity: 0.55; }
+
+.prov-row__value { }
+.prov-row__text { white-space: pre-wrap; word-break: break-word; }
+.prov-row__meta { display: flex; flex-wrap: wrap; gap: 2px 6px; align-items: center; }
+.prov-row__actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
+
+.prov-chip {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.prov-chip--verified { background: var(--ok-soft); color: var(--ok); }
+.prov-chip--conflict { background: var(--warn-soft); color: var(--warn); }
+.prov-chip--rejected { background: var(--err-soft); color: var(--err); }
+.prov-chip--unverified { background: var(--panel); color: var(--muted); border: 1px solid var(--rule); }
+
+.badge--warn-badge { background: var(--warn-soft); color: var(--warn); }
+
+.attach-source {
+  background: var(--accent-soft);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 14px;
+}
+.attach-source input, .attach-source select, .attach-source textarea {
+  background: #fff;
+  padding: 7px 9px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font: inherit;
+}
+
