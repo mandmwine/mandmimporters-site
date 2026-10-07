@@ -2130,7 +2130,8 @@ export async function runWineCsvImport(formData: FormData): Promise<{ ok: boolea
         );
         await audit(user.id, "wine_vintage.csv_update",
           { type: "wine_vintage", id: existingVintage.id },
-          { new: patch, changed });
+          { new: patch },
+          { changed });
         outcomes.push({ line, status: "updated", wine_id: wineId, vintage_id: existingVintage.id, changed });
         summary.updated++;
       } else {
