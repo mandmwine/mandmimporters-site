@@ -1401,6 +1401,64 @@ kbd {
 }
 .saved-views__row:not(:last-child) { border-bottom: 1px dashed var(--rule); }
 
+/* Phase 5 — Dropbox browser */
+.dropbox-browser { display: flex; flex-direction: column; gap: 10px; }
+.dropbox-crumbs {
+  padding: 8px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.dropbox-crumbs button { padding: 0; background: transparent; border: 0; cursor: pointer; color: var(--accent); }
+.dropbox-crumbs button:hover { text-decoration: underline; }
+
+.dropbox-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.dropbox-toolbar .spacer { flex: 1; }
+.dropbox-toolbar label { display: inline-flex; align-items: center; gap: 6px; }
+.dropbox-toolbar select { padding: 4px 8px; border: 1px solid var(--rule); border-radius: 4px; font: inherit; }
+
+.dropbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 6px;
+  max-height: 70vh;
+  overflow: auto;
+}
+.dropbox-row {
+  display: grid;
+  grid-template-columns: 20px 24px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  width: 100%;
+}
+.dropbox-row:hover { background: var(--accent-soft); }
+.dropbox-row--folder { grid-template-columns: 24px 1fr auto; }
+.dropbox-row__icon { font-size: 16px; line-height: 1; }
+.dropbox-row__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dropbox-row input[type="checkbox"] { margin: 0; cursor: pointer; }
+.dropbox-more { display: flex; justify-content: center; padding: 10px 0; }
+
 /* kbd styling for shortcut cheatsheet and tips */
 kbd {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

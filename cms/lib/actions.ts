@@ -1590,3 +1590,89 @@ export async function deleteSavedView(formData: FormData) {
   await audit(user.id, "saved_view.delete", { type: "saved_view", id });
   if (row) revalidatePath(row.path);
 }
+
+// ---------------------------------------------------------------- dropbox import
+// Pull one or more files from Dropbox into the asset library. Each file is
+// downloaded, SHA-256-deduped against existing assets, and either reused or
+// uploaded fresh to Firebase Storage.  Returns per-file outcome so the UI
+// can show "3 imported, 2 already in library, 1 failed".
+const ASSET_KIND_FROM_DROPBOX = new Set(["bottle", "map", "logo", "photo", "document", "pdf", "other"]);
+
+export type DropboxImportResult = {
+  path: string;
+  status: "imported" | "deduped" | "failed";
+  asset_id?: string;
+  message?: string;
+};
+
+export async function importFromDropbox(formData: FormData): Promise<{ ok: boolean; results: DropboxImportResult[]; message?: string }> {
+  const user = await requireEditor();
+  const kindRaw = String(formData.get("kind") ?? "photo");
+  const kind = ASSET_KIND_FROM_DROPBOX.has(kindRaw) ? kindRaw : "photo";
+  const pathsRaw = String(formData.get("paths") ?? "");
+  const paths = pathsRaw.split("\n").map((p) => p.trim()).filter(Boolean);
+  if (paths.length === 0) return { ok: false, results: [], message: "No files selected." };
+
+  const { downloadFile, guessImageContentType } = await import("./dropbox");
+  const { uploadBytes, storageConfigured } = await import("./storage");
+  if (!storageConfigured()) {
+    return { ok: false, results: [], message: "Image storage is not configured." };
+  }
+
+  const results: DropboxImportResult[] = [];
+  for (const path of paths) {
+    try {
+      const { bytes, name, contentType: ct } = await downloadFile(path);
+      const contentType = ct === "application/octet-stream" ? guessImageContentType(name) : ct;
+      const checksum = crypto.createHash("sha256").update(bytes).digest("hex");
+
+      const existing = await one<{ id: string }>(
+        "SELECT id FROM assets WHERE checksum_sha256 = $1 AND deleted_at IS NULL",
+        [checksum],
+      );
+      if (existing) {
+        results.push({ path, status: "deduped", asset_id: existing.id });
+        continue;
+      }
+
+      const id = crypto.randomUUID();
+      const ext = contentType === "image/jpeg" ? "jpg"
+        : contentType === "image/png" ? "png"
+        : contentType === "image/webp" ? "webp"
+        : contentType === "image/avif" ? "avif"
+        : contentType === "application/pdf" ? "pdf"
+        : contentType === "image/svg+xml" ? "svg"
+        : "bin";
+      const storagePath = `assets/originals/${id}.${ext}`;
+      await uploadBytes({
+        storagePath,
+        bytes,
+        contentType,
+        metadata: {
+          uploadedBy: user.id,
+          source: "dropbox",
+          originalPath: path.slice(0, 240),
+        },
+      });
+
+      const row = await one<{ id: string }>(
+        `INSERT INTO assets (
+           id, kind, derivative, storage_path, file_name, mime_type,
+           bytes, checksum_sha256, uploaded_by, metadata)
+         VALUES ($1, $2, 'original', $3, $4, $5, $6, $7, $8,
+                 jsonb_build_object('source', 'dropbox', 'dropbox_path', $9::text))
+         RETURNING id`,
+        [id, kind, storagePath, name.slice(0, 240), contentType, bytes.byteLength, checksum, user.id, path],
+      );
+      await audit(user.id, "asset.dropbox_import",
+        { type: "asset", id: row!.id },
+        { new: { source: "dropbox", path, bytes: bytes.byteLength } });
+      results.push({ path, status: "imported", asset_id: row!.id });
+    } catch (err) {
+      results.push({ path, status: "failed", message: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  revalidatePath("/assets");
+  revalidatePath("/dropbox");
+  return { ok: true, results };
+}
