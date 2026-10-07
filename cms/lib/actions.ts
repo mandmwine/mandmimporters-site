@@ -1900,3 +1900,360 @@ export async function deleteProducer(formData: FormData): Promise<{ ok: boolean;
   revalidatePath("/wines");
   redirect("/producers");
 }
+
+// ---------------------------------------------------------------- xlsx imports (Phase 12)
+import type { Row as XlsxRow } from "./xlsx";
+
+export type XlsxImportSummary = {
+  total: number;
+  matched_by_sku: number;
+  matched_by_name: number;
+  created: number;
+  skipped: number;
+  updated: number;
+  failed: number;
+  outcomes: {
+    line: number;
+    sku: string | null;
+    name: string | null;
+    vintage: string | null;
+    status: "matched" | "created" | "updated" | "skipped" | "failed";
+    reason?: string;
+    changed?: string[];
+  }[];
+};
+
+function toText(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  const s = String(v).trim();
+  return s === "" ? null : s;
+}
+function toInt(v: unknown): number | null {
+  const n = typeof v === "number" ? v : parseInt(String(v ?? ""), 10);
+  return Number.isFinite(n) ? Math.round(n) : null;
+}
+function toNum(v: unknown): number | null {
+  const n = typeof v === "number" ? v : parseFloat(String(v ?? ""));
+  return Number.isFinite(n) ? n : null;
+}
+
+// Pull sku prefix and derive country code (first 2 letters). IT1709011321 → IT
+function skuCountry(sku: string | null): string | null {
+  if (!sku) return null;
+  const m = sku.match(/^([A-Z]{2})/);
+  return m ? m[1] : null;
+}
+
+// Parse the "name" column from the owner's xlsx — strip vintage year off the
+// end when present so we can match against our stored display_name.  Returns
+// {displayName, inferredVintage}.
+function splitNameAndVintage(name: string): { display: string; vintage: string | null } {
+  const m = name.match(/^(.*?)[\s]*((?:19|20)\d{2}|NV)\s*(?:\d*\s*(?:L|ml))?\s*$/i);
+  if (m) {
+    const base = m[1].replace(/\s*[-,]\s*$/, "").trim();
+    return { display: base || name, vintage: m[2].toUpperCase() };
+  }
+  return { display: name.trim(), vintage: null };
+}
+
+async function findVintageBySkuOrName(
+  sku: string | null,
+  displayName: string | null,
+  vintageText: string | null,
+): Promise<{ id: string; wine_id: string } | null> {
+  if (sku) {
+    const bySku = await one<{ id: string; wine_id: string }>(
+      "SELECT id, wine_id FROM wine_vintages WHERE lower(sku) = lower($1) AND deleted_at IS NULL LIMIT 1",
+      [sku],
+    );
+    if (bySku) return bySku;
+  }
+  if (displayName) {
+    const vt = vintageText ?? "";
+    const match = await one<{ id: string; wine_id: string }>(
+      `SELECT v.id, v.wine_id
+         FROM wine_vintages v JOIN wines w ON w.id = v.wine_id
+        WHERE w.deleted_at IS NULL AND v.deleted_at IS NULL
+          AND lower(w.display_name) = lower($1)
+          AND coalesce(v.vintage_text, '') = coalesce($2, '')
+        LIMIT 1`,
+      [displayName, vt || null],
+    );
+    if (match) return match;
+  }
+  return null;
+}
+
+// --------- INVENTORY importer ----------
+// Columns we care about (owner's file uses these headers):
+//   "Item Number"       -> sku
+//   "Item"              -> name
+//   "UoM"               -> "12 Bottle Case" / "6 Bottle Case" / ...
+//   "Inventory UoM Qty On Hand"      -> stock_cases_on_hand
+//   "Inventory UoM Qty Allocated"    -> stock_cases_allocated
+//   "Inventory UoM Qty Available"    -> stock_cases_available
+//   "Inventory UoM Qty Inbound"      -> stock_cases_inbound
+export async function importInventoryXlsx(formData: FormData): Promise<{ ok: boolean; summary?: XlsxImportSummary; message?: string }> {
+  const user = await requireEditor();
+  const file = formData.get("file");
+  const dryRun = formData.get("dry_run") === "1";
+  if (!(file instanceof File)) return { ok: false, message: "No file uploaded." };
+  const bytes = await file.arrayBuffer();
+
+  const { parseWorksheet, pick } = await import("./xlsx");
+  let rows: XlsxRow[];
+  try { rows = await parseWorksheet(bytes); }
+  catch (e) { return { ok: false, message: e instanceof Error ? e.message : String(e) }; }
+
+  const summary: XlsxImportSummary = {
+    total: rows.length, matched_by_sku: 0, matched_by_name: 0,
+    created: 0, skipped: 0, updated: 0, failed: 0, outcomes: [],
+  };
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const line = i + 2; // header is line 1
+    const sku = toText(pick(row, "item number", "item#", "sku"));
+    const name = toText(pick(row, "item", "item name"));
+    const uom = toText(pick(row, "uom"));
+    const onHand = toNum(pick(row, "inventory uom qty on hand", "qty on hand"));
+    const allocated = toNum(pick(row, "inventory uom qty allocated", "qty allocated"));
+    const available = toNum(pick(row, "inventory uom qty available", "qty available"));
+    const inbound = toNum(pick(row, "inventory uom qty inbound", "qty inbound"));
+    const packSize = uom ? (uom.match(/^(\d+)\s*Bottle/i)?.[1] ? parseInt(uom.match(/^(\d+)\s*Bottle/i)![1], 10) : null) : null;
+
+    if (!sku && !name) {
+      summary.skipped++;
+      summary.outcomes.push({ line, sku, name, vintage: null, status: "skipped", reason: "no sku or name" });
+      continue;
+    }
+    // Guess the vintage by splitting off the trailing year on the name.
+    const { display, vintage } = name ? splitNameAndVintage(name) : { display: "", vintage: null };
+    try {
+      const found = await findVintageBySkuOrName(sku, display || null, vintage);
+      if (!found) {
+        summary.skipped++;
+        summary.outcomes.push({
+          line, sku, name, vintage,
+          status: "skipped",
+          reason: `No matching wine (try adjusting producer/wine name on the record)`,
+        });
+        continue;
+      }
+      if (sku) summary.matched_by_sku++;
+      else summary.matched_by_name++;
+
+      if (dryRun) {
+        summary.outcomes.push({ line, sku, name, vintage, status: "matched" });
+        summary.updated++;
+        continue;
+      }
+      await query(
+        `UPDATE wine_vintages SET
+           sku = coalesce($2, sku),
+           pack_size = coalesce($3, pack_size),
+           stock_cases_available = $4,
+           stock_cases_allocated = $5,
+           stock_cases_inbound   = $6,
+           stock_updated_at      = now(),
+           updated_at            = now()
+         WHERE id = $1`,
+        [found.id, sku, packSize, available ?? onHand ?? null, allocated, inbound],
+      );
+      summary.updated++;
+      summary.outcomes.push({ line, sku, name, vintage, status: "updated" });
+    } catch (err) {
+      summary.failed++;
+      summary.outcomes.push({ line, sku, name, vintage, status: "failed", reason: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  if (!dryRun) {
+    revalidatePath("/wines");
+    await audit(user.id, "inventory.import",
+      { type: "system", id: "inventory_import" },
+      { new: { matched_by_sku: summary.matched_by_sku, matched_by_name: summary.matched_by_name, updated: summary.updated, skipped: summary.skipped, failed: summary.failed } });
+  }
+  return { ok: true, summary };
+}
+
+// --------- PRICES importer ----------
+// Columns in the owner's Price_Posting sheet:
+//   "item#"       sku
+//   "Item"        name
+//   "size"        750 / 1500 / 3000 / 375  (ml)
+//   "Vintage"     year
+//   "Color"       TR / TW / RO / ...
+//   "PK#/cs"      bottles per case
+//   "FrontLine"   list case price
+//   "Bottle"      per-bottle price
+//   "2cs"/"3cs"/"4cs"/"5cs"/"10cs"/"25cs" + per-bottle companion columns
+const PRICE_TIERS: { tier: "frontline" | "2cs" | "3cs" | "4cs" | "5cs" | "10cs" | "25cs"; min: number; headers: [string, string] }[] = [
+  { tier: "frontline", min: 1,  headers: ["FrontLine", "Bottle"] },
+  { tier: "2cs",       min: 2,  headers: ["2cs", "Bottle .1"] },
+  { tier: "3cs",       min: 3,  headers: ["3cs", "Bottle .2"] },
+  { tier: "4cs",       min: 4,  headers: ["4 cs", "Bottle .3"] },
+  { tier: "5cs",       min: 5,  headers: ["5cs", "Bottle .4"] },
+  { tier: "10cs",      min: 10, headers: ["10cs", "Bottle .5"] },
+  { tier: "25cs",      min: 25, headers: ["25cs", "Bottle .6"] },
+];
+
+export async function importPricesXlsx(formData: FormData): Promise<{ ok: boolean; summary?: XlsxImportSummary; message?: string }> {
+  const user = await requireEditor();
+  const file = formData.get("file");
+  const dryRun = formData.get("dry_run") === "1";
+  if (!(file instanceof File)) return { ok: false, message: "No file uploaded." };
+  const bytes = await file.arrayBuffer();
+
+  const { parseWorksheet, pick } = await import("./xlsx");
+  let rows: XlsxRow[];
+  try { rows = await parseWorksheet(bytes); }
+  catch (e) { return { ok: false, message: e instanceof Error ? e.message : String(e) }; }
+
+  const summary: XlsxImportSummary = {
+    total: rows.length, matched_by_sku: 0, matched_by_name: 0,
+    created: 0, skipped: 0, updated: 0, failed: 0, outcomes: [],
+  };
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const line = i + 2;
+    const sku = toText(pick(row, "item#", "item number", "sku"));
+    const name = toText(pick(row, "item"));
+    const vintageYear = toInt(pick(row, "vintage"));
+    const vintage = vintageYear ? String(vintageYear) : null;
+
+    if (!sku && !name) { summary.skipped++; summary.outcomes.push({ line, sku, name, vintage, status: "skipped", reason: "no sku or name" }); continue; }
+    try {
+      const { display } = name ? splitNameAndVintage(name) : { display: "" };
+      const found = await findVintageBySkuOrName(sku, display || null, vintage);
+      if (!found) {
+        summary.skipped++;
+        summary.outcomes.push({ line, sku, name, vintage, status: "skipped", reason: "no matching wine/vintage" });
+        continue;
+      }
+      if (sku) summary.matched_by_sku++;
+      else summary.matched_by_name++;
+
+      const packSize = toInt(pick(row, "pk#/cs", "pk/cs", "pack size"));
+      const changed: string[] = [];
+      if (!dryRun) {
+        if (packSize) {
+          await query(
+            "UPDATE wine_vintages SET pack_size = coalesce($2, pack_size), sku = coalesce($3, sku), updated_at = now() WHERE id = $1",
+            [found.id, packSize, sku],
+          );
+        }
+        for (const t of PRICE_TIERS) {
+          const casePrice = toNum(pick(row, t.headers[0]));
+          const bottlePrice = toNum(pick(row, t.headers[1]));
+          if (casePrice === null || casePrice === 0) {
+            // Treat 0 / blank as "no tier" and remove any stale row.
+            await query(
+              "DELETE FROM wine_vintage_prices WHERE vintage_id = $1 AND tier = $2",
+              [found.id, t.tier],
+            );
+            continue;
+          }
+          await query(
+            `INSERT INTO wine_vintage_prices (vintage_id, tier, min_cases, case_price, bottle_price)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (vintage_id, tier)
+             DO UPDATE SET case_price = EXCLUDED.case_price, bottle_price = EXCLUDED.bottle_price,
+                           min_cases = EXCLUDED.min_cases, updated_at = now()`,
+            [found.id, t.tier, t.min, casePrice, bottlePrice],
+          );
+          changed.push(t.tier);
+        }
+      }
+      summary.updated++;
+      summary.outcomes.push({ line, sku, name, vintage, status: dryRun ? "matched" : "updated", changed });
+    } catch (err) {
+      summary.failed++;
+      summary.outcomes.push({ line, sku, name, vintage, status: "failed", reason: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  if (!dryRun) {
+    revalidatePath("/wines");
+    await audit(user.id, "prices.import",
+      { type: "system", id: "prices_import" },
+      { new: { matched: summary.updated, skipped: summary.skipped, failed: summary.failed } });
+  }
+  return { ok: true, summary };
+}
+
+// --------- Legacy asset backfill ----------
+// Downloads every wine_vintages.legacy->>img URL that isn't yet an asset,
+// pushes it into Firebase Storage, SHA-256 dedupes, and sets bottle_asset_id.
+export async function backfillLegacyBottles(): Promise<{ ok: boolean; summary?: { total: number; imported: number; deduped: number; failed: number; outcomes: { vintage_id: string; status: string; message?: string }[] }; message?: string }> {
+  const user = await requireEditor();
+  const { storageConfigured, uploadBytes } = await import("./storage");
+  if (!storageConfigured()) return { ok: false, message: "Firebase Storage is not configured." };
+
+  const vintages = await query<{ id: string; img: string | null }>(
+    `SELECT id, legacy->>'img' AS img FROM wine_vintages
+       WHERE deleted_at IS NULL AND bottle_asset_id IS NULL
+         AND legacy->>'img' IS NOT NULL`,
+  );
+  const summary = { total: vintages.length, imported: 0, deduped: 0, failed: 0,
+    outcomes: [] as { vintage_id: string; status: string; message?: string }[] };
+
+  for (const v of vintages) {
+    if (!v.img) { summary.failed++; continue; }
+    const url = v.img.startsWith("http") ? v.img : `https://www.mandmimporters.com${v.img}`;
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Fetch ${res.status} ${res.statusText}`);
+      const contentType = res.headers.get("content-type") || "image/jpeg";
+      const buf = Buffer.from(await res.arrayBuffer());
+      const checksum = crypto.createHash("sha256").update(buf).digest("hex");
+      const existing = await one<{ id: string }>(
+        "SELECT id FROM assets WHERE checksum_sha256 = $1 AND deleted_at IS NULL",
+        [checksum],
+      );
+      let assetId: string;
+      if (existing) {
+        assetId = existing.id;
+        summary.deduped++;
+      } else {
+        const id = crypto.randomUUID();
+        const ext = contentType.includes("png") ? "png"
+                  : contentType.includes("webp") ? "webp"
+                  : "jpg";
+        const storagePath = `assets/originals/${id}.${ext}`;
+        await uploadBytes({
+          storagePath,
+          bytes: buf,
+          contentType,
+          metadata: { source: "legacy_website", originalUrl: url },
+        });
+        const fileName = url.split("/").pop()?.split("?")[0]?.slice(0, 240) ?? "bottle.jpg";
+        const row = await one<{ id: string }>(
+          `INSERT INTO assets (id, kind, derivative, storage_path, file_name, mime_type, bytes, checksum_sha256, uploaded_by, metadata)
+           VALUES ($1, 'bottle', 'original', $2, $3, $4, $5, $6, $7,
+                   jsonb_build_object('source', 'legacy_website', 'originalUrl', $8::text))
+           RETURNING id`,
+          [id, storagePath, fileName, contentType, buf.byteLength, checksum, user.id, url],
+        );
+        assetId = row!.id;
+        summary.imported++;
+      }
+      await query(
+        "UPDATE wine_vintages SET bottle_asset_id = $2, updated_at = now() WHERE id = $1",
+        [v.id, assetId],
+      );
+      summary.outcomes.push({ vintage_id: v.id, status: existing ? "deduped" : "imported" });
+    } catch (err) {
+      summary.failed++;
+      summary.outcomes.push({ vintage_id: v.id, status: "failed", message: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  revalidatePath("/assets");
+  revalidatePath("/wines");
+  await audit(user.id, "assets.backfill_legacy",
+    { type: "system", id: "backfill_legacy" },
+    { new: { imported: summary.imported, deduped: summary.deduped, failed: summary.failed } });
+  return { ok: true, summary };
+}

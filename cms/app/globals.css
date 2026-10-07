@@ -1516,6 +1516,27 @@ kbd {
   background: var(--accent-soft);
 }
 
+/* Phase 12 — Data hub & xlsx importers */
+.data-link { text-decoration: none; display: block; cursor: pointer; }
+.data-link:hover { border-color: var(--accent); }
+.data-link h2 { color: var(--ink); }
+.xlsx-import__drop {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  padding: 20px;
+}
+.xlsx-import__section { margin-top: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+.stock-price .panel-head { align-items: center; }
+.stock-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 14px 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.stock-row .strong { font-size: 18px; }
+
 /* Phase 5 — Dropbox browser */
 .dropbox-browser { display: flex; flex-direction: column; gap: 10px; }
 .dropbox-crumbs {

@@ -13,6 +13,7 @@ import WineWorkspace, { type WorkspaceSection } from "@/components/WineWorkspace
 import SourcesPanel from "@/components/SourcesPanel";
 import CopyButton from "@/components/CopyButton";
 import UpdatedMeta from "@/components/UpdatedMeta";
+import StockPricePanel from "@/components/StockPricePanel";
 import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +42,12 @@ type Vintage = {
   first_kosher_vintage: boolean | null; organic: boolean | null; biodynamic: boolean | null;
   legacy: Record<string, unknown>; updated_at: Date;
   bottle_asset_id: string | null;
+  sku: string | null;
+  pack_size: number | null;
+  stock_cases_available: string | null;
+  stock_cases_allocated: string | null;
+  stock_cases_inbound: string | null;
+  stock_updated_at: Date | null;
   display_name: string; canonical_name: string; category: string | null; slug: string; website_slug: string | null;
   producer_id: string; producer: string; location_id: string | null;
 };
@@ -66,6 +73,11 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
             v.aging_display, v.bottle_sizes, v.special_designation, v.tasting_note, v.food_pairing,
             v.short_description, v.wine_story, v.first_kosher_vintage, v.organic, v.biodynamic,
             v.legacy, v.updated_at, v.location_id, v.bottle_asset_id,
+            v.sku, v.pack_size,
+            v.stock_cases_available::text AS stock_cases_available,
+            v.stock_cases_allocated::text AS stock_cases_allocated,
+            v.stock_cases_inbound::text AS stock_cases_inbound,
+            v.stock_updated_at,
             w.display_name, w.canonical_name, w.category, w.slug, w.website_slug, w.producer_id,
             p.name AS producer
      FROM wine_vintages v JOIN wines w ON w.id = v.wine_id JOIN producers p ON p.id = w.producer_id
@@ -361,6 +373,15 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
       >
         <section id="sec-technical">
           <EditableTechnical v={editableVintage} summary={technicalSummary} canEdit={canEdit} />
+          <StockPricePanel
+            vintageId={id}
+            sku={v.sku}
+            packSize={v.pack_size}
+            stockAvailable={v.stock_cases_available}
+            stockAllocated={v.stock_cases_allocated}
+            stockInbound={v.stock_cases_inbound}
+            stockUpdatedAt={v.stock_updated_at}
+          />
         </section>
 
         <section id="sec-grapes">

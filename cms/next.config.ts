@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     "@sparticuz/chromium-min",
     "qrcode",
     "@anthropic-ai/sdk",
+    "xlsx",
   ],
   // Bundle the SQL migrations, sheet CSS, and self-hosted font files into every
   // serverless function so runtime readers (lib/db.ts, lib/sheet/html.tsx,
