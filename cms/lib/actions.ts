@@ -596,6 +596,14 @@ export async function createCatalog(formData: FormData) {
   redirect(`/catalogs/${catalogId}`);
 }
 
+// Price tiers the catalog is allowed to showcase on its Trade pages.
+// Mirror lib/xlsx.ts PRICE_TIERS; a catalog "ladder" setting shows the full
+// list rather than a single column.
+export const CATALOG_PRICE_TIERS = [
+  "ladder", "frontline", "2cs", "3cs", "4cs", "5cs", "10cs", "25cs",
+] as const;
+type CatalogPriceTier = typeof CATALOG_PRICE_TIERS[number];
+
 export async function renameCatalog(formData: FormData) {
   const user = await requireEditor();
   const id = String(formData.get("id") ?? "");
@@ -604,16 +612,32 @@ export async function renameCatalog(formData: FormData) {
   const renderMode = (RENDER_MODES as readonly string[]).includes(String(formData.get("render_mode")))
     ? String(formData.get("render_mode"))
     : null;
+  const showPrices = String(formData.get("show_prices") ?? "") === "on";
+  const priceTierRaw = String(formData.get("price_tier") ?? "");
+  const priceTier: CatalogPriceTier =
+    (CATALOG_PRICE_TIERS as readonly string[]).includes(priceTierRaw)
+      ? (priceTierRaw as CatalogPriceTier)
+      : "ladder";
+  const showStock = String(formData.get("show_stock") ?? "") === "on";
   if (!/^[0-9a-f-]{36}$/i.test(id) || !name) return;
   await query(
     `UPDATE catalogs
        SET name = $2, season = $3,
            render_mode = COALESCE($4, render_mode),
+           settings = jsonb_set(
+             jsonb_set(
+               jsonb_set(coalesce(settings, '{}'::jsonb), '{show_prices}', to_jsonb($5::bool)),
+               '{price_tier}', to_jsonb($6::text)
+             ),
+             '{show_stock}', to_jsonb($7::bool)
+           ),
            updated_at = now()
      WHERE id = $1`,
-    [id, name, season, renderMode],
+    [id, name, season, renderMode, showPrices, priceTier, showStock],
   );
-  await audit(user.id, "catalog.update", { type: "catalog", id }, { new: { name, season, render_mode: renderMode } });
+  await audit(user.id, "catalog.update", { type: "catalog", id }, { new: {
+    name, season, render_mode: renderMode, show_prices: showPrices, price_tier: priceTier, show_stock: showStock,
+  } });
   revalidatePath(`/catalogs/${id}`);
   revalidatePath("/catalogs");
 }

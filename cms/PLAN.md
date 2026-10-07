@@ -166,12 +166,30 @@ the same page promotes the whole batch to approved (admin only).
   either rename the location to match OSM's wording, or hand-draw the polygon in
   `geojson.io` and paste it into the per-location Map Uploader as a last resort.
 
-### Phase 15 — Pricing in catalogs (from the roadmap top‑10)
+### Phase 15 — Pricing in catalogs — SHIPPED
 
-Depends on Phase 12 pricing schema.
-- Catalog setting: `price_tier` (which column to show)
-- Catalog setting: `show_prices` on/off per catalog
-- Trade sheet rendering shows the ladder
+Depends on Phase 12 pricing schema; now live.
+
+- `catalogs.settings` jsonb now carries three new keys: `show_prices` (bool),
+  `price_tier` (`"ladder"` for the full table, otherwise one of
+  `frontline / 2cs / 3cs / 4cs / 5cs / 10cs / 25cs`), and `show_stock` (bool).
+  No schema migration — persisted via `jsonb_set` in `renameCatalog`.
+- Catalog settings panel gains a **Trade pricing** fieldset with a show-prices
+  checkbox, a tier selector, and a show-stock checkbox. All three persist via
+  the existing Save-settings action.
+- `SheetData` now carries a `prices` array (every tier for the vintage) and a
+  `stock` object (`available / allocated / inbound / updated_at`) + `sku` and
+  `pack_size`. Loaded in one extra SELECT per wine.
+- `TradePage` renders a compact 3-column price table (Tier / Case / Btl) under
+  each wine when the catalog says `show_prices` + `price_tier = "ladder"`.
+  When pinned to a single tier it drops a one-line summary instead
+  (`FrontLine: $240.00 / cs · $20.00 / btl`). Stock is a one-line
+  `X cs available · 12/case · SKU` under that.
+- `SingleWineSheet` gets a matching **Trade pricing** section in the left
+  column when the catalog has `show_prices` on — full table for ladder, inline
+  summary for a single tier.
+- Per-wine PDF export (not catalog-driven) ships no prices by default — Trade
+  pricing lives on the Catalog pass, which is correct for distributor sheets.
 
 ### Phase 16 — Follow‑ups from the roadmap
 

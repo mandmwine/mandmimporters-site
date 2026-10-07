@@ -1771,5 +1771,37 @@ kbd {
   font-weight: 600;
 }
 
+/* ---------- Phase 15: catalog settings form additions ---------- */
+
+.form-fieldset {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 10px 14px 12px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+}
+.form-fieldset legend {
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.form-checkbox input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+
 
 

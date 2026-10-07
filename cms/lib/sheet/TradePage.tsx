@@ -3,6 +3,7 @@
 // Each wine carries a small QR code linking to its public M&M page so buyers
 // can scan from a printed sheet.
 import type { SheetData } from "./data";
+import type { SheetPriceOptions } from "./catalog-html";
 
 export type TradeData = {
   title: string;
@@ -10,8 +11,40 @@ export type TradeData = {
   wines: SheetData[];     // up to 8 per page
 };
 
-export function TradePage({ data }: { data: TradeData }) {
+const TIER_LABEL: Record<string, string> = {
+  frontline: "FrontLine",
+  "2cs": "2 cs",
+  "3cs": "3 cs",
+  "4cs": "4 cs",
+  "5cs": "5 cs",
+  "10cs": "10 cs",
+  "25cs": "25 cs",
+};
+
+function money(v: string | null | undefined): string | null {
+  if (v === null || v === undefined) return null;
+  const n = parseFloat(v);
+  if (!Number.isFinite(n)) return null;
+  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+// Compact single-tier line used when the catalog is scoped to one tier.
+function singleTierLine(prices: SheetData["prices"], tier: string): string | null {
+  const row = prices.find((p) => p.tier === tier);
+  if (!row) return null;
+  const bits: string[] = [];
+  const c = money(row.case_price);
+  const b = money(row.bottle_price);
+  if (c) bits.push(`${c} / cs`);
+  if (b) bits.push(`${b} / btl`);
+  return bits.length ? `${TIER_LABEL[tier] ?? tier}: ${bits.join(" · ")}` : null;
+}
+
+export function TradePage({ data, priceOptions }: { data: TradeData; priceOptions?: SheetPriceOptions }) {
   const wines = data.wines.slice(0, 8);
+  const showPrices = Boolean(priceOptions?.show_prices);
+  const showStock = Boolean(priceOptions?.show_stock);
+  const priceTier = priceOptions?.price_tier ?? "ladder";
   return (
     <article className="sheet sheet--print trade" data-count={wines.length}>
       <header className="trade__head">
@@ -80,6 +113,40 @@ export function TradePage({ data }: { data: TradeData }) {
                   )}
                 </dl>
                 {w.wine.short_description && <p className="trade__one-liner">{w.wine.short_description}</p>}
+                {showPrices && (
+                  priceTier === "ladder" && w.prices.length > 0 ? (
+                    <table className="trade__prices">
+                      <thead>
+                        <tr>
+                          <th>Tier</th>
+                          <th className="right">Case</th>
+                          <th className="right">Btl</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {w.prices.map((p) => (
+                          <tr key={p.tier}>
+                            <td>{TIER_LABEL[p.tier] ?? p.tier}</td>
+                            <td className="right">{money(p.case_price) ?? "—"}</td>
+                            <td className="right">{money(p.bottle_price) ?? "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    (() => {
+                      const line = singleTierLine(w.prices, priceTier);
+                      return line ? <p className="trade__price-line">{line}</p> : null;
+                    })()
+                  )
+                )}
+                {showStock && w.stock.available && (
+                  <p className="trade__stock-line">
+                    <strong>{Math.floor(parseFloat(w.stock.available))}</strong> cs available
+                    {w.wine.pack_size ? ` · ${w.wine.pack_size}/case` : ""}
+                    {w.wine.sku ? <> · <span className="trade__sku">{w.wine.sku}</span></> : null}
+                  </p>
+                )}
               </div>
               {publicUrl && w.wine.qr_svg && (
                 <div className="trade__qr" aria-hidden="true" dangerouslySetInnerHTML={{ __html: w.wine.qr_svg }} />

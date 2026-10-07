@@ -46,7 +46,26 @@ type CatalogRow = {
   name: string;
   season: string | null;
   render_mode: string;
+  settings: Record<string, unknown>;
 };
+
+// Phase 15 — pricing & stock options passed through to the renderers.
+// show_prices + price_tier come straight from catalogs.settings; price_tier
+// of "ladder" means render the full table, otherwise render just that one tier.
+export type SheetPriceOptions = {
+  show_prices: boolean;
+  price_tier: string;         // "ladder" | "frontline" | "2cs" | …
+  show_stock: boolean;
+};
+
+function priceOptionsFromCatalog(c: CatalogRow): SheetPriceOptions {
+  const s = c.settings ?? {};
+  return {
+    show_prices: Boolean(s.show_prices),
+    price_tier: typeof s.price_tier === "string" && s.price_tier.length > 0 ? s.price_tier : "ladder",
+    show_stock: Boolean(s.show_stock),
+  };
+}
 
 // Group wine items into pages based on the section's layout.
 function paginate(wines: SheetData[], layout: string): { kind: string; wines: SheetData[] }[] {
@@ -69,7 +88,7 @@ export type CatalogPlan = {
 
 export async function buildCatalogPlan(catalogId: string): Promise<CatalogPlan | null> {
   const catalog = await one<CatalogRow>(
-    "SELECT id, name, season, render_mode FROM catalogs WHERE id = $1",
+    "SELECT id, name, season, render_mode, settings FROM catalogs WHERE id = $1",
     [catalogId],
   );
   if (!catalog) return null;
@@ -97,6 +116,7 @@ export async function catalogHtml(plan: CatalogPlan, preset: Preset): Promise<st
   const parts: string[] = [];
   const toc: { title: string; page: number }[] = [];
   let pageCount = 0;
+  const priceOptions = priceOptionsFromCatalog(plan.catalog);
 
   for (const sec of plan.sections) {
     const title = sec.title ?? sec.kind;
@@ -198,7 +218,9 @@ export async function catalogHtml(plan: CatalogPlan, preset: Preset): Promise<st
         for (const p of pages) {
           pageCount++;
           if (p.kind === "detailed") {
-            parts.push(renderToStaticMarkup(<SingleWineSheet data={p.wines[0]} mode="print" />));
+            parts.push(renderToStaticMarkup(
+              <SingleWineSheet data={p.wines[0]} mode="print" priceOptions={priceOptions} />,
+            ));
           } else if (p.kind === "lineup" || p.kind === "compact") {
             const producer = p.wines[0]?.wine.producer ?? "";
             parts.push(renderToStaticMarkup(
@@ -206,7 +228,7 @@ export async function catalogHtml(plan: CatalogPlan, preset: Preset): Promise<st
             ));
           } else if (p.kind === "trade") {
             parts.push(renderToStaticMarkup(
-              <TradePage data={{ title: title ?? "Portfolio", wines: p.wines }} />,
+              <TradePage data={{ title: title ?? "Portfolio", wines: p.wines }} priceOptions={priceOptions} />,
             ));
           }
         }

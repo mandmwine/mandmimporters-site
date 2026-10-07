@@ -3,7 +3,24 @@
 //   - /catalog-admin/sheet/[id]          (preview in-browser)
 //   - /catalog-admin/api/wines/[id]/pdf  (headless Chrome rendering)
 import type { SheetData } from "./data";
+import type { SheetPriceOptions } from "./catalog-html";
 import { renderRegionMap } from "./region-map";
+
+const TIER_LABEL: Record<string, string> = {
+  frontline: "FrontLine",
+  "2cs": "2 cs",
+  "3cs": "3 cs",
+  "4cs": "4 cs",
+  "5cs": "5 cs",
+  "10cs": "10 cs",
+  "25cs": "25 cs",
+};
+function moneyFmt(v: string | null | undefined): string | null {
+  if (v === null || v === undefined) return null;
+  const n = parseFloat(v);
+  if (!Number.isFinite(n)) return null;
+  return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 function formatBlend(grapes: SheetData["grapes"]): string {
   if (!grapes.length) return "";
@@ -43,7 +60,15 @@ function wineTitle(data: SheetData): string {
   return name;
 }
 
-export function SingleWineSheet({ data, mode = "screen" }: { data: SheetData; mode?: "screen" | "print" }) {
+export function SingleWineSheet({
+  data,
+  mode = "screen",
+  priceOptions,
+}: {
+  data: SheetData;
+  mode?: "screen" | "print";
+  priceOptions?: SheetPriceOptions;
+}) {
   const map = renderRegionMap(data.location, data.geoMap);
   const subhead = appellationDesignation(data) || regionAppellation(data);
   const scores = data.scores.slice(0, 4);
@@ -141,6 +166,52 @@ export function SingleWineSheet({ data, mode = "screen" }: { data: SheetData; mo
             <section className="sheet__section">
               <h3 className="sheet__section-label">Winery Note</h3>
               <p className="sheet__copy">{data.producer_note}</p>
+            </section>
+          )}
+
+          {priceOptions?.show_prices && data.prices.length > 0 && (
+            <section className="sheet__section sheet__prices">
+              <h3 className="sheet__section-label">Trade pricing</h3>
+              {priceOptions.price_tier === "ladder" ? (
+                <table className="sheet__prices-table">
+                  <thead>
+                    <tr>
+                      <th>Tier</th>
+                      <th className="right">Case</th>
+                      <th className="right">Bottle</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.prices.map((p) => (
+                      <tr key={p.tier}>
+                        <td>{TIER_LABEL[p.tier] ?? p.tier}</td>
+                        <td className="right">{moneyFmt(p.case_price) ?? "—"}</td>
+                        <td className="right">{moneyFmt(p.bottle_price) ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (() => {
+                const row = data.prices.find((p) => p.tier === priceOptions.price_tier);
+                if (!row) return null;
+                const c = moneyFmt(row.case_price);
+                const b = moneyFmt(row.bottle_price);
+                return (
+                  <p className="sheet__copy">
+                    <strong>{TIER_LABEL[row.tier] ?? row.tier}:</strong>
+                    {c ? ` ${c} / case` : ""}
+                    {c && b ? " · " : ""}
+                    {b ? `${b} / bottle` : ""}
+                  </p>
+                );
+              })()}
+              {priceOptions.show_stock && data.stock.available && (
+                <p className="sheet__copy small">
+                  <strong>{Math.floor(parseFloat(data.stock.available))}</strong> cs available
+                  {data.wine.pack_size ? ` · ${data.wine.pack_size}/case` : ""}
+                  {data.wine.sku ? ` · ${data.wine.sku}` : ""}
+                </p>
+              )}
             </section>
           )}
         </div>

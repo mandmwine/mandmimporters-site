@@ -843,6 +843,68 @@
   line-height: 1.35;
 }
 
+/* Phase 15 — pricing & stock on the Trade sheet. */
+.trade__prices {
+  margin: 6pt 0 0;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 6.8pt;
+  font-variant-numeric: tabular-nums;
+}
+.trade__prices th,
+.trade__prices td {
+  padding: 1.5pt 3pt;
+  border-bottom: 0.3pt solid var(--rule);
+  text-align: left;
+}
+.trade__prices th {
+  font-size: 6pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  font-weight: 600;
+}
+.trade__prices .right { text-align: right; }
+.trade__price-line {
+  margin: 6pt 0 0;
+  font-size: 7.5pt;
+  font-variant-numeric: tabular-nums;
+}
+.trade__stock-line {
+  margin: 3pt 0 0;
+  font-size: 7pt;
+  color: var(--mute);
+  font-variant-numeric: tabular-nums;
+}
+.trade__sku {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 6.5pt;
+}
+
+/* Phase 15 — pricing block on the single-wine sheet. */
+.sheet__prices-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 9pt;
+  margin-top: 4pt;
+}
+.sheet__prices-table th,
+.sheet__prices-table td {
+  padding: 3pt 6pt;
+  border-bottom: 0.5pt solid var(--rule);
+  text-align: left;
+}
+.sheet__prices-table th {
+  font-size: 7.5pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  font-weight: 600;
+}
+.sheet__prices-table .right { text-align: right; }
+.sheet__copy.small { font-size: 8pt; color: var(--mute); margin-top: 4pt; }
+
 .trade__foot {
   display: flex;
   justify-content: space-between;

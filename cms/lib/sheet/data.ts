@@ -25,6 +25,8 @@ export type SheetData = {
     website_slug: string | null;
     short_description: string | null;
     qr_svg: string | null;        // inline <svg> for the Trade sheet QR
+    sku: string | null;
+    pack_size: number | null;
   };
   producer_note: string | null;
   location: {
@@ -37,6 +39,16 @@ export type SheetData = {
   scores: { critic: string | null; short_label: string | null; score_text: string; award_text: string | null; quote: string | null; vintage_text: string | null; current_vintage: boolean }[];
   bottle_image_url: string | null;
   geoMap: GeoMap | null;
+  // Phase 15 — pricing + stock, loaded from wine_vintage_prices + the stock
+  // columns on wine_vintages (Phase 12 schema). Only emitted into the printed
+  // sheet when the catalog's settings say show_prices / show_stock.
+  prices: { tier: string; min_cases: number; case_price: string | null; bottle_price: string | null }[];
+  stock: {
+    available: string | null;
+    allocated: string | null;
+    inbound: string | null;
+    updated_at: Date | null;
+  };
 };
 
 type VintageRow = {
@@ -65,6 +77,12 @@ type VintageRow = {
   legacy: Record<string, unknown>;
   bottle_asset_id: string | null;
   bottle_asset_path: string | null;
+  sku: string | null;
+  pack_size: number | null;
+  stock_cases_available: string | null;
+  stock_cases_allocated: string | null;
+  stock_cases_inbound: string | null;
+  stock_updated_at: Date | null;
 };
 
 export async function loadSheetData(vintageId: string): Promise<SheetData | null> {
@@ -73,6 +91,11 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
             v.supervision_display, v.mevushal, v.bottle_sizes, v.aging_display,
             v.first_kosher_vintage, v.organic, v.biodynamic, v.short_description, v.location_id,
             v.legacy, v.bottle_asset_id,
+            v.sku, v.pack_size,
+            v.stock_cases_available::text AS stock_cases_available,
+            v.stock_cases_allocated::text AS stock_cases_allocated,
+            v.stock_cases_inbound::text   AS stock_cases_inbound,
+            v.stock_updated_at,
             a.storage_path AS bottle_asset_path,
             w.display_name, w.canonical_name, w.category, w.website_slug,
             p.id AS producer_id, p.name AS producer, p.winery_summary_short AS producer_note
@@ -85,7 +108,7 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
   );
   if (!v) return null;
 
-  const [chain, grapes, currentScores, otherScores] = await Promise.all([
+  const [chain, grapes, currentScores, otherScores, prices] = await Promise.all([
     query<{ type: string; name: string }>(
       `WITH RECURSIVE up AS (
          SELECT id, parent_id, type, name, 0 AS depth FROM locations WHERE id = $1
@@ -120,6 +143,12 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
        ORDER BY vv.vintage_text DESC NULLS LAST, s.numeric_score DESC NULLS LAST
        LIMIT 4`,
       [v.wine_id, v.id],
+    ),
+    // Phase 15: all price tiers for this vintage, ordered ladder-first.
+    query<{ tier: string; min_cases: number; case_price: string | null; bottle_price: string | null }>(
+      `SELECT tier, min_cases, case_price::text, bottle_price::text
+       FROM wine_vintage_prices WHERE vintage_id = $1 ORDER BY min_cases`,
+      [v.id],
     ),
   ]);
 
@@ -196,6 +225,8 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
       website_slug: v.website_slug,
       short_description: v.short_description,
       qr_svg,
+      sku: v.sku,
+      pack_size: v.pack_size,
     },
     producer_note: v.producer_note,
     location: {
@@ -213,6 +244,13 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
       subregion: loc("subregion"),
       appellation: loc("appellation"),
     }),
+    prices,
+    stock: {
+      available: v.stock_cases_available,
+      allocated: v.stock_cases_allocated,
+      inbound: v.stock_cases_inbound,
+      updated_at: v.stock_updated_at,
+    },
   };
 }
 

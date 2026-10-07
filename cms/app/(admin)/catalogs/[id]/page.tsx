@@ -228,31 +228,64 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
         </div>
 
         <div>
-          {canEdit && (
-            <form className="panel form-grid" action={renameCatalog}>
-              <h2>Catalog settings</h2>
-              <input type="hidden" name="id" value={id} />
-              <label>
-                Name
-                <input name="name" defaultValue={c.name} required />
-              </label>
-              <label>
-                Season
-                <input name="season" defaultValue={c.season ?? ""} placeholder="2026, Fall 2026, etc." />
-              </label>
-              <label>
-                Overall render mode
-                <select name="render_mode" defaultValue={c.render_mode}>
-                  <option value="hybrid">Hybrid</option>
-                  <option value="detailed">Detailed only</option>
-                  <option value="compact">Compact only</option>
-                </select>
-              </label>
-              <div className="form-actions">
-                <button className="btn primary small" type="submit">Save settings</button>
-              </div>
-            </form>
-          )}
+          {canEdit && (() => {
+            const settings = (c.settings ?? {}) as Record<string, unknown>;
+            const showPrices = Boolean(settings.show_prices);
+            const showStock = Boolean(settings.show_stock);
+            const priceTier = typeof settings.price_tier === "string" ? settings.price_tier : "ladder";
+            return (
+              <form className="panel form-grid" action={renameCatalog}>
+                <h2>Catalog settings</h2>
+                <input type="hidden" name="id" value={id} />
+                <label>
+                  Name
+                  <input name="name" defaultValue={c.name} required />
+                </label>
+                <label>
+                  Season
+                  <input name="season" defaultValue={c.season ?? ""} placeholder="2026, Fall 2026, etc." />
+                </label>
+                <label>
+                  Overall render mode
+                  <select name="render_mode" defaultValue={c.render_mode}>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="detailed">Detailed only</option>
+                    <option value="compact">Compact only</option>
+                  </select>
+                </label>
+                <fieldset className="form-fieldset">
+                  <legend>Trade pricing</legend>
+                  <label className="form-checkbox">
+                    <input type="checkbox" name="show_prices" defaultChecked={showPrices} />
+                    Show prices on this catalog
+                  </label>
+                  <label>
+                    Which tier
+                    <select name="price_tier" defaultValue={priceTier}>
+                      <option value="ladder">Full price ladder (FrontLine → 25cs)</option>
+                      <option value="frontline">FrontLine only</option>
+                      <option value="2cs">2 cs</option>
+                      <option value="3cs">3 cs</option>
+                      <option value="4cs">4 cs</option>
+                      <option value="5cs">5 cs</option>
+                      <option value="10cs">10 cs</option>
+                      <option value="25cs">25 cs</option>
+                    </select>
+                    <span className="small muted">
+                      Pricing comes from the Price Posting xlsx you imported. Full ladder is best for Trade PDFs; a single tier is best for a cleaner retail-facing catalog.
+                    </span>
+                  </label>
+                  <label className="form-checkbox">
+                    <input type="checkbox" name="show_stock" defaultChecked={showStock} />
+                    Also show stock on hand (cases)
+                  </label>
+                </fieldset>
+                <div className="form-actions">
+                  <button className="btn primary small" type="submit">Save settings</button>
+                </div>
+              </form>
+            );
+          })()}
 
           <div className="panel">
             <h2>Export history</h2>
