@@ -5,6 +5,8 @@ import { one, query } from "@/lib/db";
 import { renderMap, type GeoCollection } from "@/lib/maps/render";
 import MapUploader from "@/components/MapUploader";
 import MapVersionActions from "@/components/MapVersionActions";
+import UpdatedMeta from "@/components/UpdatedMeta";
+import CopyButton from "@/components/CopyButton";
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +106,11 @@ export default async function MapDetailPage({ params }: { params: Promise<{ id: 
           <p className="eyebrow">{chain.map((c) => c.name).join(" / ")}</p>
           <h1>{loc.name}</h1>
           <p className="muted">{loc.type} · {wines.length} wine{wines.length === 1 ? "" : "s"}</p>
+          <p className="small muted record-meta">
+            <UpdatedMeta entityType="location" entityId={id} />
+            {" · "}
+            <CopyButton value={id} label="ID" compact />
+          </p>
         </div>
         <div className="head-side">
           <span className={`badge badge--${loc.map_status}`}>

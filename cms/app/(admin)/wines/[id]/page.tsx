@@ -12,6 +12,7 @@ import AIFieldButton from "@/components/AIFieldButton";
 import WineWorkspace, { type WorkspaceSection } from "@/components/WineWorkspace";
 import SourcesPanel from "@/components/SourcesPanel";
 import CopyButton from "@/components/CopyButton";
+import UpdatedMeta from "@/components/UpdatedMeta";
 import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -48,20 +49,6 @@ function fmtPct(p: string | null) {
   if (p === null) return "";
   const n = Number(p);
   return `${Number.isInteger(n) ? n : n.toFixed(1)}% `;
-}
-
-function relativeTime(d: Date | string | null): string {
-  if (!d) return "never";
-  const t = typeof d === "string" ? new Date(d).getTime() : d.getTime();
-  const diff = Math.max(0, Date.now() - t);
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m} min ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h} hr${h === 1 ? "" : "s"} ago`;
-  const days = Math.floor(h / 24);
-  if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
-  return new Date(t).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
 export default async function WineDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -318,7 +305,7 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
             {v.category ? ` · ${v.category}` : ""}
           </p>
           <p className="small muted record-meta">
-            Updated {relativeTime(v.updated_at)}
+            <UpdatedMeta entityType="wine_vintage" entityId={id} fallback={v.updated_at} />
             {" · "}
             <CopyButton value={shareBase} label="Copy link" compact />
             <CopyButton value={id} label="ID" compact />

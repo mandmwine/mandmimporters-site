@@ -2,7 +2,7 @@
 import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin, requireEditor, type Role } from "./auth";
+import { requireAdmin, requireEditor, requireUser, type Role } from "./auth";
 import { one, query } from "./db";
 import { audit } from "./audit";
 import { adminAuth } from "./firebase-admin";
@@ -1539,3 +1539,54 @@ export async function attachSource(formData: FormData): Promise<{ ok: boolean; m
 }
 
 
+
+// ---------------------------------------------------------------- saved views
+// A per-user "view" is a named snapshot of a list page's URL (path + query).
+// Users pin a few as tabs above the list; clicking opens the exact filter set.
+const SAVED_SCOPES = new Set(["wines", "catalogs", "assets", "producers", "maps", "review"]);
+
+export async function createSavedView(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireUser();
+  const scope = String(formData.get("scope") ?? "");
+  if (!SAVED_SCOPES.has(scope)) return { ok: false, message: "Unknown scope." };
+  const name = (s(formData, "name") ?? "").slice(0, 120);
+  const path = (s(formData, "path") ?? "").slice(0, 240);
+  const q = (s(formData, "query") ?? "").slice(0, 2048);
+  if (!name) return { ok: false, message: "Give the view a name." };
+  if (!path || !path.startsWith("/")) return { ok: false, message: "Missing path." };
+  await query(
+    `INSERT INTO saved_views (user_id, scope, name, path, query, pinned)
+     VALUES ($1, $2, $3, $4, $5, false)`,
+    [user.id, scope, name, path, q],
+  );
+  await audit(user.id, "saved_view.create", { type: "saved_view", id: scope }, { new: { name, path, query: q } });
+  revalidatePath(path);
+  return { ok: true };
+}
+
+export async function toggleSavedViewPin(formData: FormData) {
+  const user = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ scope: string; pinned: boolean; path: string }>(
+    "SELECT scope, pinned, path FROM saved_views WHERE id = $1 AND user_id = $2",
+    [id, user.id],
+  );
+  if (!row) return;
+  await query(
+    "UPDATE saved_views SET pinned = NOT pinned, updated_at = now() WHERE id = $1 AND user_id = $2",
+    [id, user.id],
+  );
+  await audit(user.id, "saved_view.pin", { type: "saved_view", id }, { new: { pinned: !row.pinned } });
+  revalidatePath(row.path);
+}
+
+export async function deleteSavedView(formData: FormData) {
+  const user = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ path: string }>("SELECT path FROM saved_views WHERE id = $1 AND user_id = $2", [id, user.id]);
+  await query("DELETE FROM saved_views WHERE id = $1 AND user_id = $2", [id, user.id]);
+  await audit(user.id, "saved_view.delete", { type: "saved_view", id });
+  if (row) revalidatePath(row.path);
+}

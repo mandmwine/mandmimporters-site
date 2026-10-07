@@ -6,6 +6,7 @@ import { one, query } from "@/lib/db";
 import { EditableProducer, type LocationChoice, type ProducerFields } from "@/components/EditableProducer";
 import SourcesPanel, { type ProvenanceRow } from "@/components/SourcesPanel";
 import CopyButton from "@/components/CopyButton";
+import UpdatedMeta from "@/components/UpdatedMeta";
 
 export const dynamic = "force-dynamic";
 
@@ -149,6 +150,8 @@ export default async function ProducerDetail({ params }: { params: Promise<{ id:
             )}
           </p>
           <p className="small muted record-meta">
+            <UpdatedMeta entityType="producer" entityId={id} />
+            {" · "}
             <CopyButton value={shareUrl} label="Copy link" compact />
             <CopyButton value={id} label="ID" compact />
           </p>

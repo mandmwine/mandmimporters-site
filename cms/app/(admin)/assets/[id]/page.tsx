@@ -6,6 +6,7 @@ import AssetEditForm, { type AssetMeta } from "@/components/AssetEditForm";
 import AssetDeleteButton from "@/components/AssetDeleteButton";
 import AssetReplaceUploader from "@/components/AssetReplaceUploader";
 import CopyButton from "@/components/CopyButton";
+import UpdatedMeta from "@/components/UpdatedMeta";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +115,9 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
             {" · "}{fmtBytes(asset.bytes)}
             {asset.width_px && asset.height_px && ` · ${asset.width_px}×${asset.height_px}`}
             {asset.mime_type && ` · ${asset.mime_type}`}
+          </p>
+          <p className="small muted record-meta">
+            <UpdatedMeta entityType="asset" entityId={id} fallback={asset.created_at} />
           </p>
         </div>
         <div className="head-side">

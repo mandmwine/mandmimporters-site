@@ -7,6 +7,8 @@ import ConfirmSubmit from "@/components/ConfirmSubmit";
 import CatalogSharePanel, { type Share } from "@/components/CatalogSharePanel";
 import CatalogSectionsReorder, { type SectionRow as DragSectionRow } from "@/components/CatalogSectionsReorder";
 import CatalogItemsReorder, { type CatalogItemRow } from "@/components/CatalogItemsReorder";
+import CopyButton from "@/components/CopyButton";
+import UpdatedMeta from "@/components/UpdatedMeta";
 import {
   addCatalogSection,
   deleteCatalog,
@@ -142,6 +144,12 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
           <h1>{c.name}</h1>
           <p className="muted">
             {items.length} wine{items.length === 1 ? "" : "s"} · {sections.length} section{sections.length === 1 ? "" : "s"} · Layout: {c.render_mode}
+          </p>
+          <p className="small muted record-meta">
+            <UpdatedMeta entityType="catalog" entityId={id} />
+            {" · "}
+            <CopyButton value={`${shareBase}/catalogs/${id}`} label="Copy link" compact />
+            <CopyButton value={id} label="ID" compact />
           </p>
         </div>
         <div className="head-side">

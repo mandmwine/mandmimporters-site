@@ -7,6 +7,8 @@ import LiveFilters from "@/components/LiveFilters";
 import SortableTh from "@/components/SortableTh";
 import PerPageChooser from "@/components/PerPageChooser";
 import FilterChips, { type Chip } from "@/components/FilterChips";
+import SavedViews from "@/components/SavedViews";
+import { loadSavedViews } from "@/lib/savedViews";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +109,7 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
     params,
   );
   const countries = await query<{ name: string }>("SELECT name FROM locations WHERE type = 'country' ORDER BY name");
+  const savedViews = await loadSavedViews("wines");
   const pages = Math.max(1, Math.ceil(total / per));
   const link = (p: number) => {
     const u = new URLSearchParams({
@@ -146,6 +149,8 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
           <PerPageChooser current={per} />
         </div>
       </header>
+
+      <SavedViews scope="wines" views={savedViews} anyFilter={anyFilter} />
 
       <LiveFilters
         basePath="/catalog-admin/wines"

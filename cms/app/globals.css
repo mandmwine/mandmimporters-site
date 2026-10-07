@@ -1346,6 +1346,61 @@ kbd {
   margin-top: 6px;
 }
 
+/* Required-field markers — any form-grid label whose child has [required] gets a red asterisk. */
+.form-grid label:has(> input[required]) > :first-child::after,
+.form-grid label:has(> select[required]) > :first-child::after,
+.form-grid label:has(> textarea[required]) > :first-child::after {
+  content: " *";
+  color: var(--err);
+  font-weight: 600;
+}
+
+/* Saved views tab bar */
+.saved-views { margin: 10px 0 12px; display: flex; flex-direction: column; gap: 8px; }
+.saved-views__tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.saved-view-tab {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.saved-view-tab:hover { background: var(--accent-soft); text-decoration: none; }
+.saved-view-tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.saved-view-tab--add {
+  background: transparent;
+  border-style: dashed;
+  color: var(--muted);
+}
+.saved-view-tab--add:hover { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
+
+.saved-views__form {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  padding: 10px 12px;
+  background: var(--accent-soft);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.saved-views__form input { flex: 1 1 220px; padding: 7px 10px; }
+
+.saved-views__list {
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.saved-views__row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) 2fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+}
+.saved-views__row:not(:last-child) { border-bottom: 1px dashed var(--rule); }
+
 /* kbd styling for shortcut cheatsheet and tips */
 kbd {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

@@ -2,8 +2,17 @@ import Link from "next/link";
 import { query } from "@/lib/db";
 import NewCatalogForm from "./NewCatalogForm";
 import ClickableRow from "@/components/ClickableRow";
+import SortableTh from "@/components/SortableTh";
 
 export const dynamic = "force-dynamic";
+
+const SORT: Record<string, string> = {
+  name: "c.name",
+  wines: "wine_count",
+  layout: "c.render_mode",
+  updated: "c.updated_at",
+  export: "last_export_at",
+};
 
 type CatalogRow = {
   id: string;
@@ -16,7 +25,18 @@ type CatalogRow = {
   last_export_at: Date | null;
 };
 
-export default async function CatalogsPage() {
+export default async function CatalogsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const sp = await searchParams;
+  const sort = sp.sort && SORT[sp.sort] ? sp.sort : "";
+  const dir = sp.dir === "desc" ? "desc" : "asc";
+  const orderClause = sort
+    ? `${SORT[sort]} ${dir === "desc" ? "DESC" : "ASC"} NULLS LAST, c.name`
+    : "c.updated_at DESC";
+
   const rows = await query<CatalogRow>(
     `SELECT c.id, c.name, c.season, c.render_mode, c.status, c.updated_at,
        (SELECT count(*)::int FROM catalog_items ci WHERE ci.catalog_id = c.id) AS wine_count,
@@ -25,7 +45,7 @@ export default async function CatalogsPage() {
           WHERE cv.catalog_id = c.id) AS last_export_at
      FROM catalogs c
      WHERE c.status = 'working'
-     ORDER BY c.updated_at DESC`,
+     ORDER BY ${orderClause}`,
   );
   return (
     <>
@@ -44,11 +64,11 @@ export default async function CatalogsPage() {
             <table className="table table-rows">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Wines</th>
-                  <th>Layout</th>
-                  <th>Updated</th>
-                  <th>Last export</th>
+                  <SortableTh label="Name" field="name" />
+                  <SortableTh label="Wines" field="wines" />
+                  <SortableTh label="Layout" field="layout" />
+                  <SortableTh label="Updated" field="updated" />
+                  <SortableTh label="Last export" field="export" />
                 </tr>
               </thead>
               <tbody>
