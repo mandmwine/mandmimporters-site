@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { one, query } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
+import CatalogSharePanel, { type Share } from "@/components/CatalogSharePanel";
 import {
   addCatalogSection,
   deleteCatalog,
@@ -84,7 +86,7 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
   const c = await one<Catalog>("SELECT id, name, season, render_mode, status, settings FROM catalogs WHERE id = $1", [id]);
   if (!c) notFound();
 
-  const [sections, items, exports] = await Promise.all([
+  const [sections, items, exports, shares] = await Promise.all([
     query<Section>(
       "SELECT id, kind, title, position, settings FROM catalog_sections WHERE catalog_id = $1 ORDER BY position",
       [id],
@@ -113,7 +115,23 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
        ORDER BY ef.created_at DESC LIMIT 20`,
       [id],
     ),
+    query<Share>(
+      `SELECT s.id, s.token, s.label, s.created_at, s.expires_at, s.revoked_at,
+              s.view_count, s.last_viewed_at, u.email AS created_by_email
+         FROM catalog_shares s
+         LEFT JOIN users u ON u.id = s.created_by
+         WHERE s.catalog_id = $1
+         ORDER BY s.revoked_at NULLS FIRST, s.created_at DESC`,
+      [id],
+    ),
   ]);
+
+  // Derive the share base URL (host + basePath) from the request headers so
+  // the copyable URL shown in the UI matches whichever host the editor is on.
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const host = h.get("host") ?? "mandmimporters.com";
+  const shareBase = `${proto}://${host}/catalog-admin`;
 
   // Pre-flight checks are warnings, not blockers.
   const warnings: string[] = [];
@@ -348,6 +366,13 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
               </table>
             )}
           </div>
+
+          <CatalogSharePanel
+            catalogId={id}
+            shares={shares}
+            basePath={shareBase}
+            canEdit={canEdit}
+          />
 
           {canEdit && (
             <form action={deleteCatalog} className="panel">

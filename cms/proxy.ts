@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Fast gate: anyone without a session cookie is sent to the login page.
 // Every page and server action still verifies the session itself (lib/auth.ts).
-const PUBLIC_PATHS = ["/login", "/api/session", "/api/health"];
+// /share/* is public by design — those routes validate their own share tokens.
+const PUBLIC_PATHS = ["/login", "/api/session", "/api/health", "/share"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

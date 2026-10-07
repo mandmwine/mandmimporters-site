@@ -1,4 +1,5 @@
 "use server";
+import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin, requireEditor, type Role } from "./auth";
@@ -1219,6 +1220,109 @@ export async function pushProvenanceValue(formData: FormData): Promise<{ ok: boo
   revalidatePath(`/wines/${row.entity_id}`);
   revalidatePath(`/producers/${row.entity_id}`);
   return { ok: true };
+}
+
+// ---------------------------------------------------------------- catalog shares
+function newShareToken(): string {
+  // url-safe base64 of 24 random bytes (32 chars). Collision risk is zero.
+  return crypto.randomBytes(24).toString("base64url");
+}
+
+export async function createCatalogShare(formData: FormData): Promise<{ ok: boolean; token?: string; message?: string }> {
+  const user = await requireEditor();
+  const catalogId = String(formData.get("catalog_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(catalogId)) return { ok: false, message: "Bad catalog id." };
+  const label = s(formData, "label");
+  const expiresRaw = s(formData, "expires_at");
+  const expiresAt = expiresRaw ? new Date(expiresRaw) : null;
+  if (expiresAt && Number.isNaN(expiresAt.getTime())) {
+    return { ok: false, message: "Invalid expiry date." };
+  }
+
+  const exists = await one("SELECT id FROM catalogs WHERE id = $1", [catalogId]);
+  if (!exists) return { ok: false, message: "Catalog not found." };
+
+  const token = newShareToken();
+  await query(
+    `INSERT INTO catalog_shares (catalog_id, token, label, created_by, expires_at)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [catalogId, token, label, user.id, expiresAt],
+  );
+  await audit(user.id, "catalog_share.create", { type: "catalog", id: catalogId },
+    { new: { token: token.slice(0, 6) + "…", label, expires_at: expiresAt?.toISOString() ?? null } });
+  revalidatePath(`/catalogs/${catalogId}`);
+  return { ok: true, token };
+}
+
+export async function revokeCatalogShare(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ catalog_id: string }>(
+    "SELECT catalog_id FROM catalog_shares WHERE id = $1",
+    [id],
+  );
+  if (!row) return;
+  await query("UPDATE catalog_shares SET revoked_at = now() WHERE id = $1", [id]);
+  await audit(user.id, "catalog_share.revoke", { type: "catalog_share", id });
+  revalidatePath(`/catalogs/${row.catalog_id}`);
+}
+
+// ---------------------------------------------------------------- theme tokens
+const SCOPE_TYPES = ["global", "category", "region"] as const;
+type ScopeType = (typeof SCOPE_TYPES)[number];
+
+export async function upsertThemeTokens(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const scopeType = String(formData.get("scope_type") ?? "") as ScopeType;
+  if (!(SCOPE_TYPES as readonly string[]).includes(scopeType)) {
+    return { ok: false, message: "Pick a scope." };
+  }
+  const scopeKey = (s(formData, "scope_key") ?? "").slice(0, 120);
+  if (!scopeKey) return { ok: false, message: "Scope key is required (e.g. 'red', 'france', or 'default')." };
+
+  let tokens: Record<string, string> = {};
+  const tokensRaw = s(formData, "tokens") ?? "";
+  if (tokensRaw) {
+    try {
+      const parsed = JSON.parse(tokensRaw);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        tokens = Object.fromEntries(
+          Object.entries(parsed as Record<string, unknown>)
+            .filter(([, v]) => typeof v === "string")
+            .map(([k, v]) => [k.slice(0, 80), String(v).slice(0, 240)]),
+        );
+      } else {
+        return { ok: false, message: "Expected a JSON object of key:value strings." };
+      }
+    } catch {
+      return { ok: false, message: "Not valid JSON." };
+    }
+  }
+
+  await query(
+    `INSERT INTO theme_tokens (scope_type, scope_key, tokens, updated_by)
+     VALUES ($1, $2, $3::jsonb, $4)
+     ON CONFLICT (scope_type, scope_key)
+       DO UPDATE SET tokens = EXCLUDED.tokens, updated_by = EXCLUDED.updated_by, updated_at = now()`,
+    [scopeType, scopeKey, JSON.stringify(tokens), user.id],
+  );
+  await audit(user.id, "theme.upsert", { type: "theme_token", id: `${scopeType}/${scopeKey}` }, { new: tokens });
+  revalidatePath("/theme");
+  return { ok: true };
+}
+
+export async function deleteThemeTokens(formData: FormData) {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const row = await one<{ scope_type: string; scope_key: string }>(
+    "SELECT scope_type, scope_key FROM theme_tokens WHERE id = $1", [id],
+  );
+  if (!row) return;
+  await query("DELETE FROM theme_tokens WHERE id = $1", [id]);
+  await audit(user.id, "theme.delete", { type: "theme_token", id: `${row.scope_type}/${row.scope_key}` });
+  revalidatePath("/theme");
 }
 
 // ---------------------------------------------------------------- QC
