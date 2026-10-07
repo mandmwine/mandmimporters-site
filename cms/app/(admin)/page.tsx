@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { query } from "@/lib/db";
+import QcScanButton from "@/components/QcScanButton";
 
 export const dynamic = "force-dynamic";
 
@@ -55,12 +56,17 @@ export default async function Dashboard() {
 
   return (
     <>
-      <header className="page-head">
-        <h1>Dashboard</h1>
-        <p className="muted">
-          {c.wines} wines from {c.producers} producers · {c.vintages} vintage records · {c.approved} approved ·{" "}
-          {c.published} published
-        </p>
+      <header className="page-head row">
+        <div>
+          <h1>Dashboard</h1>
+          <p className="muted">
+            {c.wines} wines from {c.producers} producers · {c.vintages} vintage records · {c.approved} approved ·{" "}
+            {c.published} published
+          </p>
+        </div>
+        <div className="head-side">
+          <QcScanButton />
+        </div>
       </header>
 
       <section className="cards">

@@ -1221,6 +1221,22 @@ export async function pushProvenanceValue(formData: FormData): Promise<{ ok: boo
   return { ok: true };
 }
 
+// ---------------------------------------------------------------- QC
+export async function runQcScanAction(): Promise<{
+  ok: boolean;
+  counts?: Record<string, number>;
+  total?: number;
+}> {
+  const user = await requireEditor();
+  const { runQcScan } = await import("./qc/scan");
+  const counts = await runQcScan();
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  await audit(user.id, "qc.scan", { type: "system", id: "qc" }, { new: counts });
+  revalidatePath("/review");
+  revalidatePath("/");
+  return { ok: true, counts, total };
+}
+
 // ---------------------------------------------------------------- sources
 const SOURCE_TYPES = [
   "mm_catalog", "mm_website", "tech_sheet", "producer_website",

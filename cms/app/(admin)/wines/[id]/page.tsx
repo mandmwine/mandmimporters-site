@@ -295,6 +295,11 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
               <a className="link small" href={`/catalog-admin/api/wines/${id}/pdf?preset=web`}>Web</a>
             </div>
           </div>
+          {siblings.length > 1 && (
+            <Link className="link small" href={`/wines/${id}/compare`}>
+              Compare vintages
+            </Link>
+          )}
           {v.website_slug && (
             <a className="link small" href={`https://www.mandmimporters.com/wines/p/${v.website_slug}`} target="_blank" rel="noreferrer">
               Public page ↗
