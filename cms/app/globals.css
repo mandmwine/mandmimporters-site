@@ -1,6 +1,11 @@
 :root {
   --paper: #f7f3ea;
   --panel: #fffdf8;
+  /* --card-soft: a subtly tinted surface used for cards nested INSIDE a panel
+     (AI dialog actions, proposal cards, inline forms). Needs a theme-flipping
+     token so the surface + ink stay legible together in dark mode. */
+  --card-soft: #faf6ec;
+  --card-soft-hover: #fffefa;
   --ink: #1e1b18;
   --muted: #6f675d;
   --rule: #e2dacb;
@@ -37,6 +42,10 @@
 :root[data-theme="dark"] {
   --paper: #1a1613;
   --panel: #26211c;
+  /* Slightly LIGHTER than --panel so a nested card is visible, matching the
+     light-theme logic where --card-soft is slightly darker than --panel. */
+  --card-soft: #332c25;
+  --card-soft-hover: #3d352c;
   --ink:   #f5efe3;          /* was #efe8da, bumped for stronger contrast */
   --muted: #b8aea0;          /* was #9c9382 — hard to read; now AA on panel */
   --rule:  #4a4238;          /* was #332d26 — borders were nearly invisible */
@@ -67,7 +76,10 @@
   color: var(--ink);
   border-color: var(--rule);
 }
-:root[data-theme="dark"] .ai-dialog__action:hover { background: var(--panel); }
+/* AI proposal cards (Phase 13 Review AI proposals panel) — use card-soft so
+   nested proposals read in both themes. */
+.ai-proposal-card { background: var(--card-soft); }
+.ai-proposal-card--done { background: var(--panel); }
 :root[data-theme="dark"] .selbar__actions .btn,
 :root[data-theme="dark"] .selbar__actions .btn.primary { color: var(--ink); }
 :root[data-theme="dark"] .selbar__actions .btn { background: var(--rule); border-color: var(--rule); }
@@ -421,7 +433,7 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 .ai-dialog__action {
   text-align: left;
   padding: 12px 14px;
-  background: #faf6ec;
+  background: var(--card-soft);
   border: 1px solid var(--rule);
   border-radius: 6px;
   cursor: pointer;
@@ -431,7 +443,9 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   font: inherit;
   color: var(--ink);
 }
-.ai-dialog__action:hover { border-color: var(--accent); background: #fff; }
+.ai-dialog__action strong { color: var(--ink); }
+.ai-dialog__action .muted { color: var(--muted); }
+.ai-dialog__action:hover { border-color: var(--accent); background: var(--card-soft-hover); }
 .ai-dialog__loading { display: flex; align-items: center; gap: 10px; padding: 20px; color: var(--muted); }
 .ai-dialog__spinner {
   width: 16px; height: 16px;
@@ -443,13 +457,15 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 @keyframes ai-spin { to { transform: rotate(360deg); } }
 .ai-dialog__proposal { display: flex; flex-direction: column; gap: 12px; }
 .ai-dialog__text {
-  background: #fcf9f1;
+  background: var(--card-soft);
   border: 1px solid var(--rule);
   border-radius: 6px;
   padding: 14px;
   font-size: 14px;
   line-height: 1.55;
+  color: var(--ink);
 }
+.ai-dialog__text p { color: var(--ink); }
 .ai-dialog__text p { margin: 0; }
 .ai-dialog__sources summary { cursor: pointer; font-size: 12px; color: var(--muted); }
 .ai-dialog__sources ul { font-size: 12px; margin: 6px 0 0 16px; }
@@ -1715,7 +1731,8 @@ kbd {
   border: 1px solid var(--rule);
   border-radius: 6px;
   padding: 12px 14px;
-  background: var(--bg);
+  background: var(--card-soft);
+  color: var(--ink);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1741,6 +1758,38 @@ kbd {
   align-items: center;
   margin-top: 2px;
 }
+
+/* ---------- Phase 18: inline row-archive + export chooser ---------- */
+
+.inline-archive {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .1s, border-color .1s;
+}
+.inline-archive:hover { color: var(--err); border-color: var(--err); background: var(--err-soft); }
+.inline-archive--danger { color: var(--err); border-color: var(--err); background: var(--err-soft); }
+.inline-archive--danger:hover { color: #fff; background: var(--err); border-color: var(--err); }
+.inline-archive-confirm { display: inline-flex; gap: 8px; align-items: center; }
+
+.export-chooser {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+}
+.export-chooser__row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 
 /* ---------- Phase 14: bulk seed maps panel ---------- */
 

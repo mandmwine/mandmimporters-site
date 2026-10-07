@@ -3,6 +3,7 @@ import { query } from "@/lib/db";
 import { StatusBadge } from "@/components/Badge";
 import WineRowSelect, { SelectAllCheckbox } from "@/components/WineRowSelect";
 import ClickableRow from "@/components/ClickableRow";
+import InlineArchiveButton from "@/components/InlineArchiveButton";
 import LiveFilters from "@/components/LiveFilters";
 import SortableTh from "@/components/SortableTh";
 import PerPageChooser from "@/components/PerPageChooser";
@@ -197,6 +198,7 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
             <th>Appellation / region</th>
             <SortableTh label="Status" field="status" />
             <SortableTh label="Open flags" field="flags" className="right" />
+            <th style={{ width: 100 }} className="right" />
           </tr>
         </thead>
         <tbody>
@@ -231,10 +233,16 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
               </td>
               <td><StatusBadge status={r.status} /></td>
               <td className="right">{r.flags > 0 ? <span className="pill">{r.flags}</span> : "—"}</td>
+              <td className="right">
+                <InlineArchiveButton
+                  vintageId={r.vintage_id}
+                  label={`${r.display_name}${r.vintage_text ? ` ${r.vintage_text}` : ""}`}
+                />
+              </td>
             </ClickableRow>
           ))}
           {rows.length === 0 && (
-            <tr><td colSpan={6} className="muted empty-state">
+            <tr><td colSpan={7} className="muted empty-state">
               No wines match these filters.
               {anyFilter && <> <Link href="/wines">Clear filters</Link></>}
             </td></tr>

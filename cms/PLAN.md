@@ -191,6 +191,35 @@ Depends on Phase 12 pricing schema; now live.
 - Per-wine PDF export (not catalog-driven) ships no prices by default — Trade
   pricing lives on the Catalog pass, which is correct for distributor sheets.
 
+### Phase 18 — UX fixes: inline row archive, export chooser, dark-mode AI dialog — SHIPPED
+
+Three UX fixes from screenshot review:
+
+**1. Archive button on every wine row.** Right-most column, hover-friendly, two-click
+confirm inline (no modal) so a row's archive stays close to the row. Click
+cancels bubble up blocked so the row's own navigation doesn't fire.
+
+**2. Export CSV chooser.** The Selection Bar's Export CSV button now opens a
+tiny panel asking whether to export:
+- *Selected (N)* — only the ticked rows across all pages
+- *All matching filters (M)* — every wine that matches current search / filters, not just the page
+The "all" count is fetched on-open from the new `/api/wines/count` endpoint
+so the button shows the exact number. The export route (`/api/wines/export`)
+now accepts `?all=1` plus any of q/status/country/missing/sort/dir and
+re-runs the filter query, so the result matches the list the user is looking at.
+
+**3. Dark-mode AI dialog readability.** New `--card-soft` CSS token in both
+themes:
+- Light: `#faf6ec` (same as before)
+- Dark: `#332c25` — slightly lighter than `--panel`, so a nested card is
+  visible on the panel without becoming washed out
+Every `.ai-dialog__action`, `.ai-dialog__text`, and `.ai-proposal-card` now
+uses `--card-soft` with explicit `color: var(--ink)` on the text, replacing
+the previous hardcoded light-cream backgrounds that left the text invisible
+in dark mode. Buttons inside the AI dialog honor the normal `.btn` dark
+override, and the muted secondary text uses `var(--muted)` with AA contrast
+on both themes.
+
 ### Phase 17 — Reconcile from inventory + archive — SHIPPED
 
 Two user-asked additions on top of the shipped roadmap:
