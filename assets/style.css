@@ -126,7 +126,14 @@ form.f{display:grid;gap:14px}form.f input,form.f textarea,form.f select{font:inh
 @media(max-width:700px){.sort{margin-left:0;width:100%}.sort select{flex:1}}
 .wgrid .wcard .bottle{background:none;border:0;position:relative;overflow:visible;padding:4% 10% 12%}
 .wgrid .wcard .bottle img{position:relative;z-index:1;mix-blend-mode:multiply;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
-.wgrid .wcard .bottle:after{content:"";position:absolute;left:50%;bottom:5%;width:46%;height:16px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at center,rgba(28,22,24,.28),rgba(28,22,24,0) 70%);transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .5s}
+.wgrid .wcard .bottle:after{content:"";position:absolute;left:50%;bottom:8%;width:46%;height:16px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at center,rgba(28,22,24,.28),rgba(28,22,24,0) 70%);transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .5s}
 .wgrid .wcard:hover .bottle img,.wgrid .wcard:focus-visible .bottle img{transform:translateY(-14px)}
 .wgrid .wcard:hover .bottle:after,.wgrid .wcard:focus-visible .bottle:after{transform:translateX(-50%) scale(.75);opacity:.6}
 @media(prefers-reduced-motion:reduce){.wgrid .wcard .bottle img,.wgrid .wcard .bottle:after{transition:none}}
+/* wine detail pages: free-floating bottle */
+.product .shot{background:var(--paper);border:0;overflow:visible;padding:4% 12% 14%}
+.product .shot img{position:relative;z-index:1;mix-blend-mode:multiply;animation:mm-float 6s ease-in-out infinite}
+.product .shot:after{content:"";position:absolute;left:50%;bottom:10.5%;width:44%;height:22px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at center,rgba(28,22,24,.3),rgba(28,22,24,0) 70%);animation:mm-shadow 6s ease-in-out infinite}
+@keyframes mm-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes mm-shadow{0%,100%{transform:translateX(-50%) scale(1);opacity:1}50%{transform:translateX(-50%) scale(.85);opacity:.7}}
+@media(prefers-reduced-motion:reduce){.product .shot img,.product .shot:after{animation:none}}
