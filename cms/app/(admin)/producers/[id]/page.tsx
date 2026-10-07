@@ -7,6 +7,7 @@ import { EditableProducer, type LocationChoice, type ProducerFields } from "@/co
 import SourcesPanel, { type ProvenanceRow } from "@/components/SourcesPanel";
 import CopyButton from "@/components/CopyButton";
 import UpdatedMeta from "@/components/UpdatedMeta";
+import DeleteProducerButton from "@/components/DeleteProducerButton";
 
 export const dynamic = "force-dynamic";
 
@@ -155,6 +156,13 @@ export default async function ProducerDetail({ params }: { params: Promise<{ id:
             <CopyButton value={shareUrl} label="Copy link" compact />
             <CopyButton value={id} label="ID" compact />
           </p>
+        </div>
+        <div className="head-side">
+          <DeleteProducerButton
+            id={id}
+            wineCount={wines.length}
+            canDelete={user?.role === "admin"}
+          />
         </div>
       </header>
 

@@ -1870,3 +1870,33 @@ export async function runWineCsvImport(formData: FormData): Promise<{ ok: boolea
   }
   return { ok: true, summary };
 }
+
+// ---------------------------------------------------------------- producer delete
+export async function deleteProducer(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireAdmin();   // destructive — admin only
+  const id = String(formData.get("id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Invalid id." };
+
+  const row = await one<{ name: string; wine_count: number; vintage_count: number }>(
+    `SELECT p.name,
+       (SELECT count(*)::int FROM wines w WHERE w.producer_id = p.id AND w.deleted_at IS NULL) AS wine_count,
+       (SELECT count(*)::int FROM wine_vintages v
+          JOIN wines w ON w.id = v.wine_id
+          WHERE w.producer_id = p.id AND v.deleted_at IS NULL) AS vintage_count
+     FROM producers p WHERE p.id = $1 AND p.deleted_at IS NULL`,
+    [id],
+  );
+  if (!row) return { ok: false, message: "Producer not found." };
+
+  // Soft-delete the producer, their wines and all vintages in a single pass.
+  await query("UPDATE wine_vintages SET deleted_at = now() WHERE wine_id IN (SELECT id FROM wines WHERE producer_id = $1) AND deleted_at IS NULL", [id]);
+  await query("UPDATE wines SET deleted_at = now() WHERE producer_id = $1 AND deleted_at IS NULL", [id]);
+  await query("UPDATE producers SET deleted_at = now() WHERE id = $1", [id]);
+
+  await audit(user.id, "producer.delete",
+    { type: "producer", id },
+    { old: { name: row.name, wine_count: row.wine_count, vintage_count: row.vintage_count } });
+  revalidatePath("/producers");
+  revalidatePath("/wines");
+  redirect("/producers");
+}

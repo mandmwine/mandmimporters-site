@@ -4,8 +4,8 @@
 //   email  — PDF 1.4 compression, slightly reduced image quality (~5 MB target)
 //   web    — stronger compression, ~1 MB target for fast download
 //
-// Runs on Vercel via @sparticuz/chromium (brotli-compressed Chrome in /tmp) and
-// puppeteer-core. Not available in `edge` runtime.
+// Runs on Vercel via @sparticuz/chromium-min (downloads Chrome on first use
+// from a hosted pack URL) + puppeteer-core. Not available in `edge` runtime.
 import { NextResponse, type NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { loadSheetData } from "@/lib/sheet/data";
@@ -33,12 +33,18 @@ function filenameFor(data: Awaited<ReturnType<typeof loadSheetData>>, preset: Pr
   return `MM-${slug}${vintage}-${preset}.pdf`;
 }
 
+// Hosted brotli-packed Chromium binary matching @sparticuz/chromium-min 153.
+// Pinned per release — change this when we upgrade chromium-min.
+const CHROMIUM_PACK_URL =
+  process.env.CHROMIUM_PACK_URL ??
+  "https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.x64.tar";
+
 async function launchBrowser(preset: Preset) {
-  // Vercel's Node runtime has no Chrome. @sparticuz/chromium provides a small build
-  // that unpacks into /tmp on first use.
-  const chromium = (await import("@sparticuz/chromium")).default;
+  // chromium-min fetches the pack URL on first invocation and caches it in /tmp
+  // so subsequent requests reuse it. Nothing is shipped in the lambda bundle.
+  const chromium = (await import("@sparticuz/chromium-min")).default;
   const puppeteer = await import("puppeteer-core");
-  const executablePath = await chromium.executablePath();
+  const executablePath = await chromium.executablePath(CHROMIUM_PACK_URL);
   // Pixel density is the main size/quality lever we have for Chromium PDF.
   const scale = preset === "print" ? 2.0 : preset === "email" ? 1.4 : 1.0;
   return puppeteer.default.launch({

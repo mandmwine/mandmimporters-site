@@ -19,40 +19,99 @@
    when no explicit choice was made. Light mode is forced when data-theme="light". */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #16130f;
-    --panel: #1f1b17;
-    --ink:   #efe8da;
-    --muted: #9c9382;
-    --rule:  #332d26;
-    --accent: #c87a8a;
-    --accent-soft: #3a1e24;
-    --warn: #d4a05e;
-    --warn-soft: #3a2a14;
-    --ok: #86c69b;
-    --ok-soft: #1c2e22;
-    --err: #e78585;
-    --err-soft: #3a1a1a;
+    --paper: #1a1613;
+    --panel: #26211c;
+    --ink:   #f5efe3;
+    --muted: #b8aea0;
+    --rule:  #4a4238;
+    --accent: #e49aa8;
+    --accent-soft: #4a2630;
+    --warn: #e4b876;
+    --warn-soft: #3f2e18;
+    --ok: #9ad9ad;
+    --ok-soft: #223a2d;
+    --err: #f09a9a;
+    --err-soft: #3f2020;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #16130f;
-  --panel: #1f1b17;
-  --ink:   #efe8da;
-  --muted: #9c9382;
-  --rule:  #332d26;
-  --accent: #c87a8a;
-  --accent-soft: #3a1e24;
-  --warn: #d4a05e;
-  --warn-soft: #3a2a14;
-  --ok: #86c69b;
-  --ok-soft: #1c2e22;
-  --err: #e78585;
-  --err-soft: #3a1a1a;
+  --paper: #1a1613;
+  --panel: #26211c;
+  --ink:   #f5efe3;          /* was #efe8da, bumped for stronger contrast */
+  --muted: #b8aea0;          /* was #9c9382 — hard to read; now AA on panel */
+  --rule:  #4a4238;          /* was #332d26 — borders were nearly invisible */
+  --accent: #e49aa8;         /* brighter burgundy for a dark background */
+  --accent-soft: #4a2630;
+  --warn: #e4b876;
+  --warn-soft: #3f2e18;
+  --ok: #9ad9ad;
+  --ok-soft: #223a2d;
+  --err: #f09a9a;
+  --err-soft: #3f2020;
 }
 
 /* Reduced motion: respect the OS setting and the user's preference. */
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* Dark-mode: replace hardcoded white / cream backgrounds with panel/paper
+   tokens. We can't retrofit every rule, so this sweep catches the common
+   ones so inputs, buttons, badges and tiles don't look stark on dark. */
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] .btn,
+:root[data-theme="dark"] .export-group {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--rule);
+}
+:root[data-theme="dark"] .ai-dialog__action:hover { background: var(--panel); }
+:root[data-theme="dark"] .selbar__actions .btn,
+:root[data-theme="dark"] .selbar__actions .btn.primary { color: var(--ink); }
+:root[data-theme="dark"] .selbar__actions .btn { background: var(--rule); border-color: var(--rule); }
+:root[data-theme="dark"] .bottle-panel__preview,
+:root[data-theme="dark"] .map-preview,
+:root[data-theme="dark"] .preview-frame,
+:root[data-theme="dark"] .asset-tile img,
+:root[data-theme="dark"] .bottle-library li { background: var(--rule); }
+:root[data-theme="dark"] .asset-detail__image { background: var(--rule); }
+:root[data-theme="dark"] .prov-row,
+:root[data-theme="dark"] .drag-item,
+:root[data-theme="dark"] .share-row,
+:root[data-theme="dark"] .theme-row .form-grid textarea { background: var(--panel); color: var(--ink); border-color: var(--rule); }
+:root[data-theme="dark"] .cmd-palette__footer { background: var(--panel); }
+:root[data-theme="dark"] .map-uploader textarea { background: var(--panel); color: var(--ink); }
+:root[data-theme="dark"] .asset-search input[type="search"] { background: var(--panel); color: var(--ink); border-color: var(--rule); }
+:root[data-theme="dark"] .share-row__url input { background: var(--rule); color: var(--ink); }
+:root[data-theme="dark"] .compare-table thead th,
+:root[data-theme="dark"] .compare-table tbody th[scope="row"] { background: var(--panel); color: var(--muted); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) input,
+  :root:not([data-theme="light"]) select,
+  :root:not([data-theme="light"]) textarea,
+  :root:not([data-theme="light"]) .btn,
+  :root:not([data-theme="light"]) .export-group {
+    background: var(--panel);
+    color: var(--ink);
+    border-color: var(--rule);
+  }
+  :root:not([data-theme="light"]) .bottle-panel__preview,
+  :root:not([data-theme="light"]) .map-preview,
+  :root:not([data-theme="light"]) .preview-frame,
+  :root:not([data-theme="light"]) .asset-tile img,
+  :root:not([data-theme="light"]) .bottle-library li,
+  :root:not([data-theme="light"]) .asset-detail__image { background: var(--rule); }
+  :root:not([data-theme="light"]) .prov-row,
+  :root:not([data-theme="light"]) .drag-item,
+  :root:not([data-theme="light"]) .share-row,
+  :root:not([data-theme="light"]) .theme-row .form-grid textarea { background: var(--panel); color: var(--ink); border-color: var(--rule); }
+  :root:not([data-theme="light"]) .asset-search input[type="search"] { background: var(--panel); color: var(--ink); border-color: var(--rule); }
+  :root:not([data-theme="light"]) .share-row__url input { background: var(--rule); color: var(--ink); }
+  :root:not([data-theme="light"]) .compare-table thead th,
+  :root:not([data-theme="light"]) .compare-table tbody th[scope="row"] { background: var(--panel); color: var(--muted); }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }

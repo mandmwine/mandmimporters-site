@@ -39,13 +39,18 @@ const PRESET_SETTINGS: Record<Preset, { scale: number; margin: string }> = {
   web: { scale: 1.0, margin: "0in" },
 };
 
+// Hosted brotli-packed Chromium binary matching @sparticuz/chromium-min 153.
+const CHROMIUM_PACK_URL =
+  process.env.CHROMIUM_PACK_URL ??
+  "https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.x64.tar";
+
 async function launchBrowser(preset: Preset) {
-  const chromium = (await import("@sparticuz/chromium")).default;
+  const chromium = (await import("@sparticuz/chromium-min")).default;
   const puppeteer = await import("puppeteer-core");
   return puppeteer.default.launch({
     args: chromium.args,
     defaultViewport: { width: 1240, height: 1600, deviceScaleFactor: PRESET_SETTINGS[preset].scale },
-    executablePath: await chromium.executablePath(),
+    executablePath: await chromium.executablePath(CHROMIUM_PACK_URL),
     headless: true,
   });
 }
