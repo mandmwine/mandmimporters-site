@@ -418,9 +418,11 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 }
 .ai-dialog__backdrop {
   position: absolute; inset: 0; background: rgba(30, 27, 24, 0.5);
+  z-index: 0;
 }
 .ai-dialog__inner {
   position: relative;
+  z-index: 1;
   background: var(--panel);
   border-radius: 10px;
   width: 100%; max-width: 560px;
