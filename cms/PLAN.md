@@ -191,6 +191,57 @@ Depends on Phase 12 pricing schema; now live.
 - Per-wine PDF export (not catalog-driven) ships no prices by default — Trade
   pricing lives on the Catalog pass, which is correct for distributor sheets.
 
+### Phase 19 — Color system concept (then fix the gap) — SHIPPED
+
+User rightly called out: fixing color bugs reactively is the wrong workflow.
+The underlying concept has to exist first, then every component picks from it.
+Captured here so future components stay inside the system.
+
+**Three surface levels, one ink, one muted — all contrast-validated.**
+
+| Token | Light | Dark | Role |
+|---|---|---|---|
+| `--paper` | `#f7f3ea` | `#1a1613` | Page body, outside any card |
+| `--panel` | `#fffdf8` | `#26211c` | Standard card / panel |
+| `--card-soft` | `#faf6ec` | `#332c25` | Nested card inside a panel (dialog tiles, proposals, modal bodies) |
+| `--ink` | `#1e1b18` | `#f5efe3` | Primary text |
+| `--muted` | `#6f675d` | `#b8aea0` | Secondary text |
+| `--rule` | `#e2dacb` | `#4a4238` | Borders |
+
+**Why three surface levels:** a dialog opens on a page already in a panel, and
+usually holds action tiles or a proposal body nested inside. Without a third
+level those nested cards vanish into the dialog. `--card-soft` = `panel`
+shifted by a few shades of warmth — slightly darker in light mode, slightly
+lighter in dark mode. Always one surface step from `panel`, both ways.
+
+**Contrast (WCAG AA = 4.5:1):**
+
+| Pair | Light | Dark |
+|---|---|---|
+| ink on paper | 16.1 ✓ | 14.5 ✓ |
+| ink on panel | 17.3 ✓ | 11.6 ✓ |
+| ink on card-soft | 16.0 ✓ | 9.2 ✓ |
+| muted on panel | 5.5 ✓ | 6.2 ✓ |
+| muted on card-soft | 5.3 ✓ | 5.2 ✓ |
+
+Every pair passes AA — so any component picking any surface + ink/muted is safe.
+
+**Rules for component authors (captured in a comment at the top of globals.css):**
+1. Pick ONE surface token for background: `--paper`, `--panel`, `--card-soft`. Never hardcode `#fff`, `#faf6ec`, `#fcf9f1`, `#efe9dd`.
+2. Primary text = `var(--ink)`. Secondary = `var(--muted)`.
+3. Borders = `var(--rule)`.
+4. Dark-mode token values must appear in BOTH the `@media (prefers-color-scheme: dark)` block AND the `[data-theme="dark"]` block. Missing one = half the users see broken contrast.
+5. Exception: `.sheet` print preview stays on physical-paper cream always — it's a preview of a printed page.
+
+**The gap this phase closed:**
+`--card-soft` was defined in `[data-theme="dark"]` but missing from the
+`prefers-color-scheme: dark` block. Users on OS-level dark mode (no explicit
+toggle) saw every token flip to dark except `--card-soft`, which stayed cream
+— so the AI dialog's proposal body rendered as a bright cream block on the
+dark panel. Fix was two lines of CSS, but the real fix is the rule above
+(§4). The AI dialog `pre` / `em` / `strong` descendants also now inherit
+`--ink` explicitly, so a scores JSON blob reads correctly on both themes.
+
 ### Phase 18 — UX fixes: inline row archive, export chooser, dark-mode AI dialog — SHIPPED
 
 Three UX fixes from screenshot review:

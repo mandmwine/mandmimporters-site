@@ -20,12 +20,27 @@
   --radius: 6px;
 }
 
+/* ---------------------------------------------------------------------------
+   COLOR SYSTEM — three surface levels, one ink, contrast-validated.
+   See PLAN.md "Phase 19" for the rationale. Rule for authors:
+     1. Pick ONE surface token for background: --paper, --panel, --card-soft.
+        Never hardcode #fff / #faf6ec / #fcf9f1 / #efe9dd. The print sheet
+        preview (.sheet) is the only exception — it is a preview of paper.
+     2. Primary text = color: var(--ink). Secondary = color: var(--muted).
+     3. Borders = var(--rule).
+   The dark-mode token values must appear in BOTH the prefers-color-scheme
+   block (for OS dark) and the [data-theme="dark"] block (for explicit toggle).
+   Missing one = half the users see broken contrast.
+--------------------------------------------------------------------------- */
+
 /* Dark mode: user-chosen via [data-theme="dark"], or auto via prefers-color-scheme
    when no explicit choice was made. Light mode is forced when data-theme="light". */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #1a1613;
     --panel: #26211c;
+    --card-soft: #332c25;      /* nested card — lighter than --panel */
+    --card-soft-hover: #3d352c;
     --ink:   #f5efe3;
     --muted: #b8aea0;
     --rule:  #4a4238;
@@ -42,14 +57,12 @@
 :root[data-theme="dark"] {
   --paper: #1a1613;
   --panel: #26211c;
-  /* Slightly LIGHTER than --panel so a nested card is visible, matching the
-     light-theme logic where --card-soft is slightly darker than --panel. */
-  --card-soft: #332c25;
+  --card-soft: #332c25;        /* nested card — lighter than --panel */
   --card-soft-hover: #3d352c;
-  --ink:   #f5efe3;          /* was #efe8da, bumped for stronger contrast */
-  --muted: #b8aea0;          /* was #9c9382 — hard to read; now AA on panel */
-  --rule:  #4a4238;          /* was #332d26 — borders were nearly invisible */
-  --accent: #e49aa8;         /* brighter burgundy for a dark background */
+  --ink:   #f5efe3;
+  --muted: #b8aea0;
+  --rule:  #4a4238;
+  --accent: #e49aa8;
   --accent-soft: #4a2630;
   --warn: #e4b876;
   --warn-soft: #3f2e18;
@@ -78,8 +91,9 @@
 }
 /* AI proposal cards (Phase 13 Review AI proposals panel) — use card-soft so
    nested proposals read in both themes. */
-.ai-proposal-card { background: var(--card-soft); }
-.ai-proposal-card--done { background: var(--panel); }
+/* Phase 19: duplicate declaration intentionally lifted up here so an
+   enclosing dark override earlier in the cascade can't win. The authoritative
+   rules remain in the Phase 13 block near line 1751. */
 :root[data-theme="dark"] .selbar__actions .btn,
 :root[data-theme="dark"] .selbar__actions .btn.primary { color: var(--ink); }
 :root[data-theme="dark"] .selbar__actions .btn { background: var(--rule); border-color: var(--rule); }
@@ -467,7 +481,13 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   line-height: 1.55;
   color: var(--ink);
 }
-.ai-dialog__text p { color: var(--ink); }
+/* Everything inside the proposal body inherits ink so pre / p / em all stay
+   readable on card-soft in both themes. */
+.ai-dialog__text,
+.ai-dialog__text p,
+.ai-dialog__text pre,
+.ai-dialog__text em,
+.ai-dialog__text strong { color: var(--ink); }
 .ai-dialog__text p { margin: 0; }
 .ai-dialog__sources summary { cursor: pointer; font-size: 12px; color: var(--muted); }
 .ai-dialog__sources ul { font-size: 12px; margin: 6px 0 0 16px; }
@@ -1751,6 +1771,18 @@ kbd {
   gap: 10px;
   flex-wrap: wrap;
 }
+.ai-proposal-card__head strong { color: var(--ink); }
+/* Everything inside the proposal body stays legible on card-soft regardless
+   of theme. Secondary bits (notes, confidence) go through .muted explicitly. */
+.ai-proposal-card__body,
+.ai-proposal-card__body p,
+.ai-proposal-card__body dl,
+.ai-proposal-card__body dt,
+.ai-proposal-card__body dd,
+.ai-proposal-card__body pre,
+.ai-proposal-card__body em,
+.ai-proposal-card__body strong { color: var(--ink); }
+.ai-proposal-card__body dt { color: var(--muted); }
 .ai-proposal-card__body p { margin: 0; }
 .ai-proposal-card__body dl { margin: 0; }
 .ai-proposal-card__sources summary { cursor: pointer; }
