@@ -119,3 +119,14 @@ form.f{display:grid;gap:14px}form.f input,form.f textarea,form.f select{font:inh
 .wcard .bottle img,.shelf .bottle img{width:100%;height:100%;max-height:none;object-fit:contain}
 .shelf a{flex:0 0 190px}.badges{top:10px;left:10px;z-index:2}
 .product .shot{background:#fff;border:1px solid var(--line);min-height:0;aspect-ratio:2/3;padding:6%;align-items:center}.product .shot img{width:100%;height:100%;max-height:none;object-fit:contain}
+/* wines page: sort control + free-floating bottles */
+.sort{display:flex;align-items:center;gap:10px;margin-left:auto;font-family:var(--ui);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sort select{font-family:var(--ui);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%231c1618' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid var(--line);padding:9px 34px 9px 14px;cursor:pointer;-webkit-appearance:none;appearance:none;border-radius:0}
+.sort select:focus-visible{outline:2px solid var(--wine);outline-offset:2px}
+@media(max-width:700px){.sort{margin-left:0;width:100%}.sort select{flex:1}}
+.wgrid .wcard .bottle{background:none;border:0;position:relative;overflow:visible;padding:4% 10% 12%}
+.wgrid .wcard .bottle img{position:relative;z-index:1;mix-blend-mode:multiply;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.wgrid .wcard .bottle:after{content:"";position:absolute;left:50%;bottom:5%;width:46%;height:16px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at center,rgba(28,22,24,.28),rgba(28,22,24,0) 70%);transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .5s}
+.wgrid .wcard:hover .bottle img,.wgrid .wcard:focus-visible .bottle img{transform:translateY(-14px)}
+.wgrid .wcard:hover .bottle:after,.wgrid .wcard:focus-visible .bottle:after{transform:translateX(-50%) scale(.75);opacity:.6}
+@media(prefers-reduced-motion:reduce){.wgrid .wcard .bottle img,.wgrid .wcard .bottle:after{transition:none}}
