@@ -137,3 +137,48 @@ form.f{display:grid;gap:14px}form.f input,form.f textarea,form.f select{font:inh
 @keyframes mm-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 @keyframes mm-shadow{0%,100%{transform:translateX(-50%) scale(1);opacity:1}50%{transform:translateX(-50%) scale(.85);opacity:.7}}
 @media(prefers-reduced-motion:reduce){.product .shot img,.product .shot:after{animation:none}}
+/* critical acclaim: scores by vintage */
+.acc-pill{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:6px 0 4px;padding:9px 16px 9px 14px;border:1px solid var(--gold);background:linear-gradient(180deg,#fffaf0,#f8efdc);text-decoration:none;color:var(--ink)}
+.acc-pill b{font-family:var(--display);font-size:1.7rem;font-weight:600;line-height:1;color:var(--wine)}
+.acc-pill span{font-family:var(--ui);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--wine)}
+.acc-pill i{font-style:normal;font-family:var(--ui);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.acc-pill:hover{border-color:var(--wine)}
+.acclaim{margin:46px 0 10px;border-top:1px solid var(--line);padding-top:34px}
+.acc-top h2{margin:.25em 0 .2em}.acc-top p{color:var(--muted);font-size:1rem;margin:0}
+.vint-nav{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px}
+.vint-nav a{font-family:var(--ui);font-size:.68rem;letter-spacing:.16em;padding:7px 13px;border:1px solid var(--line);text-decoration:none;color:var(--ink);background:#fff}
+.vint-nav a:hover{border-color:var(--gold);color:var(--wine)}
+.vint{margin-top:30px;scroll-margin-top:110px}
+.vint-head{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:18px}
+.vint-year{font-family:var(--display);font-size:2.4rem;font-weight:500;line-height:1;color:var(--ink)}
+.vint-lab{font-family:var(--ui);font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.vint-n{margin-left:auto;font-family:var(--ui);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.vint-hero{display:flex;gap:24px;align-items:center;margin-bottom:18px}
+.medal{flex:0 0 auto;width:112px;height:112px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid var(--wine);box-shadow:inset 0 0 0 5px #fff,inset 0 0 0 6px var(--wine);background:#fff;color:var(--wine)}
+.medal b{font-family:var(--display);font-size:2.6rem;font-weight:600;line-height:.9;letter-spacing:-.01em}
+.medal i{font-style:normal;font-family:var(--ui);font-size:.52rem;letter-spacing:.24em;text-transform:uppercase;margin-top:6px}
+.medal.gold{border-color:var(--gold);background:radial-gradient(circle at 35% 30%,#fbf1d9,#e8cf98 60%,#c9a868);color:#3b2a12;box-shadow:inset 0 0 0 5px rgba(255,255,255,.55),inset 0 0 0 6px #a8844a,0 6px 18px rgba(184,149,90,.28)}
+.medal b:only-child{font-size:2rem}
+.hero-txt{min-width:0}
+.hero-critic{display:block;font-family:var(--display);font-size:1.45rem;font-weight:600;line-height:1.15}
+.hero-v{display:block;font-family:var(--ui);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-top:4px}
+.also{display:block;font-size:.92rem;color:var(--muted);margin-top:6px}
+.hero-txt q{display:block;font-family:var(--display);font-style:italic;font-size:1.12rem;line-height:1.4;margin-top:10px;color:var(--ink);quotes:"\201C" "\201D"}
+.hero-txt cite{display:block;font-style:normal;font-family:var(--ui);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.scores{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.sc{position:relative;background:#fff;border:1px solid var(--line);padding:12px 12px 10px;display:flex;flex-direction:column;gap:3px}
+.sc b{font-family:var(--display);font-size:1.75rem;font-weight:600;line-height:1;color:var(--wine)}
+.sc.hi{border-color:#dcc699;background:linear-gradient(180deg,#fffdf7,#fbf4e4)}
+.sc.hi b{color:#8a6a33}
+.sc span{font-family:var(--ui);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);line-height:1.35}
+.sc em{position:absolute;top:10px;right:10px;font-style:normal;font-family:var(--ui);font-size:.56rem;letter-spacing:.12em;color:var(--gold)}
+.sc.minor span{color:var(--muted)}
+.bar{display:inline-block;width:max-content;margin-top:4px;font-family:var(--ui);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);padding:2px 6px;background:var(--paper)}
+.hero-v .bar{margin:0 0 0 8px;vertical-align:1px}
+.vint details{margin-top:8px}.vint summary{cursor:pointer;font-family:var(--ui);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--wine);padding:8px 0;list-style:none}
+.vint summary::-webkit-details-marker{display:none}.vint summary:before{content:"+ "}.vint details[open] summary:before{content:"– "}
+.vint details .scores{margin-top:6px}
+.acc-note{font-size:.85rem;color:var(--muted);margin-top:22px}
+@media(max-width:560px){.vint-hero{gap:16px}.medal{width:92px;height:92px}.medal b{font-size:2.1rem}.scores{grid-template-columns:repeat(2,1fr)}.vint-year{font-size:2rem}}
+/* score badge on wine cards */
+.badge.score{background:linear-gradient(135deg,#d8bd87,#b8955a);color:#2a1d0c;font-weight:500}

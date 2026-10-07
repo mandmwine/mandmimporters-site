@@ -1,0 +1,3352 @@
+{
+ "Carillon d'Angélus": [
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinum",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Drinks Business",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "92–94",
+   "source": "https://www.thedrinksbusiness.com/2023/05/saint-emilion-2022-en-primeur-tasting-notes/",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "92–94",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · N. Martin",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "91–93",
+   "source": "https://www.millesima-usa.com/carillon-d-angelus-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": "Linear and tight with fresh and fine tannins."
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "93–94",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "92–94",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/le-carillon-d-angelus-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "92–94",
+   "source": "site",
+   "quote": "I cannot recall a Carillon as precise as this."
+  }
+ ],
+ "Castellare Chianti Classico": [
+  {
+   "critic": "Vinous",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "92",
+   "source": "site",
+   "quote": "Silky, aromatic, and light on its feet."
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "91",
+   "source": "site",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "90",
+   "source": "site",
+   "quote": "Big sour-cherry and spice nose with notes of tobacco leaf."
+  }
+ ],
+ "Castellare di Castellina Chianti Classico Riserva": [
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "94",
+   "source": "https://www.superiore.de/en/wine/tuscany-chianti/castellare-di-castellina/chianti-classico-riserva-docg-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "92",
+   "source": "https://www.superiore.de/en/wine/tuscany-chianti/castellare-di-castellina/chianti-classico-riserva-docg-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "91",
+   "source": "https://www.superiore.de/en/wine/tuscany-chianti/castellare-di-castellina/chianti-classico-riserva-docg-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Luca Maroni",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "91",
+   "source": "https://www.superiore.de/en/wine/tuscany-chianti/castellare-di-castellina/chianti-classico-riserva-docg-2023.html",
+   "quote": ""
+  }
+ ],
+ "Castellare di Castellina I Sodi di San Niccolò": [
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "98",
+   "source": "https://www.falstaff.com/en/wines/castellare-di-castellina-2022-i-sodi-di-s-niccolo-toscana-igt-1",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "site",
+   "quote": ""
+  },
+  {
+   "critic": "The Drinks Business",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "site",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "site",
+   "quote": ""
+  }
+ ],
+ "Chateau Labegorce Margaux": [
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": "A dark, sumptuous beauty."
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "92–93",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": "A tight, compact Labégorce. Very structured for this estate."
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": "Fleshy and layered, this contemporary-styled Margaux."
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2015",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2015.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2015",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2015.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2015",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2015.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2015",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/chateau-labegorce-2015.html",
+   "quote": ""
+  }
+ ],
+ "Chateau Lafon-Rochet": [
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": "Once again, the most elegant wine in Saint-Estèphe."
+  },
+  {
+   "critic": "Vinum",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": "An exceptional wine in 2022."
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": "A seriously good, concentrated, powerful expression."
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Terre de Vins",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": "Dark chocolate, cigar box, blackcurrants, white pepper and graphite."
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "93–95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · N. Martin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": "A rich, ripe, somewhat Napa-styled Saint-Estèphe."
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "17/20",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": "Represents the essence of classicism in Bordeaux."
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": "Richly structured, powered by dark tannins and rich blackberry fruits."
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": "Pleasingly silky, polished and smooth. Sheer pleasure!"
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93+",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "La RVF",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91+",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": "Plump and open, with a burst of loganberry and mulberry fruit."
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "17/20",
+   "source": "https://www.millesima-usa.com/chateau-lafon-rochet-2020.html",
+   "quote": ""
+  }
+ ],
+ "Chateau Smith Haut Lafitte": [
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "100",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "100",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": "One of the greatest wines from the estate."
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "100",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": "The polish, texture, complexity and patina are very impressive."
+  },
+  {
+   "critic": "Vinum",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Terre de Vins",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "97+",
+   "source": "site",
+   "quote": "Silky, elegant and nuanced. A wine of precision and class."
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96+",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": "Needs time to digest its élevage."
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95+",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": "A warm gush of cassis, plum purée and cherry preserve flavors."
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "95–97",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "99",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": "This shows finesse with structure."
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "99",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": true,
+   "vintage": "2019",
+   "score": "97",
+   "source": "site",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": true,
+   "vintage": "2019",
+   "score": "96–98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "17.5/20",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2014",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2014.html",
+   "quote": "A big black-cherry and bitter-chocolate nose."
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2014",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2014.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2014",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2014.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous",
+   "barrel": false,
+   "vintage": "2014",
+   "score": "94",
+   "source": "site",
+   "quote": "An exceptionally soft, sexy Grand Vin."
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2014",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2014.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2014",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2014.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2014",
+   "score": "93",
+   "source": "site",
+   "quote": "A beautiful, elegant wine to drink over the coming 15 years."
+  },
+  {
+   "critic": "René Gabriel",
+   "barrel": false,
+   "vintage": "2014",
+   "score": "18/20",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2014.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2014",
+   "score": "17.5/20",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2014.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "100",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": "The finest wine ever made by proprietors Daniel and Florence Cathiard."
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "100",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "La RVF",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "Andreas Larsson",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "René Gabriel",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "19/20",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2009",
+   "score": "17/20",
+   "source": "https://www.millesima-usa.com/chateau-smith-haut-lafitte-2009.html",
+   "quote": ""
+  }
+ ],
+ "Chateau Valandraud Grand Cru": [
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "99",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "99",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "99",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": "A stunner. Rich, deep and explosive."
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Andreas Larsson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "96–97",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "96–98",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "17++/20",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2020.html",
+   "quote": ""
+  }
+ ],
+ "Chateau Valandraud Grand Cru (2005)": [
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2005",
+   "score": "100",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2005.html",
+   "quote": "Off the charts. Easily one of the wines of the vintage."
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2005",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2005.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2005",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2005.html",
+   "quote": ""
+  },
+  {
+   "critic": "René Gabriel",
+   "barrel": false,
+   "vintage": "2005",
+   "score": "19/20",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2005.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2005",
+   "score": "17/20",
+   "source": "https://www.millesima-usa.com/chateau-valandraud-2005.html",
+   "quote": ""
+  }
+ ],
+ "Château Haut Brisson": [
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.jjbuckley.com/wine/2020-haut-brisson-bordeaux-blend/2020-976-750/",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.jjbuckley.com/wine/2020-haut-brisson-bordeaux-blend/2020-976-750/",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.jjbuckley.com/wine/2020-haut-brisson-bordeaux-blend/2020-976-750/",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.jjbuckley.com/wine/2020-haut-brisson-bordeaux-blend/2020-976-750/",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "92–93",
+   "source": "https://vertdevin.com/?p=203946",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.thewinecellarinsider.com/bordeaux-wine-producer-profiles/bordeaux/st-emilion/chateau-haut-brisson-st-emilion-bordeaux/",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91",
+   "source": "https://www.jjbuckley.com/wine/2020-haut-brisson-bordeaux-blend/2020-976-750/",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91",
+   "source": "https://www.jjbuckley.com/wine/2020-haut-brisson-bordeaux-blend/2020-976-750/",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91",
+   "source": "https://www.jjbuckley.com/wine/2020-haut-brisson-bordeaux-blend/2020-976-750/",
+   "quote": ""
+  }
+ ],
+ "Château Lespault-Martillac": [
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · N. Martin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "89–91",
+   "source": "https://www.millesima-usa.com/chateau-lespault-martillac-2021.html",
+   "quote": ""
+  }
+ ],
+ "Château Lilian Ladouys": [
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://do.mtouton.com/products/france/bordeaux/saint-estephe/1846-2020/chateau-lilian-ladouys",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://do.mtouton.com/products/france/bordeaux/saint-estephe/1846-2020/chateau-lilian-ladouys",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://do.mtouton.com/products/france/bordeaux/saint-estephe/1846-2020/chateau-lilian-ladouys",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "90+",
+   "source": "https://do.mtouton.com/products/france/bordeaux/saint-estephe/1846-2020/chateau-lilian-ladouys",
+   "quote": ""
+  }
+ ],
+ "Château Olivier Blanc": [
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Terre de Vins",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "90–92",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "17/20",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "91–93",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "91–92",
+   "source": "https://www.millesima-usa.com/chateau-olivier-2020-1.html",
+   "quote": ""
+  }
+ ],
+ "Château Olivier Rouge": [
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://millesima-usa.com/chateau-olivier-2021.html",
+   "quote": "Finely textured, juicy wine that needs time."
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://millesima-usa.com/chateau-olivier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://millesima-usa.com/chateau-olivier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://millesima-usa.com/chateau-olivier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "92–94",
+   "source": "https://millesima-usa.com/chateau-olivier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "91–92",
+   "source": "https://millesima-usa.com/chateau-olivier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "https://millesima-usa.com/chateau-olivier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://millesima-usa.com/chateau-olivier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://millesima-usa.com/chateau-olivier-2021.html",
+   "quote": ""
+  }
+ ],
+ "Château Pontet Labrie": [
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91",
+   "source": "https://www.thewinecellarinsider.com/bordeaux-wine-producer-profiles/bordeaux/st-emilion/chateau-le-pontet-st-emilion-bordeaux-wine-complete-guide/",
+   "quote": ""
+  }
+ ],
+ "Château Teyssier": [
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "90",
+   "source": "https://www.justerinis.com/fine-wines/france/bordeaux/chateau-teyssier/chateau-teyssier-st-emilion-grand-cru/2022",
+   "quote": ""
+  },
+  {
+   "critic": "The Drinks Business",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "90–92",
+   "source": "https://www.thedrinksbusiness.com/2023/05/saint-emilion-2022-en-primeur-tasting-notes/",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://vertdevin.com/?p=239316",
+   "quote": ""
+  }
+ ],
+ "Château Valois Pomerol": [
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "90",
+   "source": "https://vertdevin.com/?p=226668",
+   "quote": ""
+  }
+ ],
+ "Château de Fieuzal": [
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Terre de Vins",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · N. Martin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/chateau-de-fieuzal-2022.html",
+   "quote": ""
+  }
+ ],
+ "Clos La Gaffelière": [
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": true,
+   "vintage": "2023",
+   "score": "94–97",
+   "source": "https://www.frw.co.uk/product/661e9001f7e3d8db1e2b87b8/2023-clos-la-gaffeliere-la-gaffeliere",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": true,
+   "vintage": "2023",
+   "score": "94–96",
+   "source": "https://www.frw.co.uk/product/661e9001f7e3d8db1e2b87b8/2023-clos-la-gaffeliere-la-gaffeliere",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/clos-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/clos-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · N. Martin",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "90",
+   "source": "https://www.frw.co.uk/product/661e9001f7e3d8db1e2b87b8/2023-clos-la-gaffeliere-la-gaffeliere",
+   "quote": ""
+  }
+ ],
+ "Clément Pichon": [
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.wine.com/product/chateau-clement-pichon-2020/748162",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "90",
+   "source": "https://www.wine.com/product/chateau-clement-pichon-2020/748162",
+   "quote": ""
+  }
+ ],
+ "Domaine de Chevalier Blanc": [
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "99",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinum",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "95–96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "94–96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "17.5/20",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96+",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "96–97",
+   "source": "site",
+   "quote": "Pretty phenolic tension, too."
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": true,
+   "vintage": "2020",
+   "score": "94–96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "17+/20",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020-1.html",
+   "quote": ""
+  }
+ ],
+ "Domaine de Chevalier Rouge": [
+  {
+   "critic": "Alexandre Ma",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "98–99",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "98",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · N. Martin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": "Fabulous, a bit strict and tightly wound."
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96+",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96+",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinum",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "96–98",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "96",
+   "source": "site",
+   "quote": "Taut and persistent, with certain ageing potential."
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Terre de Vins",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jancis Robinson",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "17.5/20",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2022.html",
+   "quote": "Racy and likely to age well."
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "98+",
+   "source": "site",
+   "quote": "One of the legendary wines from this address."
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Andreas Larsson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95+",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Weinwisser",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "19/20",
+   "source": "https://www.millesima-usa.com/domaine-de-chevalier-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "95",
+   "source": "site",
+   "quote": "The class shines through."
+  }
+ ],
+ "Domaine de Montille Beaune 1er Cru Les Perrières": [
+  {
+   "critic": "Jasper Morris",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "89–91",
+   "source": "site",
+   "quote": "Very pretty red fruit behind."
+  }
+ ],
+ "Domaine de Montille Nuits-Saint-Georges 1er Cru Aux Thorey": [
+  {
+   "critic": "Burghound",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "90–93",
+   "source": "https://www.bbr.com/products-20218018285-2021-nuits-st-georges-aux-thorey-1er-cru-domaine-de-montille-burgundy",
+   "quote": "Lovely and understated in style."
+  },
+  {
+   "critic": "Jasper Morris",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "90–93",
+   "source": "https://www.bbr.com/products-20218018285-2021-nuits-st-georges-aux-thorey-1er-cru-domaine-de-montille-burgundy",
+   "quote": "A pretty rather than a weighty Nuits-St-Georges."
+  }
+ ],
+ "Domaine de Montille Pommard 1er Cru Les Grands Epenots": [
+  {
+   "critic": "Jasper Morris",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "91–93",
+   "source": "https://www.lcbo.com/en/domaine-de-montille-grands-epenots-pommard-1er-cru-k-2021-40158",
+   "quote": "Lovely fresh cherries."
+  }
+ ],
+ "Falesco Montiano": [
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2018",
+   "score": "93",
+   "source": "site",
+   "quote": "A profound and deep personality with generous richness."
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2018",
+   "score": "92",
+   "source": "site",
+   "quote": "Firm, creamy tannins frame a plush core of dark fruit."
+  },
+  {
+   "critic": "Vinous",
+   "barrel": false,
+   "vintage": "2018",
+   "score": "92",
+   "source": "site",
+   "quote": "Silky and enveloping yet superbly balanced."
+  }
+ ],
+ "Feudi di San Gregorio Fiano di Avellino": [
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "90",
+   "source": "https://www.falstaff.com/en/wines/feudi-di-san-gregorio-2023-fiano-di-avellino-docg",
+   "quote": ""
+  }
+ ],
+ "Feudi di San Gregorio Greco di Tufo": [
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "91",
+   "source": "https://www.falstaff.com/en/wines/feudi-di-san-gregorio-2022-greco-di-tufo-docg",
+   "quote": ""
+  }
+ ],
+ "Feudi di San Gregorio Rubrato Aglianico": [
+  {
+   "critic": "Vinous · E. Guido",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://sf.flatiron-wines.com/products/feudi-di-san-gregorio-aglianico-rubrato-2021",
+   "quote": ""
+  }
+ ],
+ "L'Esprit de Chevalier Blanc": [
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · N. Martin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "91–93",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021-1.html",
+   "quote": ""
+  }
+ ],
+ "L'Esprit de Chevalier Rouge": [
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · N. Martin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/l-esprit-de-chevalier-2021.html",
+   "quote": ""
+  }
+ ],
+ "La Gaffelière Saint-Émilion Grand Cru": [
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": "A dense, powerful wine."
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": true,
+   "vintage": "2023",
+   "score": "96–98",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": "A tight centre palate with firm but creamy tannins."
+  },
+  {
+   "critic": "Vinum",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": "Feels instantly classy, layered and complex. Sophisticated."
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": true,
+   "vintage": "2023",
+   "score": "94–96",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": true,
+   "vintage": "2023",
+   "score": "94–95",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2023.html",
+   "quote": ""
+  },
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "97",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Bettane & Desseauve",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": "A wine of sublime elegance and understated finesse."
+  },
+  {
+   "critic": "Wine Enthusiast",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": "Fresh, bright and more vertically structured than many of its peers."
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Alexandre Ma",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "93–95",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": "Quite rich and generous by the standards of the vintage."
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": "A pretty solid core of black cherry and cassis notes."
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-la-gaffeliere-2021.html",
+   "quote": ""
+  }
+ ],
+ "Les Astéries": [
+  {
+   "critic": "The Drinks Business",
+   "barrel": true,
+   "vintage": "2022",
+   "score": "94–96",
+   "source": "https://www.thedrinksbusiness.com/2023/05/saint-emilion-2022-en-primeur-tasting-notes/",
+   "quote": ""
+  }
+ ],
+ "Marquis d'Alesme": [
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2021.html",
+   "quote": "Enjoyable and well structured without being overly austere."
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2021.html",
+   "quote": "An elegant, polished wine for the year."
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "La RVF",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2021.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "96",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "95",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "The Wine Independent",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeb Dunnuck",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "94",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "93",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "Le Figaro Vin",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  },
+  {
+   "critic": "René Gabriel",
+   "barrel": false,
+   "vintage": "2019",
+   "score": "18/20",
+   "source": "https://www.millesima-usa.com/chateau-marquis-d-alesme-2019.html",
+   "quote": ""
+  }
+ ],
+ "Negretti Barolo Bricco Ambrogio": [
+  {
+   "critic": "Raffaele Vecchione",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "94",
+   "source": "https://firstbottlewines.com/products/negretti-barolo-bricco-ambrogio-2020",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://firstbottlewines.com/products/negretti-barolo-bricco-ambrogio-2020",
+   "quote": ""
+  }
+ ],
+ "Puyblanquet": [
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "92",
+   "source": "https://www.bbr.com/products-20238220668-2023-chateau-puyblanquet-st-emilion-bordeaux",
+   "quote": ""
+  },
+  {
+   "critic": "Vert de Vin",
+   "barrel": true,
+   "vintage": "2023",
+   "score": "92",
+   "source": "https://vertdevin.com/en/vins/chateau-puyblanquet-2023-saint-emilion-grand-cru-2",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.bbr.com/products-20218220668-2021-chateau-puyblanquet-st-emilion-bordeaux",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "90",
+   "source": "https://www.bbr.com/products-20218220668-2021-chateau-puyblanquet-st-emilion-bordeaux",
+   "quote": ""
+  }
+ ],
+ "Rocca di Frassinello Baffonero Maremma Toscana": [
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "94",
+   "source": "https://www.flaschenpost.ch/en/baffonero_rocca-di-frassinello",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "91",
+   "source": "site",
+   "quote": "Ripe black and blue fruit, blue flowers, sweet spices and chocolate."
+  }
+ ],
+ "Rocca di Frassinello Maremma Toscana": [
+  {
+   "critic": "Vinous",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93+",
+   "source": "https://www.superiore.de/en/wine/tuscany-maremma/rocca-di-frassinello/rocca-di-frassinello-maremma-toscana-doc-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Veronelli",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.superiore.de/en/wine/tuscany-maremma/rocca-di-frassinello/rocca-di-frassinello-maremma-toscana-doc-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Doctor Wine",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "93",
+   "source": "https://www.superiore.de/en/wine/tuscany-maremma/rocca-di-frassinello/rocca-di-frassinello-maremma-toscana-doc-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "92",
+   "source": "https://www.superiore.de/en/wine/tuscany-maremma/rocca-di-frassinello/rocca-di-frassinello-maremma-toscana-doc-2020.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2020",
+   "score": "91",
+   "source": "https://www.superiore.de/en/wine/tuscany-maremma/rocca-di-frassinello/rocca-di-frassinello-maremma-toscana-doc-2020.html",
+   "quote": ""
+  }
+ ],
+ "Tempo d'Angélus": [
+  {
+   "critic": "Yves Beck",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "92",
+   "source": "https://www.millesima-usa.com/tempo-d-angelus-2023-c-nc-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/tempo-d-angelus-2023-c-nc-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Decanter",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/tempo-d-angelus-2023-c-nc-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "91",
+   "source": "https://www.millesima-usa.com/tempo-d-angelus-2023-c-nc-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jean-Marc Quarin",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/tempo-d-angelus-2023-c-nc-1.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "90",
+   "source": "https://www.millesima-usa.com/tempo-d-angelus-2023-c-nc-1.html",
+   "quote": ""
+  }
+ ],
+ "Tench Estate Cabernet Sauvignon": [
+  {
+   "critic": "California Wine Advisors",
+   "barrel": false,
+   "vintage": "2023",
+   "score": "99",
+   "source": "https://www.californiawineadvisors.com/?p=3864",
+   "quote": ""
+  }
+ ],
+ "Vallepicciola Chianti Classico": [
+  {
+   "critic": "Falstaff",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "91",
+   "source": "https://www.falstaff.com/en/wines/vallepicciola-2022-chianti-classico-docg",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "91",
+   "source": "https://wineindustryadvisor.com/2024/12/17/prestigious-awards-received-in-2024-establish-vallepicciola-as-a-winery-of-excellence/",
+   "quote": ""
+  }
+ ],
+ "Vallepicciola Rosso Toscana Sangiovese": [
+  {
+   "critic": "Le Guide de L'Espresso",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "99",
+   "source": "https://wineindustryadvisor.com/2025/12/17/in-2025-vallepicciola-strengthens-its-identity-as-a-distinguished-chianti-classico-winery/",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Spectator",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://wineindustryadvisor.com/2025/12/17/in-2025-vallepicciola-strengthens-its-identity-as-a-distinguished-chianti-classico-winery/",
+   "quote": ""
+  },
+  {
+   "critic": "Vinous · A. Galloni",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "93",
+   "source": "https://wineindustryadvisor.com/2025/12/17/in-2025-vallepicciola-strengthens-its-identity-as-a-distinguished-chianti-classico-winery/",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2022",
+   "score": "92",
+   "source": "https://wineindustryadvisor.com/2025/12/17/in-2025-vallepicciola-strengthens-its-identity-as-a-distinguished-chianti-classico-winery/",
+   "quote": ""
+  }
+ ],
+ "Vieux Château Mazerat": [
+  {
+   "critic": "Jane Anson",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://www.leaandsandeman.co.uk/wine/2021-VIEUX-CHATEAU-MAZERAT-Saint-Emilion-48203-00.html",
+   "quote": ""
+  },
+  {
+   "critic": "Jeff Leve",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "93",
+   "source": "https://thewinecellarinsider.com/bordeaux-wine-producer-profiles/bordeaux/st-emilion/vieux-chateau-mazerat",
+   "quote": ""
+  },
+  {
+   "critic": "Matthew Jukes",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "18.5/20",
+   "source": "https://www.leaandsandeman.co.uk/wine/2021-VIEUX-CHATEAU-MAZERAT-Saint-Emilion-48203-00.html",
+   "quote": ""
+  },
+  {
+   "critic": "James Suckling",
+   "barrel": false,
+   "vintage": "2021",
+   "score": "92",
+   "source": "https://www.leaandsandeman.co.uk/wine/2021-VIEUX-CHATEAU-MAZERAT-Saint-Emilion-48203-00.html",
+   "quote": ""
+  },
+  {
+   "critic": "Wine Advocate",
+   "barrel": true,
+   "vintage": "2021",
+   "score": "90–92",
+   "source": "https://www.leaandsandeman.co.uk/wine/2021-VIEUX-CHATEAU-MAZERAT-Saint-Emilion-48203-00.html",
+   "quote": ""
+  }
+ ]
+}
