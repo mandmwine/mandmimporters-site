@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { query } from "@/lib/db";
 import { StatusBadge } from "@/components/Badge";
-import WineRowSelect, { SelectAllButton } from "@/components/WineRowSelect";
+import WineRowSelect, { SelectAllCheckbox } from "@/components/WineRowSelect";
+import ClickableRow from "@/components/ClickableRow";
+import LiveFilters from "@/components/LiveFilters";
 
 export const dynamic = "force-dynamic";
 
@@ -74,52 +76,53 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
     return `/wines?${u}`;
   };
 
+  const entries = rows.map((r) => ({
+    id: r.vintage_id,
+    label: `${r.display_name}${r.vintage_text ? ` ${r.vintage_text}` : ""}`,
+    producer: r.producer,
+  }));
+  const anyFilter = Boolean(q || status || country || missing);
+
   return (
     <>
       <header className="page-head">
         <h1>Wines</h1>
-        <p className="muted">{total} vintage records</p>
+        <p className="muted">
+          {total} vintage record{total === 1 ? "" : "s"}
+          {anyFilter && " · filtered"}
+          {" · showing "}{rows.length ? `${(page - 1) * PAGE + 1}–${(page - 1) * PAGE + rows.length}` : "0"}
+        </p>
       </header>
 
-      <form className="filters" action="/catalog-admin/wines">
-        <input name="q" placeholder="Search wine, producer, appellation, vintage" defaultValue={q} />
-        <select name="status" defaultValue={status}>
-          <option value="">Any status</option>
-          <option value="draft">Draft</option>
-          <option value="needs_review">Needs review</option>
-          <option value="approved">Approved</option>
-          <option value="published">Published</option>
-          <option value="discontinued">Discontinued</option>
-        </select>
-        <select name="country" defaultValue={country}>
-          <option value="">Any country</option>
-          {countries.map((c) => (
-            <option key={c.name}>{c.name}</option>
-          ))}
-        </select>
-        <select name="missing" defaultValue={missing}>
-          <option value="">Any completeness</option>
-          <option value="vintage">Missing vintage</option>
-          <option value="mevushal">Missing mevushal</option>
-          <option value="supervision">Missing supervision</option>
-          <option value="tasting">Missing tasting note</option>
-          <option value="scores">No scores</option>
-        </select>
-        <button className="btn">Filter</button>
-        {(q || status || country || missing) && <Link href="/wines" className="link">Clear</Link>}
-      </form>
+      <LiveFilters
+        basePath="/catalog-admin/wines"
+        q={q}
+        status={status}
+        country={country}
+        missing={missing}
+        countries={countries}
+        statuses={[
+          ["draft", "Draft"],
+          ["needs_review", "Needs review"],
+          ["approved", "Approved"],
+          ["published", "Published"],
+          ["discontinued", "Discontinued"],
+        ]}
+        missings={[
+          ["vintage", "Missing vintage"],
+          ["mevushal", "Missing mevushal"],
+          ["supervision", "Missing supervision"],
+          ["tasting", "Missing tasting note"],
+          ["scores", "No scores"],
+          ["bottle", "Missing bottle image"],
+        ]}
+      />
 
-      <table className="table">
+      <table className="table table-rows">
         <thead>
           <tr>
             <th style={{ width: 44 }}>
-              <SelectAllButton
-                entries={rows.map((r) => ({
-                  id: r.vintage_id,
-                  label: `${r.display_name}${r.vintage_text ? ` ${r.vintage_text}` : ""}`,
-                  producer: r.producer,
-                }))}
-              />
+              <SelectAllCheckbox entries={entries} idPrefix="wines" />
             </th>
             <th>Wine</th>
             <th>Vintage</th>
@@ -130,7 +133,7 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.vintage_id}>
+            <ClickableRow key={r.vintage_id} href={`/catalog-admin/wines/${r.vintage_id}`}>
               <td>
                 <WineRowSelect
                   id={r.vintage_id}
@@ -149,19 +152,24 @@ export default async function WinesPage({ searchParams }: { searchParams: Promis
               </td>
               <td><StatusBadge status={r.status} /></td>
               <td className="right">{r.flags > 0 ? <span className="pill">{r.flags}</span> : "—"}</td>
-            </tr>
+            </ClickableRow>
           ))}
           {rows.length === 0 && (
-            <tr><td colSpan={6} className="muted">No wines match these filters.</td></tr>
+            <tr><td colSpan={6} className="muted empty-state">
+              No wines match these filters.
+              {anyFilter && <> <Link href="/wines">Clear filters</Link></>}
+            </td></tr>
           )}
         </tbody>
       </table>
 
       {pages > 1 && (
         <nav className="pager">
-          {page > 1 && <Link href={link(page - 1)}>← Previous</Link>}
+          {page > 1 ? <Link href={link(1)}>« First</Link> : <span className="muted">« First</span>}
+          {page > 1 ? <Link href={link(page - 1)}>← Previous</Link> : <span className="muted">← Previous</span>}
           <span className="muted">Page {page} of {pages}</span>
-          {page < pages && <Link href={link(page + 1)}>Next →</Link>}
+          {page < pages ? <Link href={link(page + 1)}>Next →</Link> : <span className="muted">Next →</span>}
+          {page < pages ? <Link href={link(pages)}>Last »</Link> : <span className="muted">Last »</span>}
         </nav>
       )}
     </>

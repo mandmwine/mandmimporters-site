@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useEscClose } from "./useEscClose";
 
 // Lightweight edit-mode toggle around a server-action form. Hides a static
 // summary when idle; reveals the <form> children when the pencil is clicked.
 // `rightSlot` renders a secondary control (usually an AI button) in the panel head.
+// Esc closes; the first focusable field is autofocused on open.
 export default function EditablePanel({
   title,
   summary,
@@ -18,6 +20,17 @@ export default function EditablePanel({
   rightSlot?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  useEscClose(open, () => setOpen(false));
+
+  useEffect(() => {
+    if (!open || !bodyRef.current) return;
+    const first = bodyRef.current.querySelector<HTMLElement>(
+      "input:not([type=hidden]), select, textarea",
+    );
+    first?.focus();
+  }, [open]);
+
   return (
     <div className="panel">
       <div className="panel-head">
@@ -31,7 +44,9 @@ export default function EditablePanel({
           )}
         </div>
       </div>
-      {open ? children(() => setOpen(false)) : summary}
+      {open ? (
+        <div ref={bodyRef}>{children(() => setOpen(false))}</div>
+      ) : summary}
     </div>
   );
 }

@@ -65,8 +65,33 @@ export default function AssetGrid({ tiles, canEdit }: { tiles: AssetTile[]; canE
     });
   }
 
+  const allSelected = tiles.length > 0 && selected.size === tiles.length;
+  const someSelected = selected.size > 0 && !allSelected;
+
+  function selectAllOnPage() {
+    if (allSelected || someSelected) setSelected(new Set());
+    else setSelected(new Set(tiles.map((t) => t.id)));
+  }
+
   return (
     <>
+      {canEdit && tiles.length > 0 && (
+        <div className="asset-page-tools">
+          <label className="small">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(el) => { if (el) el.indeterminate = someSelected; }}
+              onChange={selectAllOnPage}
+            />
+            {allSelected
+              ? ` Deselect all ${tiles.length}`
+              : someSelected
+                ? ` ${selected.size} of ${tiles.length} selected — select rest`
+                : ` Select all ${tiles.length} on this page`}
+          </label>
+        </div>
+      )}
       {canEdit && selected.size > 0 && (
         <div className="bulk-bar">
           <span className="strong">{selected.size} selected</span>

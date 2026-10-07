@@ -1,12 +1,14 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useEscClose } from "./useEscClose";
 import { deleteAsset } from "@/lib/actions";
 
 export default function AssetDeleteButton({ id, usedCount }: { id: string; usedCount: number }) {
   const [pending, start] = useTransition();
   const [confirming, setConfirming] = useState(false);
   const router = useRouter();
+  useEscClose(confirming, () => setConfirming(false));
 
   function onDelete() {
     const fd = new FormData();

@@ -1,6 +1,7 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useEscClose } from "./useEscClose";
 import {
   attachSource,
   pushProvenanceValue,
@@ -52,6 +53,7 @@ export default function SourcesPanel({
   const [showAttach, setShowAttach] = useState(false);
   const router = useRouter();
   const [pending, start] = useTransition();
+  useEscClose(showAttach, () => setShowAttach(false));
 
   function act(fn: (fd: FormData) => Promise<unknown>, id: string) {
     const fd = new FormData();
@@ -231,6 +233,12 @@ function AttachSourceForm({
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  useEffect(() => {
+    formRef.current?.querySelector<HTMLElement>(
+      "input:not([type=hidden]), select, textarea",
+    )?.focus();
+  }, []);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -249,7 +257,7 @@ function AttachSourceForm({
   }
 
   return (
-    <form className="attach-source form-grid two" onSubmit={onSubmit}>
+    <form ref={formRef} className="attach-source form-grid two" onSubmit={onSubmit}>
       <label>
         Field
         <input

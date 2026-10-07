@@ -1,5 +1,6 @@
 "use client";
 import { useState, useTransition } from "react";
+import { useEscClose } from "./useEscClose";
 import { useRouter } from "next/navigation";
 import {
   acceptProposal,
@@ -31,6 +32,9 @@ export default function AIFieldButton({
   const [proposal, setProposal] = useState<ProposeResult | null>(null);
   const [picked, setPicked] = useState<Action | null>(null);
   const router = useRouter();
+
+  const closeDialog = () => { setOpen(false); setProposal(null); setPicked(null); };
+  useEscClose(open, closeDialog);
 
   function run(action: Action) {
     setPicked(action);

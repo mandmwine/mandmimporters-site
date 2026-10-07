@@ -1,6 +1,7 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useEscClose } from "./useEscClose";
 import { createCatalogShare, revokeCatalogShare } from "@/lib/actions";
 
 export type Share = {
@@ -31,6 +32,11 @@ export default function CatalogSharePanel({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement | null>(null);
+  useEscClose(showNew, () => setShowNew(false));
+  useEffect(() => {
+    if (showNew) formRef.current?.querySelector<HTMLInputElement>("input[name=label]")?.focus();
+  }, [showNew]);
 
   function onCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -82,7 +88,7 @@ export default function CatalogSharePanel({
       </div>
 
       {showNew && (
-        <form className="attach-source form-grid" onSubmit={onCreate}>
+        <form ref={formRef} className="attach-source form-grid" onSubmit={onCreate}>
           <label>
             Label (optional)
             <input name="label" placeholder="e.g. &ldquo;Spring 2026 — distributors&rdquo;" />

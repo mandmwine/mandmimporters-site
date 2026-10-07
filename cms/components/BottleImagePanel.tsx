@@ -2,6 +2,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import AssetUploader from "./AssetUploader";
+import { useEscClose } from "./useEscClose";
 import { setBottleAsset } from "@/lib/actions";
 
 type Asset = {
@@ -28,6 +29,7 @@ export default function BottleImagePanel({
   const [picking, setPicking] = useState(false);
   const [pending, start] = useTransition();
   const router = useRouter();
+  useEscClose(picking, () => setPicking(false));
 
   function selectAsset(assetId: string | null) {
     const fd = new FormData();
