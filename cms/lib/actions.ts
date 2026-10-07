@@ -598,8 +598,9 @@ export async function createCatalog(formData: FormData) {
 
 // Price tiers the catalog is allowed to showcase on its Trade pages.
 // Mirror lib/xlsx.ts PRICE_TIERS; a catalog "ladder" setting shows the full
-// list rather than a single column.
-export const CATALOG_PRICE_TIERS = [
+// list rather than a single column. NOT exported — Next 16.4 requires every
+// export from a "use server" file to be an async function.
+const CATALOG_PRICE_TIERS = [
   "ladder", "frontline", "2cs", "3cs", "4cs", "5cs", "10cs", "25cs",
 ] as const;
 type CatalogPriceTier = typeof CATALOG_PRICE_TIERS[number];
