@@ -785,16 +785,50 @@ export async function addWinesToCatalog(formData: FormData) {
   revalidatePath(`/catalogs/${catalogId}`);
 }
 
-export async function removeCatalogItem(formData: FormData) {
+export type RemovedCatalogItem = {
+  catalog_id: string;
+  section_id: string | null;
+  wine_vintage_id: string;
+  position: number;
+  render_mode_override: string | null;
+};
+
+export async function removeCatalogItem(formData: FormData): Promise<{ ok: boolean; removed?: RemovedCatalogItem }> {
   const user = await requireEditor();
   const itemId = String(formData.get("id") ?? "");
-  if (!/^[0-9a-f-]{36}$/i.test(itemId)) return;
-  const row = await one<{ catalog_id: string }>("SELECT catalog_id FROM catalog_items WHERE id = $1", [itemId]);
+  if (!/^[0-9a-f-]{36}$/i.test(itemId)) return { ok: false };
+  const row = await one<RemovedCatalogItem>(
+    `SELECT catalog_id, section_id, wine_vintage_id, position, render_mode_override
+       FROM catalog_items WHERE id = $1`,
+    [itemId],
+  );
   await query("DELETE FROM catalog_items WHERE id = $1", [itemId]);
   if (row) {
     await audit(user.id, "catalog_item.delete", { type: "catalog_item", id: itemId });
     revalidatePath(`/catalogs/${row.catalog_id}`);
+    return { ok: true, removed: row };
   }
+  return { ok: false };
+}
+
+// Partner to removeCatalogItem — used by the Undo toast.
+export async function reinsertCatalogItem(formData: FormData) {
+  const user = await requireEditor();
+  const catalogId = String(formData.get("catalog_id") ?? "");
+  const vintageId = String(formData.get("wine_vintage_id") ?? "");
+  const sectionRaw = String(formData.get("section_id") ?? "");
+  const section = /^[0-9a-f-]{36}$/i.test(sectionRaw) ? sectionRaw : null;
+  const position = parseInt(String(formData.get("position") ?? "0"), 10) || 0;
+  const overrideRaw = String(formData.get("render_mode_override") ?? "");
+  const override = overrideRaw || null;
+  if (!/^[0-9a-f-]{36}$/i.test(catalogId) || !/^[0-9a-f-]{36}$/i.test(vintageId)) return;
+  await query(
+    `INSERT INTO catalog_items (catalog_id, section_id, wine_vintage_id, position, render_mode_override)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [catalogId, section, vintageId, position, override],
+  );
+  await audit(user.id, "catalog_item.reinsert", { type: "catalog_item", id: vintageId });
+  revalidatePath(`/catalogs/${catalogId}`);
 }
 
 export async function moveCatalogItem(formData: FormData) {

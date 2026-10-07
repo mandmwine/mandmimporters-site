@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { query } from "@/lib/db";
 import AssetUploader from "@/components/AssetUploader";
 import AssetGrid, { type AssetTile } from "@/components/AssetGrid";
+import FilterChips, { type Chip } from "@/components/FilterChips";
 
 export const dynamic = "force-dynamic";
 
@@ -155,6 +156,14 @@ export default async function AssetsPage({ searchParams }: { searchParams: Promi
         <button className="btn small" type="submit">Search</button>
         {q && <Link className="link small" href={filterHref(filter)}>Clear</Link>}
       </form>
+
+      <FilterChips
+        chips={([
+          q && { key: "q", value: q, label: `“${q}”` },
+          kindFilter && { key: "kind", value: kindFilter, label: `Kind: ${kindFilter}` },
+          filter && { key: "filter", value: filter, label: filter === "unused" ? "Unused" : filter === "linked" ? "Linked" : "Low res" },
+        ].filter(Boolean) as Chip[])}
+      />
 
       <nav className="chips">
         <Link href={kindHref("")} className={!kindFilter ? "active" : undefined}>All kinds</Link>

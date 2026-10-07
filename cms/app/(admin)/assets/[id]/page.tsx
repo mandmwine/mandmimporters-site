@@ -5,6 +5,7 @@ import { one, query } from "@/lib/db";
 import AssetEditForm, { type AssetMeta } from "@/components/AssetEditForm";
 import AssetDeleteButton from "@/components/AssetDeleteButton";
 import AssetReplaceUploader from "@/components/AssetReplaceUploader";
+import CopyButton from "@/components/CopyButton";
 
 export const dynamic = "force-dynamic";
 
@@ -165,11 +166,18 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ id
             <div className="panel-head"><h2>Technical</h2></div>
             <dl className="kv">
               <dt>Asset ID</dt>
-              <dd className="mono">{asset.id}</dd>
+              <dd className="mono">
+                {asset.id} <CopyButton compact value={asset.id} label="Copy ID" />
+              </dd>
               <dt>Checksum</dt>
-              <dd className="mono small">{asset.checksum_sha256 ?? "—"}</dd>
+              <dd className="mono small">
+                {asset.checksum_sha256 ?? "—"}
+                {asset.checksum_sha256 && <> <CopyButton compact value={asset.checksum_sha256} label="Copy" /></>}
+              </dd>
               <dt>Storage path</dt>
-              <dd className="mono small">{asset.storage_path}</dd>
+              <dd className="mono small">
+                {asset.storage_path} <CopyButton compact value={asset.storage_path} label="Copy" />
+              </dd>
               <dt>Uploaded</dt>
               <dd>
                 {new Date(asset.created_at).toLocaleString()}

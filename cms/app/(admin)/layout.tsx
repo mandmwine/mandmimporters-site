@@ -5,6 +5,9 @@ import SignOut from "@/components/SignOut";
 import { SelectionProvider } from "@/components/SelectionProvider";
 import SelectionBar from "@/components/SelectionBar";
 import CommandPalette from "@/components/CommandPalette";
+import ShortcutHelp from "@/components/ShortcutHelp";
+import ThemeToggle from "@/components/ThemeToggle";
+import UndoToastProvider from "@/components/UndoToast";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +30,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <div>{user.displayName || user.email}</div>
             <div className="muted small">{roleLabel(user.role)}</div>
             <SignOut />
+            <div className="sidebar-footer">
+              <ThemeToggle />
+            </div>
+            <div className="muted small sidebar-tips">
+              Press <kbd>?</kbd> for shortcuts · <kbd>⌘K</kbd> to jump
+            </div>
           </div>
         </aside>
-        <main className="content">{children}</main>
+        <main className="content">
+          <UndoToastProvider>{children}</UndoToastProvider>
+        </main>
       </div>
       <SelectionBar existingCatalogs={catalogs} />
       <CommandPalette />
+      <ShortcutHelp />
     </SelectionProvider>
   );
 }

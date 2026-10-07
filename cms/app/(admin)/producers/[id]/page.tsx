@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { getSessionUser } from "@/lib/auth";
 import { one, query } from "@/lib/db";
 import { EditableProducer, type LocationChoice, type ProducerFields } from "@/components/EditableProducer";
 import SourcesPanel, { type ProvenanceRow } from "@/components/SourcesPanel";
+import CopyButton from "@/components/CopyButton";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,8 @@ export default async function ProducerDetail({ params }: { params: Promise<{ id:
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const user = await getSessionUser();
   const canEdit = user?.role === "admin" || user?.role === "editor";
+  const h = await headers();
+  const shareUrl = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host") ?? "mandmimporters.com"}/catalog-admin/producers/${id}`;
 
   const [producerMaybe, wines, provenance, countries, regions, openFlags] = await Promise.all([
     one<Row>(
@@ -143,6 +147,10 @@ export default async function ProducerDetail({ params }: { params: Promise<{ id:
                 <Link href={`/review?producer=${id}`}>{openFlags[0].n} open flag{openFlags[0].n === 1 ? "" : "s"}</Link>
               </>
             )}
+          </p>
+          <p className="small muted record-meta">
+            <CopyButton value={shareUrl} label="Copy link" compact />
+            <CopyButton value={id} label="ID" compact />
           </p>
         </div>
       </header>

@@ -1,10 +1,29 @@
 import Link from "next/link";
 import { query } from "@/lib/db";
 import ClickableRow from "@/components/ClickableRow";
+import SortableTh from "@/components/SortableTh";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProducersPage() {
+const SORT: Record<string, string> = {
+  name: "p.name",
+  country: "coalesce(c.name, '')",
+  wines: "wines",
+  flags: "open_flags",
+};
+
+export default async function ProducersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const sp = await searchParams;
+  const sort = sp.sort && SORT[sp.sort] ? sp.sort : "";
+  const dir = sp.dir === "desc" ? "desc" : "asc";
+  const orderClause = sort
+    ? `${SORT[sort]} ${dir === "desc" ? "DESC" : "ASC"} NULLS LAST, p.name`
+    : "p.name";
+
   const rows = await query<{ id: string; name: string; place: string | null; country: string | null; wines: number; open_flags: number }>(
     `SELECT p.id, p.name, l.name AS place, c.name AS country,
        (SELECT count(*)::int FROM wines w WHERE w.producer_id = p.id AND w.deleted_at IS NULL) AS wines,
@@ -13,7 +32,7 @@ export default async function ProducersPage() {
      FROM producers p
      LEFT JOIN locations l ON l.id = p.primary_location_id
      LEFT JOIN locations c ON c.id = p.country_location_id
-     WHERE p.deleted_at IS NULL ORDER BY p.name`,
+     WHERE p.deleted_at IS NULL ORDER BY ${orderClause}`,
   );
   return (
     <>
@@ -24,10 +43,10 @@ export default async function ProducersPage() {
       <table className="table table-rows">
         <thead>
           <tr>
-            <th>Producer</th>
-            <th>Region</th>
-            <th className="right">Wines</th>
-            <th className="right">Open flags</th>
+            <SortableTh label="Producer" field="name" />
+            <SortableTh label="Region" field="country" />
+            <SortableTh label="Wines" field="wines" className="right" />
+            <SortableTh label="Open flags" field="flags" className="right" />
             <th />
           </tr>
         </thead>
@@ -43,6 +62,9 @@ export default async function ProducersPage() {
               </td>
             </ClickableRow>
           ))}
+          {rows.length === 0 && (
+            <tr><td colSpan={5} className="muted empty-state">No producers yet.</td></tr>
+          )}
         </tbody>
       </table>
     </>

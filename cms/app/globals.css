@@ -14,6 +14,46 @@
   --err-soft: #f8e3e3;
   --radius: 6px;
 }
+
+/* Dark mode: user-chosen via [data-theme="dark"], or auto via prefers-color-scheme
+   when no explicit choice was made. Light mode is forced when data-theme="light". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #16130f;
+    --panel: #1f1b17;
+    --ink:   #efe8da;
+    --muted: #9c9382;
+    --rule:  #332d26;
+    --accent: #c87a8a;
+    --accent-soft: #3a1e24;
+    --warn: #d4a05e;
+    --warn-soft: #3a2a14;
+    --ok: #86c69b;
+    --ok-soft: #1c2e22;
+    --err: #e78585;
+    --err-soft: #3a1a1a;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #16130f;
+  --panel: #1f1b17;
+  --ink:   #efe8da;
+  --muted: #9c9382;
+  --rule:  #332d26;
+  --accent: #c87a8a;
+  --accent-soft: #3a1e24;
+  --warn: #d4a05e;
+  --warn-soft: #3a2a14;
+  --ok: #86c69b;
+  --ok-soft: #1c2e22;
+  --err: #e78585;
+  --err-soft: #3a1a1a;
+}
+
+/* Reduced motion: respect the OS setting and the user's preference. */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
@@ -1115,4 +1155,228 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 .autosave__chip--saving { color: var(--accent); }
 .autosave__chip--saved { color: var(--ok); }
 .autosave__chip--error { color: var(--err); }
+
+/* Pass 3 — sortable headers, filter chips, per-page, prev/next, shortcuts, copy */
+.th-sort {
+  all: unset;
+  cursor: pointer;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  font-size: 11px;
+  display: inline-block;
+}
+.th-sort:hover { color: var(--ink); }
+.th-sort--active { color: var(--ink); }
+
+.per-page { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.per-page select {
+  padding: 3px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font: inherit;
+  background: #fff;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 0 0 10px;
+}
+.filter-chip {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  font-size: 12px;
+}
+.filter-chip:hover { background: var(--accent); color: #fff; }
+.filter-chip__x { font-size: 14px; line-height: 1; }
+
+.prev-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+.prev-next .muted { color: var(--muted); opacity: 0.5; }
+
+.shortcut-help {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(30, 27, 24, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+.shortcut-help__dialog {
+  width: 100%;
+  max-width: 520px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px rgba(30, 27, 24, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 80vh;
+}
+.shortcut-help__head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; border-bottom: 1px solid var(--rule);
+}
+.shortcut-help__head h2 { margin: 0; font-size: 18px; }
+.shortcut-help__body { padding: 10px 20px 20px; overflow: auto; }
+.shortcut-help__body section { margin-top: 14px; }
+.shortcut-help__body h3 {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+.shortcut-help__body table { width: 100%; border-collapse: collapse; }
+.shortcut-help__body td { padding: 4px 0; }
+.shortcut-help__keys { width: 180px; }
+
+kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  background: #fdfaf2;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 var(--rule);
+}
+
+.sidebar-tips { margin-top: 8px; }
+.sidebar-tips kbd { font-size: 10px; padding: 0 4px; }
+
+.copy-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  background: var(--panel);
+}
+.copy-btn:hover { color: var(--ink); border-color: var(--muted); }
+.copy-btn--compact { padding: 0 5px; margin-left: 6px; }
+
+/* Pass 3 — undo toast, theme toggle, record meta row */
+.undo-toasts {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 95;
+  pointer-events: none;
+}
+.undo-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--ink);
+  color: var(--panel);
+  border-radius: 999px;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+  font-size: 13px;
+}
+.undo-toast__button {
+  background: transparent;
+  color: var(--accent-soft);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 999px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font: inherit;
+}
+.undo-toast__button:hover { background: rgba(255,255,255,0.1); }
+.undo-toast__button .muted { color: rgba(255,255,255,0.5); }
+.undo-toast__close {
+  background: transparent;
+  border: 0;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.sidebar-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.record-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+/* kbd styling for shortcut cheatsheet and tips */
+kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+/* The sidebar often uses white in its own colors; let dark-mode take over properly. */
+.sidebar { background: var(--panel); color: var(--ink); }
+
+/* Minor polish for inputs/textarea in dark mode so the browser's default
+   white is replaced by our panel color. */
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select {
+  background: var(--panel);
+  color: var(--ink);
+  border-color: var(--rule);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) input,
+  :root:not([data-theme="light"]) textarea,
+  :root:not([data-theme="light"]) select {
+    background: var(--panel);
+    color: var(--ink);
+    border-color: var(--rule);
+  }
+}
 

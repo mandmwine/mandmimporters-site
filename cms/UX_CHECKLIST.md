@@ -1,101 +1,286 @@
-# UX checklist for the CMS
+# UX checklist — working status
 
-Working document.  Every new feature should be audited against this list
-before shipping, and every old feature should be re-audited periodically.
+Full reference list: **UX_FULL_CHECKLIST.md** (37 sections, ~1400 items).
 
-## Tables with rows
+## Status against the full list
 
-- [x] **Select-all checkbox** in the header, with an indeterminate state
-      when some but not all rows are selected
-- [x] Per-row checkbox, keyboard focusable, with an accessible label
-- [x] Row click opens the primary detail link (not just a single cell)
-- [ ] Sortable columns where it matters (producer, date, flags)
-- [x] Pagination controls with page count and "First / Prev / Next / Last"
-- [x] "N results" shown in the header
-- [x] Empty state with a clear next action
-- [ ] Loading state (skeleton rows) during async refresh
-- [ ] Keyboard: `j` / `k` or arrow keys to move between rows (nice-to-have)
+The sections below note what's shipped and what the next targets are.
+Items marked (N/A) don't apply to a boutique wine catalog CMS (shopping
+cart, booking engine, etc.) and can be ignored.
 
-## Forms and edit panels
+### 1. Search
+- [x] Live, debounced search; Enter also submits; URL-backed state
+- [x] Clear button inside each filter row
+- [x] Keyboard shortcut (`/` or `Cmd+K`) jumps to global search
+- [x] Suggestions dropdown (command palette)
+- [x] Case / accent insensitive (Postgres `ILIKE`)
+- [x] Result count shown ("130 vintage records · showing 1–50")
+- [x] No results message with "Clear filters" next step
+- [ ] Clear-X **inside** the search input (pass 3)
+- [ ] Recent searches
+- [ ] Matched text highlighting
+- [ ] "Did you mean" / typo tolerance
+- [ ] Create new from search term when nothing found
 
-- [x] First field is autofocused when the panel opens
-- [ ] `Enter` in the form submits (unless multi-line)
-- [x] `Esc` cancels and closes the panel
-- [ ] Required fields are marked and validated inline
-- [x] Buttons show a pending state (never let the user double-submit)
-- [x] After save, a short inline confirmation (not a full-page toast)
-- [ ] Unsaved-changes warning before navigation away (nice-to-have)
-- [x] Server errors are shown in the form, not in an alert
+### 2. Filtering
+- [x] Filter by status / country / completeness
+- [x] Filter state in the URL
+- [x] Instant apply (dropdowns)
+- [x] Clear all filters
+- [x] Click column value to filter (pass 3)
+- [ ] Chips for each applied filter with × to remove (pass 3)
+- [ ] Saved filter views
+- [ ] Column header filter menu
 
-## Dialogs / modals
+### 3. Sorting
+- [ ] Click column header to sort (pass 3)
+- [ ] Arrow shows direction (pass 3)
+- [ ] Sort kept in URL (pass 3)
+- [ ] Numbers sort naturally (pass 3)
+- [ ] Statuses sort in logical order (pass 3)
 
-- [x] `Esc` closes
-- [x] Click on the backdrop closes (AI dialog, command palette)
-- [ ] Focus is trapped inside while open
-- [x] First actionable element is autofocused on open
-- [ ] Returns focus to the opener on close
+### 4. Pagination
+- [x] First / Prev / Next / Last
+- [x] Current page highlighted; disabled states muted
+- [x] "Showing M of N"
+- [ ] Items per page chooser (pass 3)
+- [ ] Jump-to-page input (pass 3)
+- [ ] Page number kept in URL (we have this; just mark it)
+- [x] Returns to page 1 when filters change
 
-## Filters and search
-
-- [x] Live, debounced search — no "Filter" button required for a single input
-- [x] Clear button when any filter is active
-- [x] Filter state in the URL so it survives refresh and share
-- [ ] Chip for each applied filter, click to remove
-- [x] Count of matching rows always visible
-
-## Bulk actions
-
-- [x] Select-all-on-page and select-all-matching-filter
+### 5. Selection
+- [x] Per-row checkbox with label
+- [x] Header select-all (tri-state)
+- [x] Selected count in action bar
 - [x] Clear selection
-- [x] Action bar sticks to viewport when any row is selected
-- [x] Destructive actions require confirmation
-- [x] After the action completes, selection clears
+- [x] Selection survives paging (SelectionProvider)
+- [ ] Shift-click range selects
+- [ ] Running total (sum of selected)
 
-## Destructive actions
+### 6. Bulk actions
+- [x] Delete / archive / resolve / dismiss (per-feature)
+- [x] Change kind in bulk (assets)
+- [x] Confirmation with count ("Delete 14 assets?")
+- [x] After action, selection clears
+- [ ] Undo bulk action (pass 3 — Undo toast)
+- [ ] Progress bar on long jobs
 
-- [x] Inline confirmation (two-click), not a `window.confirm()`
-- [x] Explain what will be deleted and what it affects
-- [x] Say when a soft-delete can be undone and for how long
+### 7. Tables
+- [x] Click row to open (ClickableRow)
+- [x] Hover + focus highlights
+- [x] Status shown as colored badge
+- [ ] Show/hide columns, column menu
+- [ ] Drag to reorder columns
+- [ ] Row density toggle
+- [ ] Group by / subtotals
 
-## Navigation
+### 8. Views (list / grid / board)
+- [N/A] Board / kanban — not relevant for this CMS
+- [ ] Side-by-side compare on wines (already have /wines/[id]/compare)
 
-- [x] Breadcrumbs for every page nested below a top-level nav item
-- [x] "Back to X" link in the header, not browser back
-- [x] Current nav item highlighted in the sidebar
-- [x] Cmd+K opens a global search / command palette
+### 9. Record detail pages
+- [x] Breadcrumbs, title, status at top
+- [x] Three-column workspace with jump links (wine edit)
+- [x] Edit button / inline edit
+- [x] Related records (producer → wines, catalog → wines)
+- [ ] Prev / next record arrows (pass 3)
+- [ ] Copy link to record (pass 3)
+- [ ] Record ID visible + click-to-copy (pass 3)
+- [ ] "Updated X ago by Y" (pass 3)
+- [ ] "Open in new tab" button
 
-## Images and files
+### 10. Creating and editing
+- [x] Add in a consistent place
+- [x] Enter saves, Escape cancels
+- [x] Autosave with ✓ Saved indicator
+- [x] Autofocus first field
+- [x] Pending state on buttons
+- [ ] Save and add another (pass 3)
+- [ ] Discard changes button
+- [ ] Keyboard shortcut `N` for new (pass 3)
+- [ ] Warning when someone else changed the record
 
-- [x] Drag-and-drop upload, not only a file picker
-- [x] Visible progress during upload
-- [x] Resolution and size shown next to the image
-- [x] Replace-in-place, not just add-and-delete
-- [x] "Choose from library" when something was uploaded before
+### 11. Forms
+- [x] Label above field
+- [x] Help text under fields
+- [x] Pending state on submit
+- [x] Server errors shown inline
+- [ ] Required-field markers (pass 3)
+- [ ] First-field focus always
+- [ ] Validation on blur, not on keystroke
 
-## Keyboard shortcuts (CMS-wide)
+### 12. Text fields
+- [x] Textarea resize
+- [x] Char counter + warn (tasting note)
+- [x] Autosave for long text
+- [ ] Clear × inside input (pass 3)
+- [ ] Click-to-copy for IDs (pass 3)
 
-- [x] `Esc` closes dialogs and edit panels
-- [x] `/` or `Cmd+K` focuses the main search
-- [x] `Cmd+S` saves whichever panel the focus is in
-- [ ] Shortcut cheatsheet (`?`) — nice-to-have
+### 13. Dates and numbers
+- [x] Dates shown in local format
+- [ ] "In 2 hours / 3 days ago" relative display (pass 3)
 
-## Feedback and status
+### 14. Dropdowns and pickers
+- [x] Searchable in command palette
+- [ ] Searchable dropdowns elsewhere (country picker is one)
 
-- [x] After every write the page re-renders with the new state
-- [x] Server actions show a pending state locally
-- [x] Errors never silently swallow — always surfaced in the form
-- [x] Loading states for anything that takes >200 ms
+### 15. Files, images, media
+- [x] Drag and drop upload (pass 2)
+- [x] Multiple files
+- [x] Thumbnail previews
+- [x] Rename / replace / delete
+- [x] Allowed types + size stated
+- [x] Low-resolution warning
+- [ ] Crop + rotate in-place
+- [ ] Paste image from clipboard
 
-## Drag reorder
+### 16. Buttons, menus and actions
+- [x] One obvious main button per screen
+- [x] Pending states, no double-submit
+- [x] Danger buttons set apart
+- [x] Shortcut keys shown in cheatsheet (pass 3)
+- [x] Command palette
+- [ ] Right-click menu
 
-- [x] Catalog sections drag-to-reorder (with keyboard-navigable fallback)
-- [x] Catalog items drag-to-reorder
-- [ ] Reordering falls back to buttons when drag isn't supported (touch)
+### 17. Delete, undo, safety nets
+- [x] Confirmation names the exact item
+- [x] Soft-delete (assets)
+- [ ] Undo toast on destructive actions (pass 3)
+- [ ] Trash with restore
+- [ ] Session-timeout warning
+- [ ] Drafts recovered on crash
 
-## Autosave
+### 18. Loading, empty, errors, success
+- [x] Pending states on buttons
+- [x] Centered empty states
+- [x] Error messages in the form, not in alert()
+- [ ] Skeleton rows during navigation (pass 3)
+- [ ] Thin top progress bar
 
-- [x] Long-text wine fields autosave on debounced blur (tasting note,
-      food pairing, wine story)
-- [x] Status indicator: Typing… / Saving… / ✓ Saved / Error
-- [ ] Autosave for producer long-text fields
-- [ ] "Last saved X seconds ago" global page footer
+### 19. Notifications (deferred, user said no email alerts)
+- [N/A] Email notifications off per user instruction
+
+### 20. Navigation and wayfinding
+- [x] Current page highlighted in sidebar
+- [x] Breadcrumbs
+- [x] Global search (Cmd+K)
+- [x] Logo goes home (via "Catalog" brand)
+- [ ] Shortcut cheatsheet (`?`) (pass 3)
+- [ ] Back to top on long pages
+
+### 21. Links / URLs / browser
+- [x] Every page has its own URL
+- [x] Filters in the URL
+- [x] Browser back / forward work (Next.js default)
+- [x] Copy link button (pass 3)
+
+### 22. Keyboard
+- [x] Esc closes
+- [x] Cmd+K / `/` opens palette
+- [x] Cmd+S saves panel in focus
+- [ ] `N` opens new-vintage from a wine page (pass 3)
+- [ ] `?` opens shortcut cheatsheet (pass 3)
+- [ ] J / K navigates rows in a list (pass 3)
+- [ ] G then letter navigation
+
+### 23. Copy / export / import / print / share
+- [x] Export CSV / Excel-equivalent (PDF per preset for catalogs)
+- [x] Print layout (sheet mode=raw)
+- [x] Shareable public URL per catalog (phase 10)
+- [ ] Copy ID / copy link (pass 3)
+- [ ] Export selected wines as CSV (pass 3)
+- [ ] Clean print stylesheet for admin pages
+
+### 24. Dashboards (already have the dashboard panel)
+- [x] Dashboard key counts
+- [x] Click any number → list behind it
+- [ ] Date range selector on dashboard
+
+### 25. Calendar
+- [N/A] Not relevant for a wine catalog
+
+### 26. Comments and collaboration
+- [ ] Comments on wines (future)
+
+### 27. History, audit, trust
+- [x] audit_events table used by every write
+- [ ] "Updated X ago by Y" surfaced in UI (pass 3)
+- [ ] Version history view
+
+### 28. Accounts / sign in / security
+- [x] Sign in via Firebase (email+pw, Google)
+- [x] Session cookie, remembered across tabs
+- [ ] Session-timeout warning
+- [ ] List of devices currently signed in (Firebase gives this)
+
+### 29. Roles / permissions
+- [x] Admin / Editor / Viewer roles
+- [x] Per-feature gates (canEdit)
+- [ ] View as other role (nice-to-have)
+
+### 30. Personalization
+- [x] Preview scale persisted (wine workspace)
+- [x] Preview open/closed persisted
+- [x] Review-queue selection cleared on action
+- [ ] Dark mode toggle (pass 3)
+- [ ] Reduced-motion respect (pass 3)
+- [ ] Time zone / clock preference (America/New_York hardcoded for now)
+- [ ] Items-per-page persisted (pass 3)
+
+### 31. Onboarding / help / wording
+- [x] Plain words, same name for each thing
+- [x] Confirmations name the exact item
+- [ ] First-time welcome screen
+- [ ] Shortcut cheatsheet (`?`) (pass 3)
+
+### 32. Shopping
+- [N/A] Not a shop
+
+### 33. Public pages
+- [x] /share/catalog/[token] + /share/wine/[slug] (phase 10)
+
+### 34. Mobile and touch
+- [x] Responsive layout (workspace collapses rails)
+- [ ] Swipe row to archive
+- [ ] Bottom action bar for touch
+
+### 35. Accessibility
+- [x] Strong contrast
+- [x] Keyboard focus visible
+- [x] Alt text supported on assets (metadata.alt_text, phase 4)
+- [x] Icon buttons have aria-labels
+- [ ] Screen-reader announcements for autosave
+- [ ] Reduced motion respect
+
+### 36. Speed, offline, reliability
+- [x] Changes appear instantly (optimistic refresh)
+- [x] Search debounced
+- [x] Big lists paged on the server
+- [ ] Live refresh notice when a tab is stale
+- [ ] Offline banner
+
+### 37. Smart conveniences
+- [x] Duplicates from previous vintage ("Copy from previous")
+- [x] Autofill (bottle library)
+- [x] AI drafts tasting notes, finds scores
+- [ ] "Last value you used" remembered on New (pass 3)
+- [ ] Rapid-entry mode (Save-and-add-another) (pass 3)
+- [ ] Suggested next step after a task
+
+---
+
+## Pass 3 scope (shipping now)
+
+1. **Sortable column headers** — wines, catalogs, producers, assets
+2. **Prev / next record** on wine detail (arrows + J/K)
+3. **Copy link / Copy ID** on wine, producer, catalog, asset, map detail
+4. **Last updated by X, Y ago** on wine + producer detail
+5. **Undo toast** for destructive single-row actions (remove catalog item, delete score, delete grape blend, resolve flag)
+6. **Dark mode toggle** in the user menu, persisted
+7. **Reduced motion** respect
+8. **`?` shortcut cheatsheet overlay**
+9. **Items-per-page chooser** (25 / 50 / 100 / All) on wines list
+10. **Save and add another** for AddVintageButton
+11. **Required-field markers** across forms
+12. **Click producer in wine row** → filter wines by that producer
+13. **"Last updated time"** indicator in header of workspace pages

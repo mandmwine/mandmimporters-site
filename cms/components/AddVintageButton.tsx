@@ -8,12 +8,12 @@ export default function AddVintageButton({ wineId, hasExisting }: { wineId: stri
   const [open, setOpen] = useState(false);
   const [vintage, setVintage] = useState("");
   const [duplicate, setDuplicate] = useState(hasExisting);
+  const [addAnother, setAddAnother] = useState(false);
   const [pending, start] = useTransition();
   const router = useRouter();
   useEscClose(open, () => setOpen(false));
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
+  function doSubmit(keepOpen: boolean) {
     start(async () => {
       const fd = new FormData();
       fd.set("wine_id", wineId);
@@ -21,8 +21,18 @@ export default function AddVintageButton({ wineId, hasExisting }: { wineId: stri
       if (duplicate) fd.set("duplicate", "on");
       await addVintage(fd);
       router.refresh();
-      setOpen(false);
+      if (keepOpen) {
+        setVintage("");
+        // keep the dialog open for another entry
+      } else {
+        setOpen(false);
+      }
     });
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    doSubmit(addAnother);
   }
 
   if (!open) {
@@ -49,8 +59,12 @@ export default function AddVintageButton({ wineId, hasExisting }: { wineId: stri
           Copy from previous
         </label>
       )}
+      <label className="checkbox small" title="Keep this form open after save so you can add another vintage">
+        <input type="checkbox" checked={addAnother} onChange={(e) => setAddAnother(e.target.checked)} />
+        Add another
+      </label>
       <button className="btn primary small" type="submit" disabled={pending}>
-        {pending ? "Adding…" : "Add"}
+        {pending ? "Adding…" : addAnother ? "Add + another" : "Add"}
       </button>
       <button type="button" className="link small" onClick={() => setOpen(false)}>
         Cancel

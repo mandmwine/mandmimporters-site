@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { removeCatalogItem, reorderCatalogItems } from "@/lib/actions";
+import { reinsertCatalogItem, removeCatalogItem, reorderCatalogItems } from "@/lib/actions";
 import DragReorderList, { type DragItem } from "./DragReorderList";
+import { useUndo } from "./UndoToast";
 
 export type CatalogItemRow = {
   id: string;
@@ -27,6 +28,7 @@ export default function CatalogItemsReorder({
 }) {
   const [pending, start] = useTransition();
   const router = useRouter();
+  const undo = useUndo();
 
   async function reorder(orderedIds: string[]) {
     const fd = new FormData();
@@ -35,12 +37,25 @@ export default function CatalogItemsReorder({
     await reorderCatalogItems(fd);
   }
 
-  function remove(id: string) {
+  function remove(id: string, label: string) {
     const fd = new FormData();
     fd.set("id", id);
     start(async () => {
-      await removeCatalogItem(fd);
+      const res = await removeCatalogItem(fd);
       router.refresh();
+      if (res.ok && res.removed) {
+        const snap = res.removed;
+        undo.show(`Removed ${label}`, async () => {
+          const back = new FormData();
+          back.set("catalog_id", snap.catalog_id);
+          back.set("wine_vintage_id", snap.wine_vintage_id);
+          back.set("section_id", snap.section_id ?? "");
+          back.set("position", String(snap.position));
+          back.set("render_mode_override", snap.render_mode_override ?? "");
+          await reinsertCatalogItem(back);
+          router.refresh();
+        });
+      }
     });
   }
 
@@ -62,7 +77,7 @@ export default function CatalogItemsReorder({
           <button
             type="button"
             className="link small muted"
-            onClick={() => remove(it.id)}
+            onClick={() => remove(it.id, `${it.wine_name}${it.vintage_text ? ` ${it.vintage_text}` : ""}`)}
             disabled={pending}
           >
             Remove

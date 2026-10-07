@@ -11,8 +11,26 @@ import BottleImagePanel from "@/components/BottleImagePanel";
 import AIFieldButton from "@/components/AIFieldButton";
 import WineWorkspace, { type WorkspaceSection } from "@/components/WineWorkspace";
 import SourcesPanel from "@/components/SourcesPanel";
+import CopyButton from "@/components/CopyButton";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
+
+// Set the browser tab title to the wine name + vintage so a user with many
+// tabs open can tell them apart.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { title: "Wine" };
+  const row = await one<{ display_name: string; vintage_text: string | null; producer: string }>(
+    `SELECT w.display_name, v.vintage_text, p.name AS producer
+       FROM wine_vintages v JOIN wines w ON w.id = v.wine_id JOIN producers p ON p.id = w.producer_id
+       WHERE v.id = $1`,
+    [id],
+  );
+  if (!row) return { title: "Wine" };
+  const vt = row.vintage_text ? ` ${row.vintage_text}` : "";
+  return { title: `${row.producer} — ${row.display_name}${vt}` };
+}
 
 type Vintage = {
   id: string; wine_id: string; vintage_text: string | null; status: string; mevushal: string;
@@ -32,11 +50,29 @@ function fmtPct(p: string | null) {
   return `${Number.isInteger(n) ? n : n.toFixed(1)}% `;
 }
 
+function relativeTime(d: Date | string | null): string {
+  if (!d) return "never";
+  const t = typeof d === "string" ? new Date(d).getTime() : d.getTime();
+  const diff = Math.max(0, Date.now() - t);
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} hr${h === 1 ? "" : "s"} ago`;
+  const days = Math.floor(h / 24);
+  if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+  return new Date(t).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
 export default async function WineDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const user = await getSessionUser();
   const canEdit = user?.role === "admin" || user?.role === "editor";
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const host = h.get("host") ?? "mandmimporters.com";
+  const shareBase = `${proto}://${host}/catalog-admin/wines/${id}`;
 
   const v = await one<Vintage>(
     `SELECT v.id, v.wine_id, v.vintage_text, v.status, v.mevushal, v.supervision_display,
@@ -281,6 +317,12 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
             {[loc("appellation"), loc("region"), loc("country")].filter(Boolean).join(" · ")}
             {v.category ? ` · ${v.category}` : ""}
           </p>
+          <p className="small muted record-meta">
+            Updated {relativeTime(v.updated_at)}
+            {" · "}
+            <CopyButton value={shareBase} label="Copy link" compact />
+            <CopyButton value={id} label="ID" compact />
+          </p>
         </div>
         <div className="head-side">
           <StatusBadge status={v.status} />
@@ -295,11 +337,26 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
               <a className="link small" href={`/catalog-admin/api/wines/${id}/pdf?preset=web`}>Web</a>
             </div>
           </div>
-          {siblings.length > 1 && (
-            <Link className="link small" href={`/wines/${id}/compare`}>
-              Compare vintages
-            </Link>
-          )}
+          {siblings.length > 1 && (() => {
+            const idx = siblings.findIndex((s) => s.id === id);
+            const prev = idx > 0 ? siblings[idx - 1] : null;
+            const next = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
+            return (
+              <div className="prev-next" aria-label="Switch vintage">
+                {prev ? (
+                  <Link href={`/wines/${prev.id}`} className="link small" title={`Previous vintage: ${prev.vintage_text ?? "none"}`}>
+                    ← {prev.vintage_text ?? "none"}
+                  </Link>
+                ) : <span className="link small muted">← start</span>}
+                <Link className="link small" href={`/wines/${id}/compare`}>Compare</Link>
+                {next ? (
+                  <Link href={`/wines/${next.id}`} className="link small" title={`Next vintage: ${next.vintage_text ?? "none"}`}>
+                    {next.vintage_text ?? "none"} →
+                  </Link>
+                ) : <span className="link small muted">end →</span>}
+              </div>
+            );
+          })()}
           {v.website_slug && (
             <a className="link small" href={`https://www.mandmimporters.com/wines/p/${v.website_slug}`} target="_blank" rel="noreferrer">
               Public page ↗
