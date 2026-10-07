@@ -141,17 +141,30 @@ Also in this commit:
   (critic / score / quote with a source link; aging / designation / mevushal / grapes dl) instead
   of raw JSON — same accept flow
 
-### Phase 14 — Maps bulk create
+### Phase 14 — Maps bulk create — SHIPPED
 
-Your ask: create maps for every appellation. We already have the geoJSON approval infra from Phase 7. What's missing is the actual geoJSON data.
+The GeoJSON approval infra from Phase 7 is now matched with an OpenStreetMap bulk fetcher.
 
-**TODO:**
-- Audit distinct appellations/regions/countries in your catalog (from `wine_vintages.location_id`)
-- Fetch Natural Earth country outlines (public domain) for all countries represented
-- Fetch OSM Overpass for the specific appellations (Chianti Classico, Saint‑Émilion, Margaux, Pessac‑Léognan, Pomerol, Nuits‑Saint‑Georges, Pommard, Volnay, Puligny‑Montrachet, Beaune, Monthelie, Castellare di Castellina/Chianti, Sancerre, La Clape, Maremma Toscana, Judean Hills, Galilee…)
-- Script in `scripts/seed-maps.ts` that writes a draft `map_asset` per location
-- Admin "Approve all drafts" bulk action
-- Any appellation we can't find a free dataset for, I'll report back with the list and we can hand‑draw via geojson.io
+A new admin page `/maps/seed` walks every location that has no map polygon yet and queues
+them for a Nominatim lookup. Each successful hit is filed as a draft map_asset with a
+`settings.seeded_from = "openstreetmap"` and a direct `source_url` link back to the OSM
+record so the editor can audit it in one click. A single "Approve all drafts" button on
+the same page promotes the whole batch to approved (admin only).
+
+- `lib/maps/sources.ts` — Nominatim client with the required User-Agent, 24h fetch cache,
+  and `composeQuery` helper that walks the chain (country → region → name) so an obscure
+  appellation like Pessac-Léognan is queried as `Pessac-Léognan, Bordeaux, France`
+  instead of a bare name that would collide with a street in Lyon.
+- `lib/actions.ts` → `seedMapsBatch` picks the next 5 missing locations per invocation,
+  honors Nominatim's 1 req/sec rate limit, and returns a per-location log. The client
+  component paginates automatically until the queue is empty.
+- `lib/actions.ts` → `approveAllDraftMaps` promotes every latest-draft to approved in
+  one pass, auditing each. Admin only; retires any previously approved version for the
+  same location (not deleted, so a per-location rollback stays possible).
+- `/maps` index now has a "✦ Bulk seed from OpenStreetMap" button in the header.
+- Anything OSM can't find reports a plain `no_match` reason inline so the editor can
+  either rename the location to match OSM's wording, or hand-draw the polygon in
+  `geojson.io` and paste it into the per-location Map Uploader as a last resort.
 
 ### Phase 15 — Pricing in catalogs (from the roadmap top‑10)
 

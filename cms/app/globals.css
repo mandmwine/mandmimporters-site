@@ -1717,4 +1717,59 @@ kbd {
   margin-top: 2px;
 }
 
+/* ---------- Phase 14: bulk seed maps panel ---------- */
+
+.seed-maps { display: flex; flex-direction: column; gap: 12px; }
+.seed-maps__controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.seed-maps__controls select {
+  padding: 4px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+}
+.seed-maps__status {
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--panel);
+}
+.ok-text { color: #2a9b4f; }
+.seed-maps__log {
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--panel);
+  max-height: 420px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.seed-maps__row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 0;
+  border-bottom: 1px dotted var(--rule);
+}
+.seed-maps__row:last-child { border-bottom: 0; }
+.seed-maps__row--seeded .seed-maps__badge { color: #2a9b4f; }
+.seed-maps__row--no_match .seed-maps__badge { color: var(--muted); }
+.seed-maps__row--error .seed-maps__badge { color: #c0392b; }
+.seed-maps__badge {
+  display: inline-block;
+  width: 14px;
+  text-align: center;
+  font-weight: 600;
+}
+
+
 

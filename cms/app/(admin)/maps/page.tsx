@@ -87,6 +87,9 @@ export default async function MapsIndex({ searchParams }: { searchParams: Promis
             {totals.needs_map ?? 0} needing a map
           </p>
         </div>
+        <div className="head-actions">
+          <Link className="btn primary small" href="/maps/seed">✦ Bulk seed from OpenStreetMap</Link>
+        </div>
       </header>
 
       <form className="asset-search" action="/maps">

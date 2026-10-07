@@ -1167,6 +1167,191 @@ export async function deleteMapVersion(formData: FormData) {
   revalidatePath(`/maps/${row.location_id}`);
 }
 
+// ---------------------------------------------------------------- maps bulk seed
+// Phase 14: one-click bulk seeding + bulk approve.
+//
+// seedMapsBatch picks the next `limit` locations with no map yet and tries to
+// pull a polygon from OpenStreetMap (via lib/maps/sources). Each successful
+// hit becomes a draft map_asset. We paginate from the client so a long run
+// (100 appellations × 1s/each) stays well below Vercel's function timeout.
+export type SeedBatchResult = {
+  processed: number;
+  attempted: Array<{
+    location_id: string;
+    name: string;
+    status: "seeded" | "already_had_version" | "no_match" | "error";
+    message?: string;
+    source_url?: string;
+  }>;
+  remaining: number;
+};
+
+export async function seedMapsBatch(formData: FormData): Promise<SeedBatchResult> {
+  const user = await requireEditor();
+  const limit = Math.min(10, Math.max(1, parseInt(String(formData.get("limit") ?? "5"), 10) || 5));
+  const scope = String(formData.get("scope") ?? "needs_map"); // "needs_map" | "all_missing"
+
+  // We only touch locations that have NO map versions at all (status counts).
+  // "needs_map" scope narrows that to locations tagged needs_map so the admin
+  // can retry drafts separately without wiping them.
+  const statusFilter = scope === "all_missing"
+    ? "AND l.map_status <> 'approved'"
+    : "AND l.map_status = 'needs_map'";
+  const batch = await query<{
+    id: string; name: string; type: "country" | "region" | "subregion" | "appellation";
+    parent_id: string | null;
+  }>(
+    `SELECT l.id, l.name, l.type, l.parent_id
+     FROM locations l
+     WHERE NOT EXISTS (SELECT 1 FROM map_assets m WHERE m.location_id = l.id)
+       ${statusFilter}
+     ORDER BY
+       CASE l.type WHEN 'country' THEN 0 WHEN 'region' THEN 1 WHEN 'subregion' THEN 2 ELSE 3 END,
+       l.name
+     LIMIT $1`,
+    [limit],
+  );
+  const total = await one<{ n: number }>(
+    `SELECT count(*)::int AS n
+     FROM locations l
+     WHERE NOT EXISTS (SELECT 1 FROM map_assets m WHERE m.location_id = l.id)
+       ${statusFilter}`,
+  );
+
+  const { fetchFromNominatim, composeQuery, sleep } = await import("./maps/sources");
+
+  const attempted: SeedBatchResult["attempted"] = [];
+  let processed = 0;
+  for (const loc of batch) {
+    // Climb to find country + region for a better Nominatim query.
+    const chain = await query<{ type: string; name: string }>(
+      `WITH RECURSIVE up AS (
+         SELECT id, parent_id, type, name, 0 AS depth FROM locations WHERE id = $1
+         UNION ALL SELECT x.id, x.parent_id, x.type, x.name, up.depth + 1
+           FROM locations x JOIN up ON x.id = up.parent_id)
+       SELECT type, name FROM up`,
+      [loc.id],
+    );
+    const countryName = chain.find((c) => c.type === "country")?.name ?? null;
+    const regionName = chain.find((c) => c.type === "region" && c.name !== loc.name)?.name ?? null;
+    const q = composeQuery({ name: loc.name, type: loc.type, countryName, regionName });
+
+    const r = await fetchFromNominatim({ query: q, type: loc.type, countryHint: countryName ?? undefined });
+    if (!r.ok) {
+      attempted.push({ location_id: loc.id, name: loc.name, status: "no_match", message: r.reason });
+    } else {
+      try {
+        const existing = await one<{ max: number | null }>(
+          "SELECT max(version) AS max FROM map_assets WHERE location_id = $1",
+          [loc.id],
+        );
+        const nextVersion = (existing?.max ?? 0) + 1;
+        const row = await one<{ id: string }>(
+          `INSERT INTO map_assets (location_id, version, status, geojson, settings)
+           VALUES ($1, $2, 'draft', $3::jsonb, $4::jsonb) RETURNING id`,
+          [
+            loc.id,
+            nextVersion,
+            JSON.stringify(r.collection),
+            JSON.stringify({ seeded_from: r.source, source_url: r.source_url, display_name: r.display_name }),
+          ],
+        );
+        await query(
+          "UPDATE locations SET map_status = 'draft', updated_at = now() WHERE id = $1 AND map_status = 'needs_map'",
+          [loc.id],
+        );
+        await audit(user.id, "map.seed_osm", { type: "map_asset", id: row!.id }, undefined, {
+          location_id: loc.id, osm_url: r.source_url,
+        });
+        attempted.push({
+          location_id: loc.id, name: loc.name, status: "seeded", source_url: r.source_url,
+        });
+      } catch (err) {
+        attempted.push({
+          location_id: loc.id, name: loc.name, status: "error",
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+    processed++;
+    // Nominatim rate limit: 1 request/second.
+    if (processed < batch.length) await sleep(1100);
+  }
+  revalidatePath("/maps");
+  revalidatePath("/maps/seed");
+  return {
+    processed,
+    attempted,
+    remaining: Math.max(0, (total?.n ?? 0) - processed),
+  };
+}
+
+// Bulk-approve every draft version — picks the latest draft per location.
+export async function approveAllDraftMaps(): Promise<{ approved: number }> {
+  const user = await requireAdmin();
+  // Pick the newest draft per location.
+  const rows = await query<{ id: string; location_id: string; version: number }>(
+    `SELECT DISTINCT ON (location_id) id, location_id, version
+     FROM map_assets WHERE status = 'draft'
+     ORDER BY location_id, version DESC`,
+  );
+  let approved = 0;
+  for (const row of rows) {
+    await query(
+      "UPDATE map_assets SET status = 'retired' WHERE location_id = $1 AND status = 'approved' AND id <> $2",
+      [row.location_id, row.id],
+    );
+    await query(
+      "UPDATE map_assets SET status = 'approved', approved_by = $2, approved_at = now() WHERE id = $1",
+      [row.id, user.id],
+    );
+    await query(
+      "UPDATE locations SET map_status = 'approved', updated_at = now() WHERE id = $1",
+      [row.location_id],
+    );
+    await audit(user.id, "map.bulk_approve", { type: "map_asset", id: row.id }, { new: { version: row.version } });
+    approved++;
+  }
+  revalidatePath("/maps");
+  revalidatePath("/maps/seed");
+  return { approved };
+}
+
+// Snapshot used by /maps/seed to render stats + the per-location next-up queue.
+export async function mapsSeedSnapshot() {
+  await requireEditor();
+  const [stats, pending] = await Promise.all([
+    one<{
+      total: number; approved: number; draft: number; needs_map: number;
+      no_version: number; wine_count_with_map: number; wine_count_no_map: number;
+    }>(
+      `SELECT
+         (SELECT count(*)::int FROM locations) AS total,
+         (SELECT count(*)::int FROM locations WHERE map_status = 'approved') AS approved,
+         (SELECT count(*)::int FROM locations WHERE map_status = 'draft') AS draft,
+         (SELECT count(*)::int FROM locations WHERE map_status = 'needs_map') AS needs_map,
+         (SELECT count(*)::int FROM locations l
+            WHERE NOT EXISTS (SELECT 1 FROM map_assets m WHERE m.location_id = l.id)) AS no_version,
+         (SELECT count(*)::int FROM wine_vintages v JOIN locations l ON l.id = v.location_id
+            WHERE v.deleted_at IS NULL AND l.map_status = 'approved') AS wine_count_with_map,
+         (SELECT count(*)::int FROM wine_vintages v JOIN locations l ON l.id = v.location_id
+            WHERE v.deleted_at IS NULL AND l.map_status <> 'approved') AS wine_count_no_map`,
+    ),
+    query<{ id: string; name: string; type: string; wine_count: number }>(
+      `SELECT l.id, l.name, l.type,
+         (SELECT count(*)::int FROM wine_vintages v
+            WHERE v.location_id = l.id AND v.deleted_at IS NULL) AS wine_count
+       FROM locations l
+       WHERE NOT EXISTS (SELECT 1 FROM map_assets m WHERE m.location_id = l.id)
+       ORDER BY
+         CASE l.type WHEN 'country' THEN 0 WHEN 'region' THEN 1 WHEN 'subregion' THEN 2 ELSE 3 END,
+         l.name
+       LIMIT 60`,
+    ),
+  ]);
+  return { stats: stats ?? null, pending };
+}
+
 // ---------------------------------------------------------------- producers
 type ProducerRow = {
   id: string;
