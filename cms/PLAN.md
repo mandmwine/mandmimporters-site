@@ -191,6 +191,49 @@ Depends on Phase 12 pricing schema; now live.
 - Per-wine PDF export (not catalog-driven) ships no prices by default — Trade
   pricing lives on the Catalog pass, which is correct for distributor sheets.
 
+### Phase 21 — Rebuild single-wine sheet to Template 01+06 blend (Phase A of audit) — SHIPPED
+
+Governing source: `cms/AUDIT_AND_REBUILD_DIRECTIVE_2026-10-08.md`, with the
+three reference images in `cms/docs/` (template 01, template 06, current UI).
+
+Only the single-wine sheet was touched this pass — Phase A per section 52:
+"lock the visual target" before moving to maps (Phase B), workspace (Phase C),
+or catalog UX (Phase D).
+
+New composition (seven elements, nothing else):
+1. Identity header — gold hairline + dot, vintage in burgundy serif, wine name
+   large serif centered (three title-size steps for long names, never silent
+   shrink below 9pt), subtitle in tracked small caps, optional designation underneath
+2. Bottle — anchors the left column, no frame, up to 5.6" tall
+3. Place + map — "REGION, COUNTRY" eyebrow + italic serif appellation on one side,
+   small refined locator map on the other
+4. Scores — up to four outlined circular medallions (critic in gold italic above,
+   burgundy numeral below). 1, 2, 3 or 4 all look intentional — grid contracts
+   gracefully, never reserves empty slots
+5. Technical details — ruled label/value table, hairline rows, missing fields
+   omitted outright (section 8.5: no "not recorded" ever renders on export)
+6. Tasting note | Winery note — two-column at the bottom
+7. Footer — centered gold rule, "M & M IMPORTS", "Fine Wines · Higher Conversations"
+
+Palette locked inside .sheet so the admin UI theme never leaks into a printed
+page: warm ivory #f6f1e4, burgundy #6e2335, antique gold #a88b57, warm ink,
+soft hairline rules. Cormorant Garamond for the display face, Inter for body
+and small caps.
+
+Phase 15 trade pricing (price_tier + show_stock) is preserved; it renders
+full-width below the notes when a catalog opts in, so it never competes with
+the primary data hierarchy on standard catalogs.
+
+Export `template_version` bumped to `wine-sheet-v3` so a buyer re-exporting
+an older versioned catalog is unambiguously on the new layout.
+
+Not yet done (next passes per the audit):
+- Phase B — map hierarchy rebuild (appellation-first, region map, country inset)
+- Phase C — workspace plain-language rewrite, Fit Page preview, progressive
+  disclosure for optional fields
+- Phase D — catalog builder four-step flow (select / layout / organize /
+  preview / export) + preflight
+
 ### Phase 19 — Color system concept (then fix the gap) — SHIPPED
 
 User rightly called out: fixing color bugs reactively is the wrong workflow.
