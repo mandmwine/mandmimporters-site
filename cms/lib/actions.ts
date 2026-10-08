@@ -248,8 +248,14 @@ export async function updateWineVintage(formData: FormData) {
   for (const d of diffs) {
     await audit(user.id, "wine_vintage.update", { type: "wine_vintage", id, field: d.field }, { old: d.old, new: d.new });
   }
+  // Phase 39 (Sprint 2) — post-save validator reconciles review_flags
+  // against current state so the Review queue stays accurate without the
+  // user running preflight.
+  const { afterWineSave } = await import("@/lib/validators/wineValidator");
+  await afterWineSave(id);
   revalidatePath(`/wines/${id}`);
   revalidatePath("/wines", "layout");
+  revalidatePath("/review");
 }
 
 // =============================================================================
@@ -1114,8 +1120,12 @@ export async function setBottleAsset(formData: FormData) {
     [vintageId, assetId],
   );
   await audit(user.id, "wine_vintage.bottle_asset", { type: "wine_vintage", id: vintageId, field: "bottle_asset_id" }, { new: assetId });
+  // Phase 39 — re-run validators so the image-missing flag opens/closes.
+  const { afterWineSave } = await import("@/lib/validators/wineValidator");
+  await afterWineSave(vintageId);
   revalidatePath(`/wines/${vintageId}`);
   revalidatePath(`/sheet/${vintageId}`);
+  revalidatePath("/review");
 }
 
 // ---------------------------------------------------------------- single-field autosave
@@ -1149,8 +1159,13 @@ export async function autosaveWineVintageField(formData: FormData): Promise<{ ok
   await audit(user.id, `wine_vintage.${field}`,
     { type: "wine_vintage", id, field },
     { old: before.v, new: value });
+  // Phase 39 — re-run validators so the tasting-note overflow flag
+  // (and anything else triggered by field changes) toggles immediately.
+  const { afterWineSave } = await import("@/lib/validators/wineValidator");
+  await afterWineSave(id);
   revalidatePath(`/wines/${id}`);
   revalidatePath(`/sheet/${id}`);
+  revalidatePath("/review");
   return { ok: true };
 }
 
@@ -1748,8 +1763,15 @@ export async function resolveProvenanceConflict(formData: FormData) {
     { type: "field_provenance", id, field: row.field_name },
     undefined,
     { pushed_to_entity: Boolean(pushable), value_preview: row.raw_value?.slice(0, 80) ?? null });
+  // Phase 39 — if this was a wine vintage, re-run validators so the
+  // source_conflict flag closes along with the resolver action.
+  if (row.entity_type === "wine_vintage") {
+    const { afterWineSave } = await import("@/lib/validators/wineValidator");
+    await afterWineSave(row.entity_id);
+  }
   revalidatePath(`/wines/${row.entity_id}`);
   revalidatePath(`/producers/${row.entity_id}`);
+  revalidatePath("/review");
 }
 
 // Phase 38 (Sprint 2) — resolve a conflict by typing a *third* value when
@@ -1811,8 +1833,13 @@ export async function resolveWithManualValue(formData: FormData): Promise<{ ok: 
     { type: "field_provenance", id: inserted!.id, field: fieldName },
     undefined,
     { pushed_to_entity: Boolean(pushable), value_preview: value.slice(0, 80) });
+  if (entityType === "wine_vintage") {
+    const { afterWineSave } = await import("@/lib/validators/wineValidator");
+    await afterWineSave(entityId);
+  }
   revalidatePath(`/wines/${entityId}`);
   revalidatePath(`/producers/${entityId}`);
+  revalidatePath("/review");
   return { ok: true };
 }
 
