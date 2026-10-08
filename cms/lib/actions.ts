@@ -2988,11 +2988,21 @@ export async function backfillLegacyBottles(): Promise<{ ok: boolean; summary?: 
 import type { HealthResult } from "./health/environment";
 export async function runEnvironmentChecks(): Promise<{ ok: boolean; results?: HealthResult[]; message?: string }> {
   const user = await requireAdmin();
-  const { runAllHealthChecks } = await import("@/lib/health/environment");
-  const results = await runAllHealthChecks();
-  await audit(user.id, "system.health_check",
-    { type: "system", id: "health" },
-    { new: { ok: results.filter((r) => r.status === "ok").length, total: results.length } });
-  revalidatePath("/settings/environment");
-  return { ok: true, results };
+  try {
+    const { runAllHealthChecks } = await import("@/lib/health/environment");
+    const results = await runAllHealthChecks();
+    await audit(user.id, "system.health_check",
+      { type: "system", id: "health" },
+      { new: { ok: results.filter((r) => r.status === "ok").length, total: results.length } });
+    revalidatePath("/settings/environment");
+    revalidatePath("/settings/system");
+    return { ok: true, results };
+  } catch (err) {
+    // Phase 34 — persist any unexpected probe-runner failure so the System
+    // page shows it. Individual probes already return a HealthResult on
+    // failure, so this only fires on a bug in the runner itself.
+    const { captureError } = await import("@/lib/errors");
+    await captureError(err, { kind: "action", route: "runEnvironmentChecks", userId: user.id });
+    return { ok: false, message: err instanceof Error ? err.message : String(err) };
+  }
 }

@@ -32,6 +32,8 @@ const ADVANCED: Item[] = [
   // Phase 33 (Sprint 1) — operational panels.
   { href: "/settings/environment", label: "Environment" },
   { href: "/settings/backups", label: "Backups" },
+  // Phase 34 (Sprint 1) — captured errors + overall roll-up.
+  { href: "/settings/system", label: "System" },
 ];
 
 export default function Nav({ isAdmin }: { isAdmin: boolean }) {

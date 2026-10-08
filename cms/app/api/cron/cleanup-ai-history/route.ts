@@ -23,6 +23,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { query, dbConfigured } from "@/lib/db";
+import { captureError } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -45,31 +46,49 @@ export async function GET(req: NextRequest) {
   const started = Date.now();
   const cutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
 
-  // AI history pruning. Keep accepted rows as provenance forever.
-  const aiDeleted = await query<{ id: string }>(
-    `DELETE FROM ai_actions
-      WHERE created_at < $1
-        AND status IN ('rejected', 'failed', 'proposed')
-      RETURNING id`,
-    [cutoff],
-  );
+  try {
+    // AI history pruning. Keep accepted rows as provenance forever.
+    const aiDeleted = await query<{ id: string }>(
+      `DELETE FROM ai_actions
+        WHERE created_at < $1
+          AND status IN ('rejected', 'failed', 'proposed')
+        RETURNING id`,
+      [cutoff],
+    );
 
-  // Diagnostic probe log pruning. Harmless if the table is empty.
-  const healthDeleted = await query<{ id: string }>(
-    `DELETE FROM system_health_checks
-      WHERE checked_at < $1
-      RETURNING id`,
-    [cutoff],
-  );
+    // Diagnostic probe log pruning. Harmless if the table is empty.
+    const healthDeleted = await query<{ id: string }>(
+      `DELETE FROM system_health_checks
+        WHERE checked_at < $1
+        RETURNING id`,
+      [cutoff],
+    );
 
-  const durationMs = Date.now() - started;
-  return NextResponse.json({
-    ok: true,
-    cutoff: cutoff.toISOString(),
-    deleted: {
-      ai_actions: aiDeleted.length,
-      system_health_checks: healthDeleted.length,
-    },
-    duration_ms: durationMs,
-  });
+    // Phase 34 — also prune our own error log on the same cadence so it
+    // doesn't accumulate forever.
+    const errorsDeleted = await query<{ id: string }>(
+      `DELETE FROM system_errors
+        WHERE occurred_at < $1
+        RETURNING id`,
+      [cutoff],
+    );
+
+    const durationMs = Date.now() - started;
+    return NextResponse.json({
+      ok: true,
+      cutoff: cutoff.toISOString(),
+      deleted: {
+        ai_actions: aiDeleted.length,
+        system_health_checks: healthDeleted.length,
+        system_errors: errorsDeleted.length,
+      },
+      duration_ms: durationMs,
+    });
+  } catch (err) {
+    await captureError(err, { kind: "cron", route: "/api/cron/cleanup-ai-history" });
+    return NextResponse.json(
+      { ok: false, error: "Cleanup failed; see system_errors for details." },
+      { status: 500 },
+    );
+  }
 }
