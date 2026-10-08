@@ -10,7 +10,8 @@
 // A top summary + Reset + Export-as-Markdown round out the UX. The export
 // drops a .md file into the user's downloads so they can attach a run to
 // an email or paste it into a brief without hand-copying.
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { saveUXTestRun } from "@/lib/actions";
 
 type Status = "not_started" | "passed" | "failed" | "blocked";
 
@@ -81,6 +82,9 @@ function emptyRun(): RunState {
 
 export default function UXAcceptanceTests() {
   const [run, setRun] = useState<RunState | null>(null);
+  const [savePending, startSave] = useTransition();
+  const [saveState, setSaveState] = useState<"idle" | "ok" | "error">("idle");
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   // Hydrate from localStorage after mount so SSR doesn't choke on window.
   useEffect(() => {
@@ -129,7 +133,44 @@ export default function UXAcceptanceTests() {
   function startNewRun() {
     if (confirm("Start a new run? This clears all current results.")) {
       setRun(emptyRun());
+      setSaveState("idle");
+      setSaveMessage(null);
     }
+  }
+
+  // Phase 42 — persist the completed run to the server. Separate from
+  // Export-as-Markdown so a run can be saved to history AND emailed to
+  // a stakeholder. The server computes counts + the accepted boolean
+  // independently so the client can't mis-report a pass.
+  function finishAndSave() {
+    if (!run) return;
+    const results = TESTS.map((t) => {
+      const r = run.results[t.key];
+      return {
+        testId: t.key,
+        title: t.ask,
+        status: r.status,
+        neededHelp: false, // Not captured in the harness UI yet — see Phase 42 note.
+        notes: r.notes || null,
+      };
+    });
+    setSaveState("idle");
+    setSaveMessage(null);
+    startSave(async () => {
+      const res = await saveUXTestRun({
+        testerName: run.run_name || null,
+        appVersion: null,
+        startedAt: run.started_at,
+        results,
+      });
+      if (!res.ok) {
+        setSaveState("error");
+        setSaveMessage(res.message ?? "Save failed.");
+        return;
+      }
+      setSaveState("ok");
+      setSaveMessage("Saved. History visible under Settings → UX tests → History.");
+    });
   }
 
   function exportMarkdown() {
@@ -194,6 +235,9 @@ export default function UXAcceptanceTests() {
             <ScorePill n={c.not_started} label="Not run" tone="mute" />
           </div>
           <div className="ux-tests__actions">
+            <button type="button" className="btn primary small" onClick={finishAndSave} disabled={savePending}>
+              {savePending ? "Saving…" : "Finish & save to history"}
+            </button>
             <button type="button" className="btn small" onClick={exportMarkdown}>
               Export as Markdown
             </button>
@@ -201,6 +245,12 @@ export default function UXAcceptanceTests() {
               Reset run
             </button>
           </div>
+          {saveState === "ok" && saveMessage && (
+            <p className="small ok-text">{saveMessage}</p>
+          )}
+          {saveState === "error" && saveMessage && (
+            <p className="small error">{saveMessage}</p>
+          )}
         </div>
         <p className="small muted ux-tests__started">
           Started {new Date(run.started_at).toLocaleString("en-US", { timeZone: "America/New_York" })} ·

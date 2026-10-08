@@ -3130,6 +3130,70 @@ export async function backfillLegacyBottles(): Promise<{ ok: boolean; summary?: 
 }
 
 // ---------------------------------------------------------------------------
+// Phase 42 (Sprint 2 follow-up) — UX acceptance test run persistence.
+//
+// Mirrors decisions §9. The Phase 31 harness was localStorage-only; this
+// hook persists completed runs to ux_test_runs so a run survives
+// clear-site-data and shows up across devices. The client posts the full
+// `results` array; the server derives passed / failed / blocked / not_run
+// counts and the `accepted` boolean (strict 6-of-6 + no helping).
+// ---------------------------------------------------------------------------
+export type UXTestResultInput = {
+  testId: string;
+  title: string;
+  status: "passed" | "failed" | "blocked" | "not_started";
+  neededHelp: boolean;
+  notes: string | null;
+};
+
+export async function saveUXTestRun(input: {
+  testerName: string | null;
+  appVersion: string | null;
+  startedAt: string | null;
+  results: UXTestResultInput[];
+}): Promise<{ ok: boolean; message?: string; id?: string }> {
+  const user = await requireEditor();
+  if (!Array.isArray(input.results) || input.results.length === 0) {
+    return { ok: false, message: "No results to save." };
+  }
+  const total = input.results.length;
+  const counts = { passed: 0, failed: 0, blocked: 0, not_started: 0 };
+  for (const r of input.results) counts[r.status]++;
+  const neededHelp = input.results.some((r) => r.neededHelp);
+  // Decisions §10 — strict 6-of-6 + no helping = accepted.
+  const accepted = total >= 6 && counts.passed === total && !neededHelp;
+
+  const row = await one<{ id: string }>(
+    `INSERT INTO ux_test_runs
+       (tester_user_id, tester_name, app_version, total_tests, passed_tests,
+        failed_tests, blocked_tests, not_run_tests, needed_help, accepted,
+        results, started_at, completed_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, now())
+     RETURNING id`,
+    [
+      user.id,
+      input.testerName,
+      input.appVersion,
+      total,
+      counts.passed,
+      counts.failed,
+      counts.blocked,
+      counts.not_started,
+      neededHelp,
+      accepted,
+      JSON.stringify(input.results),
+      input.startedAt ? new Date(input.startedAt) : null,
+    ],
+  );
+  await audit(user.id, "ux_test.run_saved", { type: "ux_test_run", id: row!.id },
+    undefined,
+    { total, passed: counts.passed, failed: counts.failed, accepted });
+  revalidatePath("/tests");
+  revalidatePath("/tests/history");
+  return { ok: true, id: row!.id };
+}
+
+// ---------------------------------------------------------------------------
 // Phase 33 (Sprint 1) — Environment health check runner.
 //
 // Admin-only (secrets would otherwise leak via error messages, and the probe
