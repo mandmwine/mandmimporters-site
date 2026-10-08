@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { loadSheetData } from "@/lib/sheet/data";
 import { SingleWineSheet } from "@/lib/sheet/SingleWineSheet";
+import { captureError } from "@/lib/errors";
 import "@/lib/sheet/sheet.css";
 
 export const dynamic = "force-dynamic";
@@ -17,11 +18,33 @@ export default async function SheetPreview({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ mode?: string; embed?: string }>;
 }) {
-  await requireUser();
+  const user = await requireUser();
   const { id } = await params;
   const { mode, embed } = await searchParams;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const data = await loadSheetData(id);
+  // Phase 35 — any throw inside loadSheetData reaches /settings/system
+  // with full context, and the iframe shows a readable placeholder
+  // instead of blanking.
+  let data: Awaited<ReturnType<typeof loadSheetData>> = null;
+  try {
+    data = await loadSheetData(id);
+  } catch (err) {
+    await captureError(err, {
+      kind: "route",
+      route: `/catalog-admin/sheet/${id}`,
+      userId: user?.id ?? null,
+      extra: { stage: "loadSheetData" },
+    });
+    return (
+      <div style={{ padding: 24, fontFamily: "sans-serif", color: "#1e1b18" }}>
+        <h2 style={{ margin: 0, fontSize: 16 }}>Couldn&rsquo;t render this sheet</h2>
+        <p style={{ fontSize: 13, color: "#6f675d", margin: "6px 0 0" }}>
+          The sheet renderer threw an error loading this wine. See{" "}
+          <Link href="/settings/system">Settings &rarr; System</Link>.
+        </p>
+      </div>
+    );
+  }
   if (!data) notFound();
 
   // ?mode=raw hides the preview chrome so the printed/exported view matches exactly.

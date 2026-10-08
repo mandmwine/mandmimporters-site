@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { captureError } from "@/lib/errors";
 import { one, query } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { SeverityBadge, StatusBadge } from "@/components/Badge";
@@ -76,32 +77,92 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
   const host = h.get("host") ?? "mandmimporters.com";
   const shareBase = `${proto}://${host}/catalog-admin/wines/${id}`;
 
-  const v = await one<Vintage>(
-    `SELECT v.id, v.wine_id, v.vintage_text, v.status, v.mevushal, v.supervision_display,
-            v.aging_display, v.bottle_sizes, v.special_designation, v.tasting_note, v.food_pairing,
-            v.short_description, v.wine_story, v.first_kosher_vintage, v.organic, v.biodynamic,
-            v.legacy, v.updated_at, v.location_id, v.bottle_asset_id,
-            v.sku, v.pack_size,
-            v.stock_cases_available::text AS stock_cases_available,
-            v.stock_cases_allocated::text AS stock_cases_allocated,
-            v.stock_cases_inbound::text AS stock_cases_inbound,
-            v.stock_updated_at,
-            ba.width_px   AS bottle_width_px,
-            ba.height_px  AS bottle_height_px,
-            ba.mime_type  AS bottle_mime,
-            ba.file_name  AS bottle_file_name,
-            w.display_name, w.canonical_name, w.category, w.slug, w.website_slug, w.producer_id,
-            p.name AS producer
-     FROM wine_vintages v
-     JOIN wines w ON w.id = v.wine_id
-     JOIN producers p ON p.id = w.producer_id
-     LEFT JOIN assets ba ON ba.id = v.bottle_asset_id AND ba.deleted_at IS NULL
-     WHERE v.id = $1`,
-    [id],
-  );
-  if (!v) notFound();
+  // Phase 35 — one defensive step before the SELECT. The id in the URL is
+  // usually a wine_vintages.id, but we also accept a wines.id (bookmarked
+  // link from the public site, old URL, etc.) and redirect to the current
+  // vintage of that wine. This replaces the raw 404/500 for stale links.
+  let v: Vintage | null = null;
+  try {
+    v = await one<Vintage>(
+      `SELECT v.id, v.wine_id, v.vintage_text, v.status, v.mevushal, v.supervision_display,
+              v.aging_display, v.bottle_sizes, v.special_designation, v.tasting_note, v.food_pairing,
+              v.short_description, v.wine_story, v.first_kosher_vintage, v.organic, v.biodynamic,
+              v.legacy, v.updated_at, v.location_id, v.bottle_asset_id,
+              v.sku, v.pack_size,
+              v.stock_cases_available::text AS stock_cases_available,
+              v.stock_cases_allocated::text AS stock_cases_allocated,
+              v.stock_cases_inbound::text AS stock_cases_inbound,
+              v.stock_updated_at,
+              ba.width_px   AS bottle_width_px,
+              ba.height_px  AS bottle_height_px,
+              ba.mime_type  AS bottle_mime,
+              ba.file_name  AS bottle_file_name,
+              w.display_name, w.canonical_name, w.category, w.slug, w.website_slug, w.producer_id,
+              p.name AS producer
+       FROM wine_vintages v
+       JOIN wines w ON w.id = v.wine_id
+       JOIN producers p ON p.id = w.producer_id
+       LEFT JOIN assets ba ON ba.id = v.bottle_asset_id AND ba.deleted_at IS NULL
+       WHERE v.id = $1`,
+      [id],
+    );
+  } catch (err) {
+    await captureError(err, {
+      kind: "route",
+      route: `/catalog-admin/wines/${id}`,
+      userId: user?.id ?? null,
+      extra: { stage: "vintage_select" },
+    });
+    // Fall through to the admin-visible error page below.
+    return <WineLoadErrorView id={id} canSeeReason={user?.role === "admin"} reason={err} />;
+  }
 
-  const [chain, siblings, grapes, scores, supervision, flags, provenance, criticOptions, recentBottles, producerMeta] = await Promise.all([
+  if (!v) {
+    // Maybe the URL id is actually a wines.id — look up the current vintage
+    // and redirect. If not, this is a real 404.
+    try {
+      const fallback = await one<{ id: string }>(
+        `SELECT id FROM wine_vintages
+          WHERE wine_id = $1 AND deleted_at IS NULL
+          ORDER BY vintage_text DESC NULLS LAST
+          LIMIT 1`,
+        [id],
+      );
+      if (fallback) redirect(`/wines/${fallback.id}`);
+    } catch (err) {
+      await captureError(err, {
+        kind: "route",
+        route: `/catalog-admin/wines/${id}`,
+        userId: user?.id ?? null,
+        extra: { stage: "fallback_wine_lookup" },
+      });
+    }
+    notFound();
+  }
+
+  // Phase 35 — wrap the aux-data Promise.all so any downstream query
+  // failure also surfaces the diagnostic view instead of crashing to a
+  // bare 500 page.
+  let aux: [
+    { type: string; name: string }[],
+    { id: string; vintage_text: string | null; status: string }[],
+    { name: string; percentage: string | null }[],
+    ScoreRow[],
+    { name: string }[],
+    { id: string; field_name: string | null; flag_type: string; severity: string; message: string; status: string }[],
+    {
+      id: string; field_name: string; raw_value: string | null;
+      verification_status: "unverified" | "verified" | "conflict" | "rejected";
+      verified_at: Date | null; verified_by_email: string | null; is_current: boolean;
+      source_title: string | null; source_url: string | null; source_type: string | null;
+      source_locator: string | null; conflict_count: number;
+    }[],
+    { canonical_name: string }[],
+    { id: string; file_name: string | null; width_px: number | null; height_px: number | null; mime_type: string | null }[],
+    { winery_summary_short: string | null } | null,
+  ];
+  try {
+    aux = await Promise.all([
     query<{ type: string; name: string }>(
       `WITH RECURSIVE up AS (
          SELECT id, parent_id, type, name, 0 AS depth FROM locations WHERE id = $1
@@ -166,7 +227,17 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
       "SELECT winery_summary_short FROM producers WHERE id = $1",
       [v.producer_id],
     ),
-  ]);
+    ]);
+  } catch (err) {
+    await captureError(err, {
+      kind: "route",
+      route: `/catalog-admin/wines/${id}`,
+      userId: user?.id ?? null,
+      extra: { stage: "aux_data_load", vintage_id: v.id, producer_id: v.producer_id, location_id: v.location_id },
+    });
+    return <WineLoadErrorView id={id} canSeeReason={user?.role === "admin"} reason={err} />;
+  }
+  const [chain, siblings, grapes, scores, supervision, flags, provenance, criticOptions, recentBottles, producerMeta] = aux;
 
   const loc = (t: string) => chain.find((c) => c.type === t)?.name;
   const yesNo = (b: boolean | null) => (b === null ? null : b ? "Yes" : "No");
@@ -674,6 +745,58 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
           )}
         </section>
       </WineWorkspace>
+    </>
+  );
+}
+
+// Phase 35 — admin-visible error view. When the page's data loading
+// throws, we render this instead of letting Next's default 500 page bury
+// the reason. The real error is also written to system_errors via
+// captureError, so /settings/system has the full stack. Non-admins see
+// a generic message; admins see the error class + message inline so
+// they can act (bad migration, missing column, bad bottle asset, etc.)
+// without opening Vercel logs.
+function WineLoadErrorView({
+  id,
+  canSeeReason,
+  reason,
+}: {
+  id: string;
+  canSeeReason: boolean;
+  reason: unknown;
+}) {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  return (
+    <>
+      <p className="crumbs">
+        <Link href="/wines">Wines</Link> / Error
+      </p>
+      <header className="page-head">
+        <h1>Couldn&rsquo;t load this wine</h1>
+        <p className="muted">
+          Something went wrong while reading <code>{id}</code>. The error has been recorded.
+        </p>
+      </header>
+      <div className="panel notice-warn">
+        <p className="small">
+          Try{" "}
+          <Link href="/wines">going back to the Wines list</Link>
+          {" "}and opening another wine. If every wine fails the same way,
+          check{" "}
+          <Link href="/settings/system">Settings &rarr; System</Link>{" "}
+          for the captured error.
+        </p>
+        {canSeeReason && (
+          <>
+            <p className="small muted" style={{ marginTop: 10 }}>
+              <strong>Error for admins:</strong>
+            </p>
+            <pre className="small" style={{ whiteSpace: "pre-wrap", background: "var(--card-soft)", padding: 10, borderRadius: 3, overflowX: "auto" }}>
+              {message}
+            </pre>
+          </>
+        )}
+      </div>
     </>
   );
 }
