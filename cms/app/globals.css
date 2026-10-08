@@ -1450,6 +1450,36 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 .ux-test__pick--not_started.ux-test__pick--on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 
+/* Phase 33 (Sprint 1) — environment + health panel.
+ * Each env var and each probed service renders as a row with a left rail
+ * color: green (ok), amber (degraded/missing-optional), red (failed/missing-required),
+ * neutral (not yet checked). The grammar matches Phases 28/29/31. */
+.env-panel { padding: 14px 16px; }
+.env-panel + .env-panel { margin-top: 14px; }
+.env-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.env-row {
+  display: grid;
+  grid-template-columns: minmax(240px, auto) 1fr;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  background: var(--card-soft);
+  border-left: 3px solid var(--rule);
+  border-radius: 2px;
+  font-size: 13px;
+}
+.env-row code { font-size: 12px; color: var(--ink); }
+.env-row__status { color: var(--muted); font-size: 12px; justify-self: end; }
+.env-row__msg { grid-column: 1 / -1; margin: 2px 0 0; }
+.env-row--ok   { border-left-color: var(--ok); }
+.env-row--err,
+.env-row--failed  { border-left-color: var(--err); }
+.env-row--degraded,
+.env-row--missing { border-left-color: var(--warn); }
+.env-row--mute { border-left-color: var(--rule); }
+
+
+
 /* Drag-anywhere upload overlay */
 .drop-overlay {
   position: fixed; inset: 0; z-index: 90;

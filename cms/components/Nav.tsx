@@ -29,6 +29,9 @@ const ADVANCED: Item[] = [
   // it doesn't crowd the everyday nav; the people running the tests
   // typically open it once per build.
   { href: "/tests", label: "UX tests" },
+  // Phase 33 (Sprint 1) — operational panels.
+  { href: "/settings/environment", label: "Environment" },
+  { href: "/settings/backups", label: "Backups" },
 ];
 
 export default function Nav({ isAdmin }: { isAdmin: boolean }) {

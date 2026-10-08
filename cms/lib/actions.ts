@@ -2976,3 +2976,23 @@ export async function backfillLegacyBottles(): Promise<{ ok: boolean; summary?: 
     { new: { imported: summary.imported, deduped: summary.deduped, failed: summary.failed } });
   return { ok: true, summary };
 }
+
+// ---------------------------------------------------------------------------
+// Phase 33 (Sprint 1) — Environment health check runner.
+//
+// Admin-only (secrets would otherwise leak via error messages, and the probe
+// generates a cross-service burst that non-admins have no reason to trigger).
+// Returns the result array so the client page can render it immediately
+// without a second round-trip for the stored rows.
+// ---------------------------------------------------------------------------
+import type { HealthResult } from "./health/environment";
+export async function runEnvironmentChecks(): Promise<{ ok: boolean; results?: HealthResult[]; message?: string }> {
+  const user = await requireAdmin();
+  const { runAllHealthChecks } = await import("@/lib/health/environment");
+  const results = await runAllHealthChecks();
+  await audit(user.id, "system.health_check",
+    { type: "system", id: "health" },
+    { new: { ok: results.filter((r) => r.status === "ok").length, total: results.length } });
+  revalidatePath("/settings/environment");
+  return { ok: true, results };
+}
