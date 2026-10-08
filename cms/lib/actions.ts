@@ -614,12 +614,17 @@ export async function preflightCatalog(formData: FormData): Promise<{ ok: boolea
          AND coalesce(v.tasting_note, '') = ''`,
       [catalogId],
     ),
-    one<{ n: number }>(
-      `SELECT count(*)::int AS n
+    one<{ n: number; too_long: number }>(
+      // Phase 29 — mirror the two-band bottle quality: ">450 might, >700 will".
+      // n is still the overall count of over-standard notes (keeps backwards
+      // compatibility with any later consumer); too_long is the strict band
+      // that gets its own warning line.
+      `SELECT
+         count(*) FILTER (WHERE length(coalesce(v.tasting_note, '')) > 450)::int AS n,
+         count(*) FILTER (WHERE length(coalesce(v.tasting_note, '')) > 700)::int AS too_long
        FROM catalog_items ci
        JOIN wine_vintages v ON v.id = ci.wine_vintage_id
-       WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL
-         AND length(coalesce(v.tasting_note, '')) > 500`,
+       WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL`,
       [catalogId],
     ),
     one<{ n: number; too_small: number }>(
@@ -663,7 +668,10 @@ export async function preflightCatalog(formData: FormData): Promise<{ ok: boolea
   if (lowResCount > 0) warnings.push({ severity: "warning", category: "bottle_lowres", message: `${lowResCount} low-resolution bottle${lowResCount === 1 ? "" : "s"} (under 800px wide) — may look soft when printed.`, count: lowResCount });
   if ((scores?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "no_scores", message: `${scores!.n} wine${scores!.n === 1 ? "" : "s"} without any critic score.`, count: scores!.n });
   if ((notes?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "no_tasting_note", message: `${notes!.n} wine${notes!.n === 1 ? "" : "s"} without a tasting note.`, count: notes!.n });
-  if ((longNotes?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "long_tasting_note", message: `${longNotes!.n} tasting note${longNotes!.n === 1 ? "" : "s"} longer than 500 characters — may overflow the body column.`, count: longNotes!.n });
+  // Phase 29 — split long-note count by severity, same shape as bottles.
+  const longOnly = Math.max(0, (longNotes?.n ?? 0) - (longNotes?.too_long ?? 0));
+  if ((longNotes?.too_long ?? 0) > 0) warnings.push({ severity: "warning", category: "note_toolong", message: `${longNotes!.too_long} tasting note${longNotes!.too_long === 1 ? "" : "s"} over 700 characters — will likely overflow the body column; please trim.`, count: longNotes!.too_long });
+  if (longOnly > 0) warnings.push({ severity: "warning", category: "long_tasting_note", message: `${longOnly} tasting note${longOnly === 1 ? "" : "s"} longer than 450 characters — may need a smaller font on detailed sheets.`, count: longOnly });
   if ((missingMaps?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "missing_map", message: `${missingMaps!.n} location${missingMaps!.n === 1 ? "" : "s"} without an approved map — the sheet will use the country-silhouette fallback.`, count: missingMaps!.n });
 
   return {

@@ -207,6 +207,17 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
     bottleFallbackImage,
   );
 
+  // Phase 29 — tasting-note length grading, computed once and reused by
+  // the Description section pill, the top-of-page status headline, and
+  // the Copy summary block further down.
+  const noteLen = v.tasting_note?.length ?? 0;
+  const noteGrade: "none" | "short" | "ok" | "long" | "too_long" =
+    !v.tasting_note ? "none" :
+    noteLen < 200 ? "short" :
+    noteLen <= 450 ? "ok" :
+    noteLen <= 700 ? "long" :
+    "too_long";
+
   // Phase C: the numeric "5 of 7 complete" meter is gone. Status + next actions
   // are computed further down from the same facts.
 
@@ -238,12 +249,19 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
     {
       id: "copy",
       label: "Description",
-      state: v.tasting_note
-        ? (v.tasting_note.length > 450 ? "warn" : "ok")
-        : "missing",
+      // Phase 29 — four tiers for tasting-note length instead of a binary
+      // ok/warn flip. "Short" is still ok; "Long" rides warn; "Too long"
+      // rides the missing/fatal rail so the top status spells out what to do.
+      state:
+        !v.tasting_note ? "missing" :
+        noteGrade === "too_long" ? "missing" :
+        noteGrade === "long" ? "warn" :
+        "ok",
       hint:
         !v.tasting_note ? "Add tasting note" :
-        v.tasting_note.length > 450 ? "A touch long" :
+        noteGrade === "too_long" ? `${noteLen} chars — may overflow` :
+        noteGrade === "long" ? `${noteLen} chars — a touch long` :
+        noteGrade === "short" ? `${noteLen} chars — a sentence more?` :
         undefined,
     },
     {
@@ -290,7 +308,9 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
     if (bottleQuality.kind === "missing") missing.push("Add a bottle image.");
     else if (bottleQuality.kind === "fatal") missing.push(`Replace the bottle image (${bottleQuality.width}px is below our export minimum).`);
     else if (bottleQuality.kind === "low") missing.push(`Upload a larger bottle image (current is ${bottleQuality.width}px wide).`);
+    // Phase 29 — tasting-note length matters as much as presence.
     if (!v.tasting_note) missing.push("Write the tasting note.");
+    else if (noteGrade === "too_long") missing.push(`Trim the tasting note (${noteLen} chars; may overflow the body column).`);
     if (scores.length === 0) missing.push("Add at least one score.");
     if (grapes.length === 0) missing.push("Set the grape blend.");
     if (!v.vintage_text) missing.push("Set the vintage.");
@@ -346,15 +366,42 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
     </>
   );
 
+  // Phase 29 — tasting-note length labels + rail class, mirroring Phase 28's
+  // image-quality closed loop. The noteLen + noteGrade themselves are
+  // computed much earlier so the Description section pill and the
+  // top-of-page status can reuse them.
+  const noteGradeLabel: Record<typeof noteGrade, string> = {
+    none: "No tasting note yet",
+    short: `Short (${noteLen} chars)`,
+    ok: `Standard (${noteLen} chars)`,
+    long: `A touch long (${noteLen} chars)`,
+    too_long: `Too long (${noteLen} chars)`,
+  } as const;
+  const noteGradeDetail: Record<typeof noteGrade, string> = {
+    none: "Catalogs that include this wine will leave the note blank. 250–450 characters reads cleanly on every layout.",
+    short: "Reads fine; a sentence or two more would give the sheet more presence. Target 250–450 characters.",
+    ok: "Standard length. Prints cleanly on every layout.",
+    long: "May need a smaller font on the detailed sheet. Fine on editorial. Target 250–450 characters for safety.",
+    too_long: "Will likely overflow the body column on detailed sheets. Trim or condense; 450 characters is the clean ceiling.",
+  } as const;
+  const noteGradeRail =
+    noteGrade === "ok" || noteGrade === "short" ? "ok" :
+    noteGrade === "long" ? "warn" :
+    "err";
+
   const copySummary = (
     <>
       <h3>Tasting note</h3>
       <p>{v.tasting_note ?? <span className="missing">none</span>}</p>
-      {v.tasting_note && (
-        <p className={`small ${v.tasting_note.length > 450 ? "warn-text" : "muted"}`}>
-          {v.tasting_note.length} characters (target 250–450)
+      <div className={`copy-quality copy-quality--${noteGrade}`}>
+        <div className="copy-quality__head">
+          <span className={`bq-dot bq-dot--${noteGradeRail}`} aria-hidden />
+          <strong>{noteGradeLabel[noteGrade]}</strong>
+        </div>
+        <p className="copy-quality__detail small muted">
+          {noteGradeDetail[noteGrade]}
         </p>
-      )}
+      </div>
       <h3>Food pairing</h3>
       <p>{v.food_pairing ?? <span className="missing">none</span>}</p>
       {v.short_description && (

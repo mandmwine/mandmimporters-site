@@ -421,6 +421,32 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 .bq-dot--warn { background: var(--warn); }
 .bq-dot--err  { background: var(--err); }
 
+/* Phase 29 — tasting-note length status, same visual grammar as bottle
+ * quality. Four tiers (none/short/ok/long/too_long) collapse into three
+ * rails (ok/warn/err) via the dot modifier, so the two closed loops look
+ * alike at a glance. */
+.copy-quality {
+  margin: 8px 0 14px;
+  padding: 8px 10px 8px 12px;
+  border-left: 3px solid var(--rule);
+  background: var(--card-soft);
+  border-radius: 2px;
+}
+.copy-quality--ok,
+.copy-quality--short    { border-left-color: var(--ok); }
+.copy-quality--long     { border-left-color: var(--warn); }
+.copy-quality--none,
+.copy-quality--too_long { border-left-color: var(--err); }
+.copy-quality__head {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--ink);
+}
+.copy-quality__detail { margin: 2px 0 0; }
+
+
 .bottle-library ul {
   list-style: none;
   margin: 0;
