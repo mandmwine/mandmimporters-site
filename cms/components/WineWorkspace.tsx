@@ -1,5 +1,17 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+// Phase C — plain-language editor workspace.
+//
+// Changes vs the previous build (audit sections 18, 21, 22):
+//   • Progress text is contextual ("Almost ready — add a bottle image.") instead
+//     of "5 of 7 complete". The caller passes a precomputed status + next-step.
+//   • Preview defaults to Fit Page. The old −/52%/+ zoom row is replaced by a
+//     single "Fit Page" chip and an overflow menu (Actual / 75% / 100% / Hide).
+//   • The scale is computed from the actual preview-column width via
+//     ResizeObserver, so moving the window never leaves the sheet clipped or
+//     surrounded by whitespace.
+//   • No nested iframe scroll in the default state — the sheet scales to the
+//     visible frame, period.
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export type WorkspaceSection = {
   id: string;
@@ -8,59 +20,98 @@ export type WorkspaceSection = {
   hint?: string;
 };
 
+export type WorkspaceStatus = {
+  // "ready" | "almost" | "needs" | "review" — drives the pill color + label.
+  level: "ready" | "almost" | "needs" | "review";
+  // Human-language headline, 2-5 words.
+  headline: string;
+  // Optional 1-2 next actions in plain English.
+  nextActions?: string[];
+};
+
 type Props = {
-  sheetUrl: string;         // e.g. "/catalog-admin/sheet/<vintage-id>"
-  version: string;          // vintage.updated_at ISO — bumps the iframe
+  sheetUrl: string;         // "/catalog-admin/sheet/<vintage-id>"
+  version: string;          // vintage.updated_at ISO — forces iframe refresh
   sections: WorkspaceSection[];
-  completeness: { filled: number; total: number };
+  status: WorkspaceStatus;
   vintageTabs: React.ReactNode;
   children: React.ReactNode;
 };
 
-// Three-column editor workspace:
-//   left rail — jump-to section nav with filled/missing hints, scroll-spy
-//                active-section highlight, completeness meter, vintage tabs
-//   center    — the editable panels (passed as children, each with id=`sec-<n>`)
-//   right     — sticky live preview iframe. Reloads automatically whenever the
-//                server rerenders the page with a new `version` (the vintage's
-//                updated_at timestamp), so saves show up without a manual refresh.
+// US-Letter page dimensions at 96dpi (what the sheet CSS declares).
+const SHEET_W = 816;   // 8.5in * 96
+const SHEET_H = 1056;  // 11in * 96
+
+// Named zoom levels the overflow menu offers.
+type ZoomMode = "fit" | "actual" | "75" | "100";
+const ZOOM_LABEL: Record<ZoomMode, string> = {
+  fit: "Fit Page",
+  actual: "Actual Size",
+  "75": "75%",
+  "100": "100%",
+};
+
+const STATUS_LABEL: Record<WorkspaceStatus["level"], string> = {
+  ready: "Ready",
+  almost: "Almost ready",
+  needs: "Needs a few details",
+  review: "Needs review",
+};
+
 export default function WineWorkspace({
   sheetUrl,
   version,
   sections,
-  completeness,
+  status,
   vintageTabs,
   children,
 }: Props) {
   const [previewOpen, setPreviewOpen] = useState<boolean>(true);
-  const [previewScale, setPreviewScale] = useState<number>(0.52);
+  const [zoom, setZoom] = useState<ZoomMode>("fit");
+  const [zoomMenuOpen, setZoomMenuOpen] = useState(false);
+  const [fitScale, setFitScale] = useState<number>(0.5);
   const [activeId, setActiveId] = useState<string | null>(sections[0]?.id ?? null);
-  const centerRef = useRef<HTMLDivElement | null>(null);
+  const frameRef = useRef<HTMLDivElement | null>(null);
 
   // Persist layout choices per-user so moving between wines keeps the layout.
   useEffect(() => {
     try {
       const openRaw = localStorage.getItem("mm.workspace.previewOpen");
-      const scaleRaw = localStorage.getItem("mm.workspace.previewScale");
+      const zoomRaw = localStorage.getItem("mm.workspace.zoomMode");
       if (openRaw !== null) setPreviewOpen(openRaw === "1");
-      if (scaleRaw) {
-        const n = parseFloat(scaleRaw);
-        if (Number.isFinite(n) && n > 0.2 && n <= 1) setPreviewScale(n);
-      }
+      if (zoomRaw && zoomRaw in ZOOM_LABEL) setZoom(zoomRaw as ZoomMode);
     } catch {}
   }, []);
   useEffect(() => {
     try { localStorage.setItem("mm.workspace.previewOpen", previewOpen ? "1" : "0"); } catch {}
   }, [previewOpen]);
   useEffect(() => {
-    try { localStorage.setItem("mm.workspace.previewScale", String(previewScale)); } catch {}
-  }, [previewScale]);
+    try { localStorage.setItem("mm.workspace.zoomMode", zoom); } catch {}
+  }, [zoom]);
 
-  // Scroll spy: whichever section anchor is nearest the top of the viewport
-  // (after the sticky page header) is the active one in the left rail.
+  // Compute the Fit-Page scale from the actual preview frame width. Keeps the
+  // page centered and legible without a nested horizontal scrollbar.
+  useLayoutEffect(() => {
+    const el = frameRef.current;
+    if (!el) return;
+    const compute = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      if (w <= 0 || h <= 0) return;
+      const sw = (w - 16) / SHEET_W;
+      const sh = (h - 16) / SHEET_H;
+      setFitScale(Math.min(sw, sh, 1));
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [previewOpen]);
+
+  // Scroll spy — same behavior as the previous build.
   useEffect(() => {
     if (sections.length === 0) return;
-    const topOffset = 110; // allow for header
+    const topOffset = 110;
     const observed: HTMLElement[] = [];
     for (const s of sections) {
       const el = document.getElementById(`sec-${s.id}`);
@@ -88,18 +139,25 @@ export default function WineWorkspace({
   }
 
   const iframeSrc = `${sheetUrl}?v=${encodeURIComponent(version)}&embed=1`;
-  const pct = completeness.total > 0
-    ? Math.round((completeness.filled / completeness.total) * 100)
-    : 0;
+  const scale =
+    zoom === "fit" ? fitScale :
+    zoom === "actual" ? 1 :
+    zoom === "75" ? 0.75 :
+    1;
 
   return (
     <div className={`workspace ${previewOpen ? "" : "workspace--no-preview"}`}>
       <aside className="workspace__rail">
-        <div className="rail-progress">
-          <div className="rail-progress__bar"><span style={{ width: `${pct}%` }} /></div>
-          <div className="small muted">
-            {completeness.filled} of {completeness.total} complete
-          </div>
+        <div className={`rail-status rail-status--${status.level}`}>
+          <strong className="rail-status__level">{STATUS_LABEL[status.level]}</strong>
+          <p className="rail-status__headline">{status.headline}</p>
+          {status.nextActions && status.nextActions.length > 0 && (
+            <ul className="rail-status__next">
+              {status.nextActions.slice(0, 2).map((a, i) => (
+                <li key={i}>{a}</li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <nav className="rail-nav" aria-label="Edit sections">
@@ -124,31 +182,42 @@ export default function WineWorkspace({
         </div>
       </aside>
 
-      <div className="workspace__main" ref={centerRef}>
+      <div className="workspace__main">
         {children}
       </div>
 
       <aside className={`workspace__preview ${previewOpen ? "" : "workspace__preview--closed"}`}>
         <div className="preview-head">
-          <strong>Live preview</strong>
+          <strong>Preview</strong>
           <div className="preview-head__right">
-            <button
-              type="button"
-              className="link small"
-              onClick={() => setPreviewScale((s) => Math.max(0.3, +(s - 0.08).toFixed(2)))}
-              aria-label="Zoom out"
-            >
-              −
-            </button>
-            <span className="small muted">{Math.round(previewScale * 100)}%</span>
-            <button
-              type="button"
-              className="link small"
-              onClick={() => setPreviewScale((s) => Math.min(1, +(s + 0.08).toFixed(2)))}
-              aria-label="Zoom in"
-            >
-              +
-            </button>
+            <div className="preview-zoom">
+              <button
+                type="button"
+                className="btn small"
+                onClick={() => setZoomMenuOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={zoomMenuOpen}
+              >
+                {ZOOM_LABEL[zoom]}
+                <span className="preview-zoom__chev" aria-hidden="true">▾</span>
+              </button>
+              {zoomMenuOpen && (
+                <ul className="preview-zoom__menu" role="menu" onMouseLeave={() => setZoomMenuOpen(false)}>
+                  {(Object.keys(ZOOM_LABEL) as ZoomMode[]).map((k) => (
+                    <li key={k}>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={zoom === k ? "active" : undefined}
+                        onClick={() => { setZoom(k); setZoomMenuOpen(false); }}
+                      >
+                        {ZOOM_LABEL[k]}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <button
               type="button"
               className="link small"
@@ -159,16 +228,16 @@ export default function WineWorkspace({
             </button>
           </div>
         </div>
-        <div className="preview-frame">
+        <div
+          className={`preview-frame preview-frame--${zoom}`}
+          ref={frameRef}
+          style={zoom !== "fit" ? { overflow: "auto" } : undefined}
+        >
           <div
             className="preview-frame__scale"
-            style={{ transform: `scale(${previewScale})` }}
+            style={{ transform: `scale(${scale})` }}
           >
-            <iframe
-              src={iframeSrc}
-              title="Sheet preview"
-              loading="lazy"
-            />
+            <iframe src={iframeSrc} title="Sheet preview" loading="lazy" />
           </div>
         </div>
       </aside>

@@ -1811,6 +1811,138 @@ kbd {
 .inline-archive--danger:hover { color: #fff; background: var(--err); border-color: var(--err); }
 .inline-archive-confirm { display: inline-flex; gap: 8px; align-items: center; }
 
+/* ---------- Phase C: workspace status, Nav settings, preview zoom ---------- */
+
+/* Status pill replaces "5 of 7 complete" with human language. */
+.rail-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule);
+  border-left-width: 3px;
+  border-radius: 6px;
+  background: var(--panel);
+}
+.rail-status--ready  { border-left-color: var(--ok); }
+.rail-status--almost { border-left-color: var(--accent); }
+.rail-status--needs  { border-left-color: var(--warn); }
+.rail-status--review { border-left-color: var(--err); }
+.rail-status__level {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.rail-status--ready  .rail-status__level { color: var(--ok); }
+.rail-status--needs  .rail-status__level { color: var(--warn); }
+.rail-status--review .rail-status__level { color: var(--err); }
+.rail-status__headline {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.rail-status__next {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rail-status__next li { padding-left: 10px; position: relative; }
+.rail-status__next li::before {
+  content: "·";
+  position: absolute;
+  left: 0;
+  top: -2px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Nav Settings disclosure sits below the main nav. */
+.nav-advanced { margin-top: 10px; }
+.nav-advanced__toggle {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #3a332d;
+  color: #b7ab98;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.nav-advanced__toggle:hover { color: #efe9dd; }
+.nav-advanced__chev { color: inherit; opacity: 0.7; font-size: 14px; }
+.nav--advanced { margin-top: 4px; }
+.nav--advanced a {
+  color: #cbbfa9;
+  padding: 6px 10px 6px 20px;
+  font-size: 13px;
+}
+:root[data-theme="dark"] .nav-advanced__toggle { border-top-color: var(--rule); color: var(--muted); }
+:root[data-theme="dark"] .nav--advanced a { color: var(--muted); }
+
+/* Preview zoom overflow menu */
+.preview-zoom { position: relative; display: inline-flex; }
+.preview-zoom__chev { margin-left: 4px; font-size: 10px; }
+.preview-zoom__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  list-style: none;
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(30,27,24,0.14);
+  z-index: 10;
+}
+.preview-zoom__menu li { margin: 0; }
+.preview-zoom__menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 12px;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.preview-zoom__menu button:hover { background: var(--accent-soft); }
+.preview-zoom__menu button.active { color: var(--accent); font-weight: 500; }
+
+/* Fit-Page frame centers the scaled sheet instead of needing a scrollbar. */
+.preview-frame--fit {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+}
+.preview-frame--fit .preview-frame__scale { transform-origin: top center; }
+
+/* Progressive disclosure for "optional details missing" on the wine detail */
+.specs-missing { margin-top: 8px; }
+.specs-missing summary { cursor: pointer; padding: 4px 0; }
+.specs-missing summary:hover { color: var(--ink); }
+.specs--muted dt,
+.specs--muted dd { color: var(--muted); }
+
 .export-chooser {
   display: flex;
   flex-direction: column;

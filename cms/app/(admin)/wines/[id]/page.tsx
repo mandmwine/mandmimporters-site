@@ -9,7 +9,7 @@ import ScoresPanel, { type ScoreRow } from "@/components/ScoresPanel";
 import { EditableCopy, EditableGrapes, EditableTechnical } from "@/components/WineEditSections";
 import BottleImagePanel from "@/components/BottleImagePanel";
 import AIFieldButton from "@/components/AIFieldButton";
-import WineWorkspace, { type WorkspaceSection } from "@/components/WineWorkspace";
+import WineWorkspace, { type WorkspaceSection, type WorkspaceStatus } from "@/components/WineWorkspace";
 import SourcesPanel from "@/components/SourcesPanel";
 import CopyButton from "@/components/CopyButton";
 import UpdatedMeta from "@/components/UpdatedMeta";
@@ -180,27 +180,20 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
   const legacy = v.legacy as Record<string, unknown>;
   const openFlags = flags.filter((f) => f.status === "open");
 
-  // ----------------------------------------------------- completeness
-  const completenessChecks: { label: string; ok: boolean }[] = [
-    { label: "Vintage set", ok: Boolean(v.vintage_text) },
-    { label: "Mevushal recorded", ok: v.mevushal !== "unknown" },
-    { label: "Supervision recorded", ok: Boolean(supervision.length || v.supervision_display) },
-    { label: "Grape blend set", ok: grapes.length > 0 },
-    { label: "At least one score", ok: scores.length > 0 },
-    { label: "Tasting note", ok: Boolean(v.tasting_note) },
-    { label: "Bottle image", ok: Boolean(v.bottle_asset_id) },
-  ];
-  const filled = completenessChecks.filter((c) => c.ok).length;
+  // Phase C: the numeric "5 of 7 complete" meter is gone. Status + next actions
+  // are computed further down from the same facts.
 
+  // Phase C: plain-language section labels. "Technical" → "Details",
+  // "Copy" → "Description", "Bottle image" → "Bottle", "Review items" → "Review".
   const sections: WorkspaceSection[] = [
     {
       id: "technical",
-      label: "Technical",
+      label: "Details",
       state: (v.vintage_text && v.mevushal !== "unknown" && (supervision.length || v.supervision_display)) ? "ok" : "missing",
       hint:
-        !v.vintage_text ? "No vintage" :
+        !v.vintage_text ? "Add vintage" :
         v.mevushal === "unknown" ? "Mevushal unknown" :
-        !supervision.length && !v.supervision_display ? "No supervision" :
+        !supervision.length && !v.supervision_display ? "Add supervision" :
         undefined,
     },
     {
@@ -213,48 +206,99 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
       id: "scores",
       label: "Scores",
       state: scores.length > 0 ? "ok" : "missing",
-      hint: scores.length === 0 ? "None added" : `${scores.length} score${scores.length === 1 ? "" : "s"}`,
+      hint: scores.length === 0 ? "Add scores" : `${scores.length} score${scores.length === 1 ? "" : "s"}`,
     },
     {
       id: "copy",
-      label: "Copy",
+      label: "Description",
       state: v.tasting_note
         ? (v.tasting_note.length > 450 ? "warn" : "ok")
         : "missing",
       hint:
-        !v.tasting_note ? "No tasting note" :
-        v.tasting_note.length > 450 ? `${v.tasting_note.length} chars (long)` :
+        !v.tasting_note ? "Add tasting note" :
+        v.tasting_note.length > 450 ? "A touch long" :
         undefined,
     },
     {
       id: "bottle",
-      label: "Bottle image",
+      label: "Bottle",
       state: v.bottle_asset_id ? "ok" : "missing",
-      hint: v.bottle_asset_id ? undefined : "Not uploaded",
+      hint: v.bottle_asset_id ? undefined : "Add image",
     },
     {
       id: "review",
-      label: "Review items",
+      label: "Review",
       state: openFlags.length === 0 ? "info" : openFlags.some((f) => f.severity === "error") ? "warn" : "info",
-      hint: openFlags.length === 0 ? undefined : `${openFlags.length} open`,
+      hint: openFlags.length === 0 ? undefined : `${openFlags.length} to check`,
     },
     {
       id: "sources",
       label: "Sources",
-      state: provenance.length > 0 ? "info" : "info",
+      state: "info",
       hint: provenance.length > 0 ? `${provenance.length} field${provenance.length === 1 ? "" : "s"}` : undefined,
     },
   ];
 
+  // Phase C: translate the completeness checks into human-language status +
+  // the next concrete action (section 17 / 18.3 / 36). The old "5 of 7 complete"
+  // meter is replaced by this.
+  const status: WorkspaceStatus = (() => {
+    const missing: string[] = [];
+    if (!v.bottle_asset_id) missing.push("Add a bottle image.");
+    if (!v.tasting_note) missing.push("Write the tasting note.");
+    if (scores.length === 0) missing.push("Add at least one score.");
+    if (grapes.length === 0) missing.push("Set the grape blend.");
+    if (!v.vintage_text) missing.push("Set the vintage.");
+    if (openFlags.some((f) => f.severity === "error")) {
+      return {
+        level: "review",
+        headline: `${openFlags.filter((f) => f.severity === "error").length} issue${openFlags.filter((f) => f.severity === "error").length === 1 ? "" : "s"} to resolve.`,
+        nextActions: openFlags.filter((f) => f.severity === "error").slice(0, 2).map((f) => f.message),
+      };
+    }
+    if (missing.length === 0 && v.status !== "approved" && v.status !== "published") {
+      return { level: "almost", headline: "Everything's set — mark it approved to publish." };
+    }
+    if (missing.length === 0) {
+      return { level: "ready", headline: "This sheet is ready." };
+    }
+    if (missing.length <= 2) {
+      return { level: "almost", headline: missing.length === 1 ? "One thing left." : "Two things left.", nextActions: missing };
+    }
+    return { level: "needs", headline: `${missing.length} details to add.`, nextActions: missing.slice(0, 2) };
+  })();
+
+  // Phase C: progressive disclosure. Show recorded fields normally; hide the
+  // missing ones behind a "N optional details missing" expander so the editor
+  // isn't greeted with a column of "not recorded" lines (sections 20 / 43).
+  const recordedFacts = facts.filter(([, v]) => Boolean(v));
+  const missingFacts = facts.filter(([, v]) => !v);
   const technicalSummary = (
-    <dl className="specs">
-      {facts.map(([k, val]) => (
-        <div key={k}>
-          <dt>{k}</dt>
-          <dd>{val ? val : <span className="missing">not recorded</span>}</dd>
-        </div>
-      ))}
-    </dl>
+    <>
+      <dl className="specs">
+        {recordedFacts.map(([k, val]) => (
+          <div key={k}>
+            <dt>{k}</dt>
+            <dd>{val}</dd>
+          </div>
+        ))}
+      </dl>
+      {missingFacts.length > 0 && (
+        <details className="specs-missing">
+          <summary className="muted small">
+            {missingFacts.length} optional detail{missingFacts.length === 1 ? "" : "s"} missing
+          </summary>
+          <dl className="specs specs--muted">
+            {missingFacts.map(([k]) => (
+              <div key={k}>
+                <dt>{k}</dt>
+                <dd className="muted">—</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
+    </>
   );
 
   const copySummary = (
@@ -386,7 +430,7 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
         sheetUrl={`/catalog-admin/sheet/${id}`}
         version={new Date(v.updated_at).toISOString()}
         sections={sections}
-        completeness={{ filled, total: completenessChecks.length }}
+        status={status}
         vintageTabs={vintageTabs}
       >
         <section id="sec-technical">

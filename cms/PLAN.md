@@ -191,6 +191,52 @@ Depends on Phase 12 pricing schema; now live.
 - Per-wine PDF export (not catalog-driven) ships no prices by default — Trade
   pricing lives on the Catalog pass, which is correct for distributor sheets.
 
+### Phase 23 — Plain-language workspace (Phase C of audit) — SHIPPED
+
+Phase C per the audit directive (§ 17-24): hide the complexity until it's
+needed. Scoped to the single-wine editing experience + the main nav.
+
+**Nav (components/Nav.tsx):**
+- Everyday row collapses to five destinations: Home, Wines, Catalogs,
+  Images, Review
+- A Settings disclosure below reveals Producers, Dropbox, Data, Maps, Theme,
+  and (admin-only) Users. Opens automatically when the user is already on one
+  of those pages, so bookmarked links aren't surprising.
+
+**Wine workspace status pill (components/WineWorkspace.tsx):**
+- The "5 of 7 complete" meter is replaced by a status pill with four levels:
+  Ready · Almost ready · Needs a few details · Needs review
+- Each level is a colored left-border + an eyebrow label. The wine page
+  computes the level and 1-2 next actions from the same facts the sections
+  rail already uses, so no new data pipeline.
+- Example: a wine with no bottle image + no tasting note shows
+  "**Almost ready** — Two things left." with "Add a bottle image." and
+  "Write the tasting note." as the two next actions.
+
+**Preview Fit-Page default (components/WineWorkspace.tsx):**
+- The −/52%/+ zoom row is gone. One `Fit Page` chip + a chevron menu
+  with Actual Size / 75% / 100%.
+- The Fit-Page scale is computed from the live preview column width via
+  `ResizeObserver` — the whole page scales down so no nested horizontal
+  scrollbar is ever needed in the default state.
+- Switching to Actual / 75% / 100% opts into the scrollable view.
+- Choice is persisted in localStorage per-user.
+
+**Section labels (app/(admin)/wines/[id]/page.tsx):**
+- Technical → Details · Copy → Description · Bottle image → Bottle ·
+  Review items → Review. Hints humanized ("Add vintage", "Add image",
+  "A touch long") instead of ("No vintage", "Not uploaded", "357 chars (long)").
+
+**Progressive disclosure for optional details:**
+- The Technical panel used to show every missing optional field as "not
+  recorded". Now only recorded fields appear in the primary dl; missing
+  optional fields collapse behind a "N optional details missing" expander,
+  per audit § 20.
+
+Not yet done (final pass per the audit):
+- Phase D — four-step catalog builder (select / layout / organize / preview /
+  export) + preflight
+
 ### Phase 22 — Region-first map hierarchy (Phase B of audit) — SHIPPED
 
 Phase B per the audit (§ 10-15): the map system now shows a region-scope view
