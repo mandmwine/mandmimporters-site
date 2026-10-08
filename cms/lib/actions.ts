@@ -1692,25 +1692,52 @@ export async function resolveProvenanceConflict(formData: FormData) {
   const user = await requireEditor();
   const id = String(formData.get("id") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(id)) return;
-  const row = await one<{ entity_type: string; entity_id: string; field_name: string }>(
-    "SELECT entity_type, entity_id, field_name FROM field_provenance WHERE id = $1",
+  const row = await one<{ entity_type: string; entity_id: string; field_name: string; raw_value: string | null }>(
+    "SELECT entity_type, entity_id, field_name, raw_value FROM field_provenance WHERE id = $1",
     [id],
   );
   if (!row) return;
-  // Mark every other provenance row for the same (entity, field) non-current.
+
+  // Phase 38 (Sprint 2) — stronger conflict resolution.
+  //
+  // Before: losers got is_current=false; winner got verified. The losing
+  //         evidence was still visible but easy to confuse with simply
+  //         being "stale."
+  // Now:    losers get verification_status='rejected' AND is_current=false,
+  //         so the Sources panel paints them distinctly. Winner gets
+  //         verification_status='accepted' AND is_current=true. The
+  //         accepted value is also auto-pushed to the entity's own column
+  //         when the field is in the pushable allow-list, so a single
+  //         "Pick this" click both resolves the conflict and makes the
+  //         chosen value authoritative. No orphaned "verified but not
+  //         actually visible on the record" state.
   await query(
-    `UPDATE field_provenance SET is_current = false
-       WHERE entity_type = $1 AND entity_id = $2 AND field_name = $3 AND id <> $4`,
+    `UPDATE field_provenance SET verification_status = 'rejected', is_current = false
+       WHERE entity_type = $1 AND entity_id = $2 AND field_name = $3 AND id <> $4
+         AND verification_status NOT IN ('rejected', 'superseded')`,
     [row.entity_type, row.entity_id, row.field_name, id],
   );
-  // The chosen row becomes current + verified.
   await query(
-    `UPDATE field_provenance SET is_current = true, verification_status = 'verified',
+    `UPDATE field_provenance SET is_current = true, verification_status = 'accepted',
          verified_at = now(), verified_by = $2
        WHERE id = $1`,
     [id, user.id],
   );
-  // Any open 'conflict' review flag for this entity+field gets resolved too.
+
+  // Push the chosen value to the entity column, when safe (allow-list).
+  const pushable =
+    row.entity_type === "wine_vintage" && PUSHABLE_WINE_VINTAGE_FIELDS.has(row.field_name)
+      ? "wine_vintages"
+      : row.entity_type === "producer" && PUSHABLE_PRODUCER_FIELDS.has(row.field_name)
+        ? "producers"
+        : null;
+  if (pushable && row.raw_value !== null) {
+    await query(
+      `UPDATE ${pushable} SET ${row.field_name} = $2, updated_at = now() WHERE id = $1`,
+      [row.entity_id, row.raw_value],
+    );
+  }
+
   await query(
     `UPDATE review_flags SET status = 'resolved', resolved_by = $1, resolved_at = now()
        WHERE entity_type = $2 AND entity_id = $3 AND field_name = $4
@@ -1718,9 +1745,75 @@ export async function resolveProvenanceConflict(formData: FormData) {
     [user.id, row.entity_type, row.entity_id, row.field_name],
   );
   await audit(user.id, "provenance.resolve_conflict",
-    { type: "field_provenance", id, field: row.field_name });
+    { type: "field_provenance", id, field: row.field_name },
+    undefined,
+    { pushed_to_entity: Boolean(pushable), value_preview: row.raw_value?.slice(0, 80) ?? null });
   revalidatePath(`/wines/${row.entity_id}`);
   revalidatePath(`/producers/${row.entity_id}`);
+}
+
+// Phase 38 (Sprint 2) — resolve a conflict by typing a *third* value when
+// none of the competing sources match reality. Every existing row for the
+// field is marked rejected, a new provenance row is created carrying the
+// manual value (source_id = NULL, note recording who entered it), and the
+// value is pushed to the entity column. Same auto-push allow-list as
+// resolveProvenanceConflict.
+export async function resolveWithManualValue(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const entityType = String(formData.get("entity_type") ?? "");
+  const entityId = String(formData.get("entity_id") ?? "");
+  const fieldName = String(formData.get("field_name") ?? "");
+  const value = String(formData.get("value") ?? "").trim();
+  const note = (formData.get("note") ? String(formData.get("note")) : "").trim();
+
+  if (!/^(wine_vintage|producer)$/.test(entityType)) return { ok: false, message: "Unsupported entity type." };
+  if (!/^[0-9a-f-]{36}$/i.test(entityId)) return { ok: false, message: "Bad entity id." };
+  if (!fieldName) return { ok: false, message: "Field name required." };
+  if (!value) return { ok: false, message: "Enter a value." };
+
+  // Reject every existing row for this field.
+  await query(
+    `UPDATE field_provenance SET verification_status = 'rejected', is_current = false
+       WHERE entity_type = $1 AND entity_id = $2 AND field_name = $3
+         AND verification_status NOT IN ('rejected', 'superseded')`,
+    [entityType, entityId, fieldName],
+  );
+  // Create a new row carrying the manual value.
+  const inserted = await one<{ id: string }>(
+    `INSERT INTO field_provenance
+       (entity_type, entity_id, field_name, raw_value, normalized_value,
+        source_id, source_locator, verification_status, is_current, verified_at, verified_by, notes)
+     VALUES ($1, $2, $3, $4, $4, NULL, NULL, 'accepted', true, now(), $5, $6)
+     RETURNING id`,
+    [entityType, entityId, fieldName, value, user.id, note || `Manual value entered by ${user.email}`],
+  );
+  // Push to the entity when the field is pushable.
+  const pushable =
+    entityType === "wine_vintage" && PUSHABLE_WINE_VINTAGE_FIELDS.has(fieldName)
+      ? "wine_vintages"
+      : entityType === "producer" && PUSHABLE_PRODUCER_FIELDS.has(fieldName)
+        ? "producers"
+        : null;
+  if (pushable) {
+    await query(
+      `UPDATE ${pushable} SET ${fieldName} = $2, updated_at = now() WHERE id = $1`,
+      [entityId, value],
+    );
+  }
+  // Resolve any open conflict flag for this (entity, field).
+  await query(
+    `UPDATE review_flags SET status = 'resolved', resolved_by = $1, resolved_at = now()
+       WHERE entity_type = $2 AND entity_id = $3 AND field_name = $4
+         AND flag_type = 'conflict' AND status = 'open'`,
+    [user.id, entityType, entityId, fieldName],
+  );
+  await audit(user.id, "provenance.resolve_manual",
+    { type: "field_provenance", id: inserted!.id, field: fieldName },
+    undefined,
+    { pushed_to_entity: Boolean(pushable), value_preview: value.slice(0, 80) });
+  revalidatePath(`/wines/${entityId}`);
+  revalidatePath(`/producers/${entityId}`);
+  return { ok: true };
 }
 
 // Push a provenance row's raw_value into the entity's own column.  Only a

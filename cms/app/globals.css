@@ -950,8 +950,10 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   gap: 4px;
 }
 .prov-row--verified { border-left: 3px solid var(--ok); }
+.prov-row--accepted { border-left: 3px solid var(--ok); background: var(--ok-soft); }
 .prov-row--conflict { border-left: 3px solid var(--warn); }
 .prov-row--rejected { border-left: 3px solid var(--err); opacity: 0.65; }
+.prov-row--superseded { border-left: 3px solid var(--rule); opacity: 0.55; }
 .prov-row--unverified { border-left: 3px solid var(--muted); }
 .prov-row--stale { opacity: 0.55; }
 
@@ -972,11 +974,39 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   font-weight: 600;
 }
 .prov-chip--verified { background: var(--ok-soft); color: var(--ok); }
+.prov-chip--accepted { background: var(--ok-soft); color: var(--ok); outline: 1px solid var(--ok); }
 .prov-chip--conflict { background: var(--warn-soft); color: var(--warn); }
 .prov-chip--rejected { background: var(--err-soft); color: var(--err); }
+.prov-chip--superseded { background: var(--panel); color: var(--muted); border: 1px dashed var(--rule); }
 .prov-chip--unverified { background: var(--panel); color: var(--muted); border: 1px solid var(--rule); }
 
 .badge--warn-badge { background: var(--warn-soft); color: var(--warn); }
+
+/* Phase 38 (Sprint 2) — "Enter a different value" affordance on each
+ * conflicting field group. The inline form opens on click; a filled
+ * submit marks every current row for the field as rejected and inserts
+ * a new row carrying the manual value (verification_status='accepted'). */
+.prov-field__manual-link { margin: 4px 0 2px; color: var(--muted); }
+.prov-field__manual {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0 8px;
+  padding: 10px 12px;
+  background: var(--card-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 3px;
+}
+.prov-field__manual input {
+  margin-top: 2px;
+  font-size: 13px;
+  padding: 6px 8px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--ink);
+  width: 100%;
+}
 
 .attach-source {
   background: var(--accent-soft);
