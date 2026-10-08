@@ -257,6 +257,7 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
                   <select name="render_mode" defaultValue={c.render_mode}>
                     <option value="hybrid">Hybrid</option>
                     <option value="detailed">Detailed only</option>
+                    <option value="editorial">Editorial only</option>
                     <option value="compact">Compact only</option>
                   </select>
                 </label>

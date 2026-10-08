@@ -9,6 +9,7 @@ import { loadSheetData, type SheetData } from "./data";
 import { SingleWineSheet } from "./SingleWineSheet";
 import { LineupPage } from "./LineupPage";
 import { TradePage } from "./TradePage";
+import { EditorialPage } from "./EditorialPage";
 import { inlineFontFaces } from "./fonts";
 
 export type Preset = "print" | "email" | "web";
@@ -69,7 +70,13 @@ function priceOptionsFromCatalog(c: CatalogRow): SheetPriceOptions {
 
 // Group wine items into pages based on the section's layout.
 function paginate(wines: SheetData[], layout: string): { kind: string; wines: SheetData[] }[] {
-  const perPage: Record<string, number> = { detailed: 1, lineup: 4, compact: 6, trade: 8 };
+  const perPage: Record<string, number> = {
+    detailed: 1,
+    editorial: 2, // Phase 26: reading-forward magazine spread, 2/page.
+    lineup: 4,
+    compact: 6,
+    trade: 8,
+  };
   const n = perPage[layout] ?? 1;
   if (n === 1) return wines.map((w) => ({ kind: "detailed", wines: [w] }));
   const pages: { kind: string; wines: SheetData[] }[] = [];
@@ -225,6 +232,10 @@ export async function catalogHtml(plan: CatalogPlan, preset: Preset): Promise<st
             const producer = p.wines[0]?.wine.producer ?? "";
             parts.push(renderToStaticMarkup(
               <LineupPage data={{ producer, wines: p.wines, producer_note: p.wines[0]?.producer_note }} />,
+            ));
+          } else if (p.kind === "editorial") {
+            parts.push(renderToStaticMarkup(
+              <EditorialPage data={{ wines: p.wines, spread_title: title }} />,
             ));
           } else if (p.kind === "trade") {
             parts.push(renderToStaticMarkup(

@@ -1,10 +1,9 @@
 "use client";
-// Phase D — the three-visible-step New Catalog wizard.
+// Phase D — New Catalog wizard. Four live presentation cards after Phase 26
+// shipped the Editorial renderer; Portfolio is still "coming soon".
 //
-// Step 1 — Presentation: three large cards (Detailed · Trade · Hybrid). Each
-//          one maps to a backend render_mode we already support. Editorial and
-//          Portfolio are listed as "coming soon" so the mental model matches
-//          audit § 29 even though the renderer isn't there yet.
+// Step 1 — Presentation: Detailed · Editorial · Trade · Hybrid. Each key
+//          maps to a backend render_mode the catalog renderer supports.
 // Step 2 — Name + optional structure sections. The server action already
 //          scaffolds a sensible default; this screen lets the user strip any
 //          of them off before create.
@@ -17,7 +16,7 @@ import { useSelection } from "./SelectionProvider";
 import { addWinesToCatalog, createCatalog } from "@/lib/actions";
 
 type Preset = {
-  key: "detailed" | "compact" | "hybrid";
+  key: "detailed" | "editorial" | "compact" | "hybrid";
   title: string;
   subtitle: string;
   description: string;
@@ -32,6 +31,13 @@ const PRESETS: Preset[] = [
     subtitle: "One wine per page",
     description: "A full data sheet for every wine — bottle, map, scores, technical table, tasting note.",
     hint: "Best for a sommelier catalog or a cellar reference.",
+  },
+  {
+    key: "editorial",
+    title: "Editorial",
+    subtitle: "Two wines per page",
+    description: "A reading-forward spread — bottle, big tasting note, one score. No technical table or map.",
+    hint: "Best for a magazine-style catalog or storytelling piece.",
   },
   {
     key: "compact",
@@ -147,7 +153,7 @@ export default function NewCatalogWizard({ existingCatalogs }: { existingCatalog
             ))}
           </div>
           <div className="wizard__coming">
-            Editorial &amp; Portfolio layouts land in a later pass — pick Hybrid for now and you'll be able to switch when they ship.
+            Portfolio layout (producer-first spreads with a producer header + wine lineup) lands in a later pass.
           </div>
           <div className="wizard__actions">
             <Link href="/catalogs" className="link small">Cancel</Link>

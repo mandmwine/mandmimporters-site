@@ -31,6 +31,7 @@ const KIND_LABEL: Record<string, string> = {
 
 const LAYOUT_LABEL: Record<string, string> = {
   detailed: "Detailed (one per page)",
+  editorial: "Editorial (two per page, reading-forward)",
   lineup: "Lineup (producer-focused, 2–6/page)",
   trade: "Trade sheet (dense, 8+/page)",
   compact: "Compact",
@@ -97,6 +98,7 @@ export default function CatalogSectionsReorder({
                 aria-label="Change section layout"
               >
                 <option value="detailed">Detailed</option>
+                <option value="editorial">Editorial</option>
                 <option value="lineup">Lineup</option>
                 <option value="trade">Trade</option>
                 <option value="compact">Compact</option>
