@@ -7,7 +7,7 @@ import FlagButtons from "@/components/FlagButtons";
 import AddVintageButton from "@/components/AddVintageButton";
 import ScoresPanel, { type ScoreRow } from "@/components/ScoresPanel";
 import { EditableCopy, EditableGrapes, EditableTechnical } from "@/components/WineEditSections";
-import BottleImagePanel from "@/components/BottleImagePanel";
+import BottleImagePanel, { gradeBottleQuality } from "@/components/BottleImagePanel";
 import AIFieldButton from "@/components/AIFieldButton";
 import WineWorkspace, { type WorkspaceSection, type WorkspaceStatus } from "@/components/WineWorkspace";
 import SourcesPanel from "@/components/SourcesPanel";
@@ -45,6 +45,11 @@ type Vintage = {
   first_kosher_vintage: boolean | null; organic: boolean | null; biodynamic: boolean | null;
   legacy: Record<string, unknown>; updated_at: Date;
   bottle_asset_id: string | null;
+  // Phase 28 — bottle asset dimensions so the workspace can grade image quality in-page.
+  bottle_width_px: number | null;
+  bottle_height_px: number | null;
+  bottle_mime: string | null;
+  bottle_file_name: string | null;
   sku: string | null;
   pack_size: number | null;
   stock_cases_available: string | null;
@@ -81,9 +86,16 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
             v.stock_cases_allocated::text AS stock_cases_allocated,
             v.stock_cases_inbound::text AS stock_cases_inbound,
             v.stock_updated_at,
+            ba.width_px   AS bottle_width_px,
+            ba.height_px  AS bottle_height_px,
+            ba.mime_type  AS bottle_mime,
+            ba.file_name  AS bottle_file_name,
             w.display_name, w.canonical_name, w.category, w.slug, w.website_slug, w.producer_id,
             p.name AS producer
-     FROM wine_vintages v JOIN wines w ON w.id = v.wine_id JOIN producers p ON p.id = w.producer_id
+     FROM wine_vintages v
+     JOIN wines w ON w.id = v.wine_id
+     JOIN producers p ON p.id = w.producer_id
+     LEFT JOIN assets ba ON ba.id = v.bottle_asset_id AND ba.deleted_at IS NULL
      WHERE v.id = $1`,
     [id],
   );
@@ -180,6 +192,21 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
   const legacy = v.legacy as Record<string, unknown>;
   const openFlags = flags.filter((f) => f.status === "open");
 
+  // Phase 28 — grade the bottle image once and reuse the result in both the
+  // BottleImagePanel (full status card) and the workspace status pill
+  // (compact dot + line).
+  const bottleFallbackImage: string | null = typeof legacy?.img === "string"
+    ? (legacy.img as string).startsWith("http")
+      ? (legacy.img as string)
+      : `https://www.mandmimporters.com${legacy.img as string}`
+    : null;
+  const bottleQuality = gradeBottleQuality(
+    v.bottle_asset_id,
+    v.bottle_width_px,
+    v.bottle_height_px,
+    bottleFallbackImage,
+  );
+
   // Phase C: the numeric "5 of 7 complete" meter is gone. Status + next actions
   // are computed further down from the same facts.
 
@@ -222,8 +249,22 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
     {
       id: "bottle",
       label: "Bottle",
-      state: v.bottle_asset_id ? "ok" : "missing",
-      hint: v.bottle_asset_id ? undefined : "Add image",
+      // Phase 28 — grade image quality, not just presence. Low-res or fatal
+      // bottles ride on the "warn" rail instead of "ok" so the workspace
+      // status pill flags them before preflight does.
+      state:
+        bottleQuality.kind === "hi" || bottleQuality.kind === "ok"
+          ? "ok"
+          : bottleQuality.kind === "missing" || bottleQuality.kind === "fatal"
+            ? "missing"
+            : "warn",
+      hint:
+        bottleQuality.kind === "missing" ? "Add image" :
+        bottleQuality.kind === "fatal" ? `Too small (${bottleQuality.width}px)` :
+        bottleQuality.kind === "low" ? `Low-res (${bottleQuality.width}px)` :
+        bottleQuality.kind === "fallback_only" ? "Using fallback" :
+        bottleQuality.kind === "no_dimensions" ? "Dimensions unknown" :
+        undefined,
     },
     {
       id: "review",
@@ -244,7 +285,11 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
   // meter is replaced by this.
   const status: WorkspaceStatus = (() => {
     const missing: string[] = [];
-    if (!v.bottle_asset_id) missing.push("Add a bottle image.");
+    // Phase 28 — bottle image is only "satisfied" at ok/hi; low-res or
+    // too-small counts as an item the workspace still wants done.
+    if (bottleQuality.kind === "missing") missing.push("Add a bottle image.");
+    else if (bottleQuality.kind === "fatal") missing.push(`Replace the bottle image (${bottleQuality.width}px is below our export minimum).`);
+    else if (bottleQuality.kind === "low") missing.push(`Upload a larger bottle image (current is ${bottleQuality.width}px wide).`);
     if (!v.tasting_note) missing.push("Write the tasting note.");
     if (scores.length === 0) missing.push("Add at least one score.");
     if (grapes.length === 0) missing.push("Set the grape blend.");
@@ -499,14 +544,8 @@ export default async function WineDetail({ params }: { params: Promise<{ id: str
               wineVintageId={id}
               currentAssetId={v.bottle_asset_id}
               recentAssets={recentBottles}
-              fallbackImage={
-                typeof v.legacy?.img === "string"
-                  ? (v.legacy.img as string).startsWith("http")
-                    ? (v.legacy.img as string)
-                    : `https://www.mandmimporters.com${v.legacy.img as string}`
-                  : null
-              }
-              resolutionWarning={null}
+              fallbackImage={bottleFallbackImage}
+              quality={bottleQuality}
             />
           </div>
         </section>

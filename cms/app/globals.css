@@ -379,6 +379,48 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 .bottle-panel__preview img { max-width: 100%; max-height: 320px; object-fit: contain; }
 .bottle-panel__empty { color: var(--muted); font-size: 13px; }
 .bottle-panel__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Phase 28 — image-quality status block right under the bottle preview.
+ * Four states, each with a colored left rail and a status dot:
+ *   ok/hi  → green (--ok)
+ *   low/fallback_only/no_dimensions → amber (--warn)
+ *   missing/fatal → red (--err)
+ * This mirrors the preflight banner so the editor sees the same colors
+ * for the same severity before and after preflight. */
+.bottle-panel__quality {
+  margin: 10px 0 0;
+  padding: 8px 10px 8px 12px;
+  border-left: 3px solid var(--rule);
+  background: var(--card-soft);
+  border-radius: 2px;
+}
+.bottle-panel__quality.bq-hi,
+.bottle-panel__quality.bq-ok    { border-left-color: var(--ok); }
+.bottle-panel__quality.bq-low,
+.bottle-panel__quality.bq-fallback_only,
+.bottle-panel__quality.bq-no_dimensions { border-left-color: var(--warn); }
+.bottle-panel__quality.bq-missing,
+.bottle-panel__quality.bq-fatal { border-left-color: var(--err); }
+.bottle-panel__quality-head {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--ink);
+}
+.bottle-panel__quality-detail { margin: 2px 0 0; }
+.bq-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: 0 0 auto;
+}
+.bq-dot--ok   { background: var(--ok); }
+.bq-dot--warn { background: var(--warn); }
+.bq-dot--err  { background: var(--err); }
+
 .bottle-library ul {
   list-style: none;
   margin: 0;

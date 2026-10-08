@@ -622,14 +622,17 @@ export async function preflightCatalog(formData: FormData): Promise<{ ok: boolea
          AND length(coalesce(v.tasting_note, '')) > 500`,
       [catalogId],
     ),
-    one<{ n: number }>(
-      `SELECT count(*)::int AS n
+    one<{ n: number; too_small: number }>(
+      // Phase 28 — split the single "low-res" count into two bands so the
+      // workspace and preflight agree on severity (fatal < 400 vs low < 800).
+      `SELECT
+         count(*) FILTER (WHERE a.width_px IS NOT NULL AND a.width_px < 800)::int AS n,
+         count(*) FILTER (WHERE a.width_px IS NOT NULL AND a.width_px < 400)::int AS too_small
        FROM catalog_items ci
        JOIN wine_vintages v ON v.id = ci.wine_vintage_id
        JOIN assets a ON a.id = v.bottle_asset_id
        WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL
-         AND a.deleted_at IS NULL
-         AND a.width_px IS NOT NULL AND a.width_px < 800`,
+         AND a.deleted_at IS NULL`,
       [catalogId],
     ),
     one<{ n: number }>(
@@ -653,7 +656,11 @@ export async function preflightCatalog(formData: FormData): Promise<{ ok: boolea
   const warnings: PreflightItem[] = [];
   const bottleMissing = (bottles?.m ?? 0) - (bottles?.n ?? 0);
   if (bottleMissing > 0) warnings.push({ severity: "warning", category: "bottle_missing", message: `${bottleMissing} wine${bottleMissing === 1 ? "" : "s"} without a bottle image — a placeholder will print instead.`, count: bottleMissing });
-  if ((lowRes?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "bottle_lowres", message: `${lowRes!.n} low-resolution bottle${lowRes!.n === 1 ? "" : "s"} (under 800px wide) — may look soft when printed.`, count: lowRes!.n });
+  // Phase 28 — the lowRes count already includes the too-small count; subtract
+  // so each wine appears in exactly one bucket (merely low vs. too-small).
+  const lowResCount = Math.max(0, (lowRes?.n ?? 0) - (lowRes?.too_small ?? 0));
+  if ((lowRes?.too_small ?? 0) > 0) warnings.push({ severity: "warning", category: "bottle_toosmall", message: `${lowRes!.too_small} bottle image${lowRes!.too_small === 1 ? "" : "s"} below our 400px export minimum — please upload larger versions.`, count: lowRes!.too_small });
+  if (lowResCount > 0) warnings.push({ severity: "warning", category: "bottle_lowres", message: `${lowResCount} low-resolution bottle${lowResCount === 1 ? "" : "s"} (under 800px wide) — may look soft when printed.`, count: lowResCount });
   if ((scores?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "no_scores", message: `${scores!.n} wine${scores!.n === 1 ? "" : "s"} without any critic score.`, count: scores!.n });
   if ((notes?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "no_tasting_note", message: `${notes!.n} wine${notes!.n === 1 ? "" : "s"} without a tasting note.`, count: notes!.n });
   if ((longNotes?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "long_tasting_note", message: `${longNotes!.n} tasting note${longNotes!.n === 1 ? "" : "s"} longer than 500 characters — may overflow the body column.`, count: longNotes!.n });
