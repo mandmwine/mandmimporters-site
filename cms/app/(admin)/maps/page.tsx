@@ -113,20 +113,53 @@ export default async function MapsIndex({ searchParams }: { searchParams: Promis
       </nav>
 
       <section className="maps-countries">
-        {Object.entries(byCountry).sort(([a], [b]) => a.localeCompare(b)).map(([country, { country: countryRow, children }]) => (
-          <div key={country} className="panel">
+        {Object.entries(byCountry)
+          // Phase 43 (Sprint 4) — show countries with the most wines first,
+          // not alphabetically. France and Italy are the priority per
+          // decisions §4; a country with 0 wines in the catalog gets pushed
+          // to the bottom.
+          .sort(([, a], [, b]) => {
+            const aw = (a.country?.wine_count ?? 0) + a.children.reduce((s, c) => s + c.wine_count, 0);
+            const bw = (b.country?.wine_count ?? 0) + b.children.reduce((s, c) => s + c.wine_count, 0);
+            if (bw !== aw) return bw - aw;
+            return 0;
+          })
+          .map(([country, { country: countryRow, children }]) => {
+          const perCountryCounts = { approved: 0, draft: 0, needs_map: 0 };
+          const rowsIncludingCountry = countryRow ? [countryRow, ...children] : children;
+          for (const r of rowsIncludingCountry) perCountryCounts[r.map_status]++;
+          const totalWines = (countryRow?.wine_count ?? 0) + children.reduce((s, c) => s + c.wine_count, 0);
+          return (
+          <div key={country} className="panel maps-country">
             <div className="panel-head">
               <h2>{country}</h2>
-              {countryRow && <MapStatusBadge status={countryRow.map_status} />}
+              {/* Phase 43 — per-country roll-up pills, so a glance tells
+                  you "France: 18 approved · 4 drafts · 2 missing" without
+                  scanning the table below. */}
+              <div className="maps-country__counts">
+                <span className="maps-country__pill maps-country__pill--approved">{perCountryCounts.approved}</span>
+                <span className="muted small">approved</span>
+                {perCountryCounts.draft > 0 && (
+                  <>
+                    <span className="maps-country__pill maps-country__pill--draft">{perCountryCounts.draft}</span>
+                    <span className="muted small">draft</span>
+                  </>
+                )}
+                {perCountryCounts.needs_map > 0 && (
+                  <>
+                    <span className="maps-country__pill maps-country__pill--needs">{perCountryCounts.needs_map}</span>
+                    <span className="muted small">missing</span>
+                  </>
+                )}
+                {totalWines > 0 && (
+                  <span className="muted small">&middot; {totalWines} wine{totalWines === 1 ? "" : "s"}</span>
+                )}
+              </div>
             </div>
             {countryRow && (
               <p className="muted small" style={{ marginTop: -4 }}>
                 <Link href={`/maps/${countryRow.id}`}>Edit country map</Link>
-                {countryRow.wine_count > 0 && (
-                  <>
-                    {" "}· {countryRow.wine_count} wine{countryRow.wine_count === 1 ? "" : "s"}
-                  </>
-                )}
+                {" "}&middot; <MapStatusBadge status={countryRow.map_status} />
               </p>
             )}
             {children.length === 0 ? (
@@ -162,7 +195,8 @@ export default async function MapsIndex({ searchParams }: { searchParams: Promis
               </table>
             )}
           </div>
-        ))}
+          );
+        })}
         {rows.length === 0 && (
           <p className="muted">No locations match.</p>
         )}
