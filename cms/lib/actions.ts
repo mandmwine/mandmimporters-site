@@ -540,6 +540,137 @@ type SectionKind = (typeof SECTION_KINDS)[number];
 
 // Create a catalog from a bare name and (optionally) a starter list of wines.
 // Scaffolds the default section skeleton so the user doesn't start empty.
+// Phase D — preflight before export (audit § 33-34).
+// Walks every wine in a catalog, counts missing bottles, low-res bottles,
+// missing scores, missing tasting notes, long tasting notes, missing maps,
+// and reports back with friendly language. Warnings never block an export;
+// only fatal issues do (missing records or 0 wines).
+export type PreflightItem = {
+  severity: "fatal" | "warning";
+  category: string;
+  message: string;
+  count: number;
+};
+export type PreflightReport = {
+  wine_count: number;
+  bottle_ready: number;
+  warnings: PreflightItem[];
+  fatals: PreflightItem[];
+  can_generate: boolean;
+};
+export async function preflightCatalog(formData: FormData): Promise<{ ok: boolean; report?: PreflightReport; message?: string }> {
+  await requireUser();
+  const catalogId = String(formData.get("catalog_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(catalogId)) return { ok: false, message: "Invalid catalog id." };
+
+  const row = await one<{ wine_count: number }>(
+    `SELECT count(*)::int AS wine_count FROM catalog_items ci
+       JOIN wine_vintages v ON v.id = ci.wine_vintage_id
+       WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL`,
+    [catalogId],
+  );
+  const wineCount = row?.wine_count ?? 0;
+
+  if (wineCount === 0) {
+    return {
+      ok: true,
+      report: {
+        wine_count: 0,
+        bottle_ready: 0,
+        warnings: [],
+        fatals: [{ severity: "fatal", category: "no_wines", message: "This catalog has no wines yet.", count: 0 }],
+        can_generate: false,
+      },
+    };
+  }
+
+  // One round-trip per check — cheap on Postgres, keeps the report page simple.
+  const [bottles, scores, notes, longNotes, lowRes, missingMaps] = await Promise.all([
+    one<{ n: number; m: number }>(
+      `SELECT
+         count(*) FILTER (
+           WHERE v.bottle_asset_id IS NOT NULL
+              OR (v.legacy->>'img') IS NOT NULL
+         )::int AS n,
+         count(*)::int AS m
+       FROM catalog_items ci
+       JOIN wine_vintages v ON v.id = ci.wine_vintage_id
+       WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL`,
+      [catalogId],
+    ),
+    one<{ n: number }>(
+      `SELECT count(*)::int AS n
+       FROM catalog_items ci
+       JOIN wine_vintages v ON v.id = ci.wine_vintage_id
+       WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL
+         AND NOT EXISTS (SELECT 1 FROM wine_scores s WHERE s.wine_vintage_id = v.id)`,
+      [catalogId],
+    ),
+    one<{ n: number }>(
+      `SELECT count(*)::int AS n
+       FROM catalog_items ci
+       JOIN wine_vintages v ON v.id = ci.wine_vintage_id
+       WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL
+         AND coalesce(v.tasting_note, '') = ''`,
+      [catalogId],
+    ),
+    one<{ n: number }>(
+      `SELECT count(*)::int AS n
+       FROM catalog_items ci
+       JOIN wine_vintages v ON v.id = ci.wine_vintage_id
+       WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL
+         AND length(coalesce(v.tasting_note, '')) > 500`,
+      [catalogId],
+    ),
+    one<{ n: number }>(
+      `SELECT count(*)::int AS n
+       FROM catalog_items ci
+       JOIN wine_vintages v ON v.id = ci.wine_vintage_id
+       JOIN assets a ON a.id = v.bottle_asset_id
+       WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL
+         AND a.deleted_at IS NULL
+         AND a.width_px IS NOT NULL AND a.width_px < 800`,
+      [catalogId],
+    ),
+    one<{ n: number }>(
+      `SELECT count(DISTINCT v.location_id)::int AS n
+       FROM catalog_items ci
+       JOIN wine_vintages v ON v.id = ci.wine_vintage_id
+       WHERE ci.catalog_id = $1 AND v.deleted_at IS NULL
+         AND v.location_id IS NOT NULL
+         AND NOT EXISTS (
+           WITH RECURSIVE up AS (
+             SELECT id, parent_id FROM locations WHERE id = v.location_id
+             UNION ALL SELECT x.id, x.parent_id FROM locations x JOIN up ON x.id = up.parent_id
+           )
+           SELECT 1 FROM map_assets m
+             WHERE m.status = 'approved' AND m.location_id IN (SELECT id FROM up)
+         )`,
+      [catalogId],
+    ),
+  ]);
+
+  const warnings: PreflightItem[] = [];
+  const bottleMissing = (bottles?.m ?? 0) - (bottles?.n ?? 0);
+  if (bottleMissing > 0) warnings.push({ severity: "warning", category: "bottle_missing", message: `${bottleMissing} wine${bottleMissing === 1 ? "" : "s"} without a bottle image — a placeholder will print instead.`, count: bottleMissing });
+  if ((lowRes?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "bottle_lowres", message: `${lowRes!.n} low-resolution bottle${lowRes!.n === 1 ? "" : "s"} (under 800px wide) — may look soft when printed.`, count: lowRes!.n });
+  if ((scores?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "no_scores", message: `${scores!.n} wine${scores!.n === 1 ? "" : "s"} without any critic score.`, count: scores!.n });
+  if ((notes?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "no_tasting_note", message: `${notes!.n} wine${notes!.n === 1 ? "" : "s"} without a tasting note.`, count: notes!.n });
+  if ((longNotes?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "long_tasting_note", message: `${longNotes!.n} tasting note${longNotes!.n === 1 ? "" : "s"} longer than 500 characters — may overflow the body column.`, count: longNotes!.n });
+  if ((missingMaps?.n ?? 0) > 0) warnings.push({ severity: "warning", category: "missing_map", message: `${missingMaps!.n} location${missingMaps!.n === 1 ? "" : "s"} without an approved map — the sheet will use the country-silhouette fallback.`, count: missingMaps!.n });
+
+  return {
+    ok: true,
+    report: {
+      wine_count: wineCount,
+      bottle_ready: bottles?.n ?? 0,
+      warnings,
+      fatals: [],
+      can_generate: true,
+    },
+  };
+}
+
 export async function createCatalog(formData: FormData) {
   const user = await requireEditor();
   const name = (s(formData, "name") ?? "").trim();

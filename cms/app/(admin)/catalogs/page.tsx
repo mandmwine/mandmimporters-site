@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { query } from "@/lib/db";
-import NewCatalogForm from "./NewCatalogForm";
 import ClickableRow from "@/components/ClickableRow";
 import SortableTh from "@/components/SortableTh";
 
@@ -49,49 +48,53 @@ export default async function CatalogsPage({
   );
   return (
     <>
-      <header className="page-head">
-        <h1>Catalogs</h1>
-        <p className="muted">A catalog is a composition of wines + sections. Export produces a PDF.</p>
+      <header className="page-head row">
+        <div>
+          <h1>Catalogs</h1>
+          <p className="muted">A catalog is a composition of wines + sections. Export produces a PDF.</p>
+        </div>
+        <div className="head-side">
+          <Link href="/catalogs/new" className="btn primary">+ New catalog</Link>
+        </div>
       </header>
 
-      <section className="split wide">
-        <div>
-          {rows.length === 0 ? (
-            <div className="panel">
-              <p className="muted">No catalogs yet. Create your first on the right.</p>
-            </div>
-          ) : (
-            <table className="table table-rows">
-              <thead>
-                <tr>
-                  <SortableTh label="Name" field="name" />
-                  <SortableTh label="Wines" field="wines" />
-                  <SortableTh label="Layout" field="layout" />
-                  <SortableTh label="Updated" field="updated" />
-                  <SortableTh label="Last export" field="export" />
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((c) => (
-                  <ClickableRow key={c.id} href={`/catalogs/${c.id}`}>
-                    <td>
-                      <Link href={`/catalogs/${c.id}`} className="strong">{c.name}</Link>
-                      {c.season && <div className="muted small">{c.season}</div>}
-                    </td>
-                    <td>{c.wine_count}</td>
-                    <td className="small">{c.render_mode}</td>
-                    <td className="small muted">{new Date(c.updated_at).toLocaleDateString("en-US")}</td>
-                    <td className="small muted">
-                      {c.last_export_at ? new Date(c.last_export_at).toLocaleDateString("en-US") : "—"}
-                    </td>
-                  </ClickableRow>
-                ))}
-              </tbody>
-            </table>
-          )}
+      {rows.length === 0 ? (
+        <div className="panel">
+          <p className="muted">
+            No catalogs yet. Pick a few wines from the{" "}
+            <Link href="/wines">Wines list</Link> and come back here, or{" "}
+            <Link href="/catalogs/new">create an empty one</Link> to start.
+          </p>
         </div>
-        <NewCatalogForm />
-      </section>
+      ) : (
+        <table className="table table-rows">
+          <thead>
+            <tr>
+              <SortableTh label="Name" field="name" />
+              <SortableTh label="Wines" field="wines" />
+              <SortableTh label="Layout" field="layout" />
+              <SortableTh label="Updated" field="updated" />
+              <SortableTh label="Last export" field="export" />
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((c) => (
+              <ClickableRow key={c.id} href={`/catalogs/${c.id}`}>
+                <td>
+                  <Link href={`/catalogs/${c.id}`} className="strong">{c.name}</Link>
+                  {c.season && <div className="muted small">{c.season}</div>}
+                </td>
+                <td>{c.wine_count}</td>
+                <td className="small">{c.render_mode}</td>
+                <td className="small muted">{new Date(c.updated_at).toLocaleDateString("en-US")}</td>
+                <td className="small muted">
+                  {c.last_export_at ? new Date(c.last_export_at).toLocaleDateString("en-US") : "—"}
+                </td>
+              </ClickableRow>
+            ))}
+          </tbody>
+        </table>
+      )}
     </>
   );
 }

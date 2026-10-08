@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/auth";
 import ConfirmSubmit from "@/components/ConfirmSubmit";
 import CatalogSharePanel, { type Share } from "@/components/CatalogSharePanel";
 import CloneCatalogButton from "@/components/CloneCatalogButton";
+import CatalogPreflight from "@/components/CatalogPreflight";
 import CatalogSectionsReorder, { type SectionRow as DragSectionRow } from "@/components/CatalogSectionsReorder";
 import CatalogItemsReorder, { type CatalogItemRow } from "@/components/CatalogItemsReorder";
 import CopyButton from "@/components/CopyButton";
@@ -289,6 +290,8 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
               </form>
             );
           })()}
+
+          <CatalogPreflight catalogId={id} />
 
           <div className="panel">
             <h2>Export history</h2>

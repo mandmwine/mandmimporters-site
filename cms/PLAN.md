@@ -191,6 +191,56 @@ Depends on Phase 12 pricing schema; now live.
 - Per-wine PDF export (not catalog-driven) ships no prices by default — Trade
   pricing lives on the Catalog pass, which is correct for distributor sheets.
 
+### Phase 24 — Catalog wizard + preflight (Phase D of audit) — SHIPPED
+
+Final pass per the audit directive (§ 29-34). The catalog-building flow is
+now a four-step user journey instead of a side-by-side form + table.
+
+**/catalogs — simplified index:**
+- The inline NewCatalogForm is gone. A big "+ New catalog" button in the
+  header leads to the wizard.
+- Empty state copy says "Pick a few wines from the Wines list and come back
+  here, or create an empty one to start".
+
+**/catalogs/new — the wizard (components/NewCatalogWizard.tsx):**
+Three visible steps with a stepper bar at the top:
+1. **Pick a presentation** — three big cards (Detailed · Trade · Hybrid),
+   each with title, subtitle, description, and a one-line hint for who it's
+   for. Each maps to an existing render_mode. A quiet note explains that
+   Editorial and Portfolio layouts land in a later pass.
+2. **Name &amp; structure** — catalog name + optional season field, with a
+   line explaining the default section skeleton the server will scaffold.
+3. **Review** — one-line summary of name / presentation / wine count, then
+   one big Create button. Below it: an alternative "add these N wines to an
+   existing catalog" row with a dropdown of working catalogs.
+
+Behavior:
+- If the user arrives without wines selected, step 1 shows an inline notice
+  that they can continue (empty catalog) or go select wines first — no hard
+  block.
+- Create redirects straight to the new catalog's detail page (the existing
+  behavior).
+
+**Preflight on the catalog detail page (components/CatalogPreflight.tsx):**
+New panel above Export history. One click runs `preflightCatalog` which
+walks every wine and returns a friendly report:
+- `bottle_missing` — N wine(s) without a bottle image; a placeholder will print
+- `bottle_lowres` — N low-resolution bottle(s) (under 800px wide)
+- `no_scores` — N wine(s) without any critic score
+- `no_tasting_note` — N wine(s) without a tasting note
+- `long_tasting_note` — N tasting note(s) longer than 500 chars (may overflow)
+- `missing_map` — N location(s) without an approved map (country-silhouette fallback)
+- `no_wines` (fatal) — the only hard block
+
+Each item is one plain-English sentence. Warnings never block an export per
+audit § 33; only `no_wines` does. The headline summarises:
+"All clear" (green) · "N things worth knowing" (amber) · "Can't export yet" (red).
+
+Not yet shipped (future, optional):
+- Phase E — nontechnical user tests (§ 44)
+- Thumbnail strip preview between wizard step 3 and export (§ 29 step 4)
+- Editorial and Portfolio render modes
+
 ### Phase 23 — Plain-language workspace (Phase C of audit) — SHIPPED
 
 Phase C per the audit directive (§ 17-24): hide the complexity until it's
