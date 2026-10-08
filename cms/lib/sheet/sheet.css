@@ -203,7 +203,11 @@
   line-height: 1.2;
 }
 
-/* Small refined locator map — right side of place block */
+/* Small refined locator map — right side of place block.
+   Phase 22: --region variant crops the country outline to a region bbox so
+   the appellation reads at a useful scale instead of being a dot on a
+   country silhouette. --locator keeps the Phase 20 country+pin treatment
+   as a fallback for wines whose region isn't in WINE_REGIONS yet. */
 .sheet__map {
   display: flex;
   flex-direction: column;
@@ -212,17 +216,35 @@
 }
 .sheet__map-art {
   position: relative;
-  width: 1.4in;
+  width: 1.5in;
+  height: 1.5in;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.sheet__map-art > svg { display: block; width: 100%; height: auto; overflow: visible; }
+.sheet__map-art > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* Region crops use a 1:1 cropped viewBox; the SVG fills the square frame. */
+.sheet__map-art--region > svg { object-fit: contain; }
 .sheet__map-country {
   fill: #ece3cf;
   stroke: #a89670;
   stroke-width: 0.5;
   stroke-linejoin: round;
 }
-.sheet__map-pin-halo { fill: var(--accent); opacity: 0.18; }
+/* Region crops use a thinner, warmer stroke since the outline fills the frame. */
+.sheet__map--region .sheet__map-country {
+  stroke: #96825f;
+  stroke-width: 0.6;
+}
+.sheet__map-pin-halo { fill: var(--accent); opacity: 0.22; }
 .sheet__map-pin-dot { fill: var(--accent); stroke: #fffaf2; stroke-width: 1.1; }
+/* Region-scope pins use smaller geometry so they don't swamp the appellation. */
+.sheet__map--region .sheet__map-pin-halo { opacity: 0.26; }
 .sheet__map figcaption {
   margin-top: 4pt;
   text-align: right;

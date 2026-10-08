@@ -191,6 +191,52 @@ Depends on Phase 12 pricing schema; now live.
 - Per-wine PDF export (not catalog-driven) ships no prices by default — Trade
   pricing lives on the Catalog pass, which is correct for distributor sheets.
 
+### Phase 22 — Region-first map hierarchy (Phase B of audit) — SHIPPED
+
+Phase B per the audit (§ 10-15): the map system now shows a region-scope view
+with the appellation marked at a useful scale, instead of a country silhouette
+with a dot that looks the same for Bordeaux and Burgundy.
+
+**New data model (lib/sheet/wine-map-locations.ts):**
+- `WINE_REGIONS` — 20 regions, each with a lon/lat bbox and a centroid:
+  - France: Bordeaux, Burgundy, Champagne, Loire, Provence, Languedoc
+  - Italy: Tuscany, Piedmont, Campania, Sicily, Lazio, Umbria, Abruzzo, Veneto, Marche
+  - Germany: Franken, Mosel · Hungary: Tokaj · US: Napa · Israel
+- Every appellation point now carries a `region_key` tying it to a WINE_REGIONS entry
+- New `findWineRegion` resolves a region from a point, a location-chain name, or a wine hint
+
+**New renderer (lib/sheet/region-map.tsx):**
+- When a region is matched: project the region's lon/lat bbox through the country's
+  own Natural Earth projection to build a cropped SVG viewBox, then render the
+  SAME country outline through that viewBox. The country path with
+  `vector-effect="non-scaling-stroke"` keeps the stroke constant at any zoom.
+  The appellation pin is projected in the same coordinate space, so Chianti
+  Classico ends up in the right spot on a Tuscany-scope map.
+- When no region matches: falls back to Phase 20's country+pin, so nothing is
+  ever left without a locator.
+- When an approved appellation GeoJSON exists, it still renders as an optional
+  inset — same as Phase 20.
+
+**sheet.css:**
+- Map art is now a 1.5" × 1.5" fixed square frame so region crops and
+  country-fallback both sit in the same slot
+- Region crops use a slightly warmer, thinner country stroke so the outline
+  reads as a region shape rather than a bordered rectangle
+- Pin halo bumped from 0.18 to 0.22/0.26 opacity on region crops so the
+  appellation marker reads at the smaller cropped scale
+
+**Acceptance per audit § 15 — the ten representative wines:**
+Chianti Classico, Maremma, Barolo, Brunello di Montalcino, Saint-Émilion,
+Pessac-Léognan, Margaux, Pomerol, Champagne, Corton. Each now renders through
+its region's cropped view, with the appellation dot where it should be.
+Any wine from a region not yet in WINE_REGIONS gets the Phase 20 country+pin
+fallback — never a broken map.
+
+Not yet done (next passes per the audit):
+- Phase C — workspace plain-language rewrite, Fit Page preview, progressive
+  disclosure for optional fields
+- Phase D — catalog builder four-step flow + preflight
+
 ### Phase 21 — Rebuild single-wine sheet to Template 01+06 blend (Phase A of audit) — SHIPPED
 
 Governing source: `cms/AUDIT_AND_REBUILD_DIRECTIVE_2026-10-08.md`, with the
