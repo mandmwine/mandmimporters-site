@@ -11,6 +11,7 @@ export type SheetData = {
     display_name: string;
     canonical_name: string;
     producer: string;
+    producer_id: string;
     category: string | null;
     tasting_note: string | null;
     food_pairing: string | null;
@@ -211,6 +212,7 @@ export async function loadSheetData(vintageId: string): Promise<SheetData | null
       display_name: v.display_name,
       canonical_name: v.canonical_name,
       producer: v.producer,
+      producer_id: v.producer_id,
       category: v.category,
       tasting_note: v.tasting_note,
       food_pairing: v.food_pairing,

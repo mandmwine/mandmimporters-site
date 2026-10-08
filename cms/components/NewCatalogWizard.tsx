@@ -1,9 +1,9 @@
 "use client";
-// Phase D — New Catalog wizard. Four live presentation cards after Phase 26
-// shipped the Editorial renderer; Portfolio is still "coming soon".
+// Phase D — New Catalog wizard. All five presentation cards are live as of
+// Phase 27 (Portfolio shipped). Each key maps to a backend render_mode the
+// catalog renderer dispatches to.
 //
-// Step 1 — Presentation: Detailed · Editorial · Trade · Hybrid. Each key
-//          maps to a backend render_mode the catalog renderer supports.
+// Step 1 — Presentation: Detailed · Editorial · Portfolio · Trade · Hybrid.
 // Step 2 — Name + optional structure sections. The server action already
 //          scaffolds a sensible default; this screen lets the user strip any
 //          of them off before create.
@@ -16,7 +16,7 @@ import { useSelection } from "./SelectionProvider";
 import { addWinesToCatalog, createCatalog } from "@/lib/actions";
 
 type Preset = {
-  key: "detailed" | "editorial" | "compact" | "hybrid";
+  key: "detailed" | "editorial" | "portfolio" | "compact" | "hybrid";
   title: string;
   subtitle: string;
   description: string;
@@ -38,6 +38,13 @@ const PRESETS: Preset[] = [
     subtitle: "Two wines per page",
     description: "A reading-forward spread — bottle, big tasting note, one score. No technical table or map.",
     hint: "Best for a magazine-style catalog or storytelling piece.",
+  },
+  {
+    key: "portfolio",
+    title: "Portfolio",
+    subtitle: "One producer per page",
+    description: "Groups wines by producer automatically; each page is a producer header with that producer's lineup.",
+    hint: "Best for a producer-centric tasting portfolio or trade book.",
   },
   {
     key: "compact",
@@ -153,7 +160,7 @@ export default function NewCatalogWizard({ existingCatalogs }: { existingCatalog
             ))}
           </div>
           <div className="wizard__coming">
-            Portfolio layout (producer-first spreads with a producer header + wine lineup) lands in a later pass.
+            All five presentations are live. Not sure? Hybrid is the one you&rsquo;ll grow into — it mixes a Trade overview up front with Detailed data sheets behind.
           </div>
           <div className="wizard__actions">
             <Link href="/catalogs" className="link small">Cancel</Link>

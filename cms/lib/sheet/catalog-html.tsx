@@ -69,7 +69,16 @@ function priceOptionsFromCatalog(c: CatalogRow): SheetPriceOptions {
 }
 
 // Group wine items into pages based on the section's layout.
+//
+// Portfolio (Phase 27) is special: it groups wines by producer first, then
+// paginates each producer's lineup at up to 6 per page. The user's own
+// ordering inside the section decides which producer appears first (we take
+// each producer's first occurrence), and within each producer group the
+// user's wine order is preserved. This is the fundamental difference between
+// Portfolio and Lineup: Lineup takes whatever's handed to it in order,
+// Portfolio reorders so each spread is clean producer-by-producer.
 function paginate(wines: SheetData[], layout: string): { kind: string; wines: SheetData[] }[] {
+  if (layout === "portfolio") return paginatePortfolio(wines);
   const perPage: Record<string, number> = {
     detailed: 1,
     editorial: 2, // Phase 26: reading-forward magazine spread, 2/page.
@@ -82,6 +91,25 @@ function paginate(wines: SheetData[], layout: string): { kind: string; wines: Sh
   const pages: { kind: string; wines: SheetData[] }[] = [];
   for (let i = 0; i < wines.length; i += n) {
     pages.push({ kind: layout, wines: wines.slice(i, i + n) });
+  }
+  return pages;
+}
+
+function paginatePortfolio(wines: SheetData[]): { kind: string; wines: SheetData[] }[] {
+  // Group by producer id, preserving the order each producer first appeared.
+  const buckets = new Map<string, SheetData[]>();
+  for (const w of wines) {
+    const key = w.wine.producer_id ?? w.wine.producer ?? "";
+    const prev = buckets.get(key);
+    if (prev) prev.push(w);
+    else buckets.set(key, [w]);
+  }
+  const PER_PAGE = 6;
+  const pages: { kind: string; wines: SheetData[] }[] = [];
+  for (const group of buckets.values()) {
+    for (let i = 0; i < group.length; i += PER_PAGE) {
+      pages.push({ kind: "portfolio", wines: group.slice(i, i + PER_PAGE) });
+    }
   }
   return pages;
 }
@@ -228,7 +256,10 @@ export async function catalogHtml(plan: CatalogPlan, preset: Preset): Promise<st
             parts.push(renderToStaticMarkup(
               <SingleWineSheet data={p.wines[0]} mode="print" priceOptions={priceOptions} />,
             ));
-          } else if (p.kind === "lineup" || p.kind === "compact") {
+          } else if (p.kind === "lineup" || p.kind === "compact" || p.kind === "portfolio") {
+            // Portfolio pages share Lineup's producer-first visual template;
+            // the paginator above already grouped by producer so every
+            // portfolio page's wines come from exactly one producer.
             const producer = p.wines[0]?.wine.producer ?? "";
             parts.push(renderToStaticMarkup(
               <LineupPage data={{ producer, wines: p.wines, producer_note: p.wines[0]?.producer_note }} />,

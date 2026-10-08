@@ -258,6 +258,7 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
                     <option value="hybrid">Hybrid</option>
                     <option value="detailed">Detailed only</option>
                     <option value="editorial">Editorial only</option>
+                    <option value="portfolio">Portfolio only</option>
                     <option value="compact">Compact only</option>
                   </select>
                 </label>

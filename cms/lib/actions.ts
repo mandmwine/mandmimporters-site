@@ -531,7 +531,7 @@ export async function replaceGrapes(formData: FormData) {
 // Catalogs
 // =============================================================================
 
-const RENDER_MODES = ["detailed", "editorial", "compact", "hybrid"] as const;
+const RENDER_MODES = ["detailed", "editorial", "portfolio", "compact", "hybrid"] as const;
 const SECTION_KINDS = [
   "cover", "intro", "toc", "regional_index", "divider", "producer_intro",
   "wines", "producer_index", "contact", "back_cover",
@@ -1015,7 +1015,7 @@ export async function setSectionRenderMode(formData: FormData) {
   const sectionId = String(formData.get("id") ?? "");
   const mode = String(formData.get("mode") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(sectionId)) return;
-  if (!["detailed", "editorial", "lineup", "trade", "compact"].includes(mode)) return;
+  if (!["detailed", "editorial", "portfolio", "lineup", "trade", "compact"].includes(mode)) return;
   const row = await one<{ catalog_id: string; settings: Record<string, unknown> }>(
     "SELECT catalog_id, settings FROM catalog_sections WHERE id = $1",
     [sectionId],
