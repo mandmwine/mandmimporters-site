@@ -1551,6 +1551,52 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   min-width: 180px;
 }
 
+/* Phase 41 (Sprint 3) — producer workspace image panels + inline AI
+ * bio button. Two slots (logo + hero) with their own aspect ratios. */
+.producer-image { padding: 14px 16px; }
+.producer-image + .producer-image { margin-top: 14px; }
+.producer-image__hint { margin: 2px 0 10px; }
+.producer-image__preview {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.producer-image__preview--logo { aspect-ratio: 2 / 1; max-height: 120px; }
+.producer-image__preview--hero { aspect-ratio: 16 / 9; max-height: 220px; }
+.producer-image__preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.producer-image__empty { color: var(--muted); font-size: 13px; }
+.producer-image__actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.producer-image__library ul {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.producer-image__library li { background: var(--card-soft); border-radius: 4px; }
+.producer-image__library li.selected { outline: 2px solid var(--accent); }
+.producer-image__library button {
+  width: 100%;
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.producer-image__library img { width: 100%; height: 70px; object-fit: contain; }
+
+.producer-bio-panel { padding: 14px 16px; }
+.producer-bio-ai { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+
 
 
 

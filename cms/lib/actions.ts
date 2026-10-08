@@ -1096,6 +1096,38 @@ export async function setSectionRenderMode(formData: FormData) {
 }
 
 // =============================================================================
+// Producer image assignment (Phase 41 Sprint 3 — logo + hero slots).
+// Mirrors setBottleAsset but writes to producers.logo_asset_id /
+// producers.hero_asset_id. Both are optional on the schema; nulls clear.
+// =============================================================================
+
+const PRODUCER_IMAGE_ROLES = { logo: "logo_asset_id", hero: "hero_asset_id" } as const;
+type ProducerImageRole = keyof typeof PRODUCER_IMAGE_ROLES;
+
+export async function setProducerAsset(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const producerId = String(formData.get("producer_id") ?? "");
+  const roleRaw = String(formData.get("role") ?? "");
+  const assetIdRaw = s(formData, "asset_id");
+  if (!/^[0-9a-f-]{36}$/i.test(producerId)) return { ok: false, message: "Bad producer id." };
+  if (!(roleRaw in PRODUCER_IMAGE_ROLES)) return { ok: false, message: "Role must be 'logo' or 'hero'." };
+  const column = PRODUCER_IMAGE_ROLES[roleRaw as ProducerImageRole];
+  const assetId = assetIdRaw && /^[0-9a-f-]{36}$/i.test(assetIdRaw) ? assetIdRaw : null;
+
+  if (assetId) {
+    const asset = await one<{ id: string }>("SELECT id FROM assets WHERE id = $1 AND deleted_at IS NULL", [assetId]);
+    if (!asset) return { ok: false, message: "That image is not in the asset library." };
+  }
+  await query(
+    `UPDATE producers SET ${column} = $2, updated_at = now() WHERE id = $1`,
+    [producerId, assetId],
+  );
+  await audit(user.id, "producer.image", { type: "producer", id: producerId, field: column }, { new: assetId });
+  revalidatePath(`/producers/${producerId}`);
+  return { ok: true };
+}
+
+// =============================================================================
 // Bottle image assignment
 // =============================================================================
 

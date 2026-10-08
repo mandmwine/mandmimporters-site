@@ -3,8 +3,11 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { getSessionUser } from "@/lib/auth";
 import { one, query } from "@/lib/db";
+import { signedUrl } from "@/lib/storage";
 import { EditableProducer, type LocationChoice, type ProducerFields } from "@/components/EditableProducer";
 import SourcesPanel, { type ProvenanceRow } from "@/components/SourcesPanel";
+import ProducerImagePanel from "@/components/ProducerImagePanel";
+import ProducerBioButton from "@/components/ProducerBioButton";
 import CopyButton from "@/components/CopyButton";
 import UpdatedMeta from "@/components/UpdatedMeta";
 import DeleteProducerButton from "@/components/DeleteProducerButton";
@@ -15,6 +18,10 @@ type Row = ProducerFields & {
   slug: string;
   country_name: string | null;
   region_name: string | null;
+  logo_asset_id: string | null;
+  hero_asset_id: string | null;
+  logo_asset_path: string | null;
+  hero_asset_path: string | null;
 };
 
 type Wine = {
@@ -39,10 +46,15 @@ export default async function ProducerDetail({ params }: { params: Promise<{ id:
       `SELECT p.id, p.name, p.short_name, p.slug, p.website,
               p.winery_summary_short, p.winery_story_long, p.default_supervision_display,
               p.country_location_id, p.primary_location_id, p.active,
+              p.logo_asset_id, p.hero_asset_id,
+              la.storage_path AS logo_asset_path,
+              ha.storage_path AS hero_asset_path,
               c.name AS country_name, r.name AS region_name
          FROM producers p
          LEFT JOIN locations c ON c.id = p.country_location_id
          LEFT JOIN locations r ON r.id = p.primary_location_id
+         LEFT JOIN assets la ON la.id = p.logo_asset_id AND la.deleted_at IS NULL
+         LEFT JOIN assets ha ON ha.id = p.hero_asset_id AND ha.deleted_at IS NULL
          WHERE p.id = $1 AND p.deleted_at IS NULL`,
       [id],
     ),
@@ -94,6 +106,27 @@ export default async function ProducerDetail({ params }: { params: Promise<{ id:
   ]);
   if (!producerMaybe) notFound();
   const producer: Row = producerMaybe;
+
+  // Phase 41 — sign URLs for the two producer-bound images once at page
+  // load. Both are optional; a null stays null all the way to the panel.
+  async function sign(path: string | null): Promise<string | null> {
+    if (!path) return null;
+    try { return await signedUrl(path, 60); } catch { return null; }
+  }
+  const [logoUrl, heroUrl, recentLogoAssets, recentHeroAssets] = await Promise.all([
+    sign(producer.logo_asset_path),
+    sign(producer.hero_asset_path),
+    query<{ id: string; file_name: string | null; width_px: number | null; height_px: number | null }>(
+      `SELECT id, file_name, width_px, height_px
+         FROM assets WHERE kind = 'logo' AND deleted_at IS NULL
+         ORDER BY created_at DESC LIMIT 24`,
+    ),
+    query<{ id: string; file_name: string | null; width_px: number | null; height_px: number | null }>(
+      `SELECT id, file_name, width_px, height_px
+         FROM assets WHERE kind = 'photo' AND deleted_at IS NULL
+         ORDER BY created_at DESC LIMIT 24`,
+    ),
+  ]);
 
   const summary = (
     <dl className="specs">
@@ -187,6 +220,20 @@ export default async function ProducerDetail({ params }: { params: Promise<{ id:
             regions={regions}
           />
 
+          {canEdit && (
+            <div className="panel producer-bio-panel">
+              <div className="panel-head">
+                <h2>Draft from sources</h2>
+              </div>
+              <p className="small muted">
+                Claude searches the web for public information about this producer and drafts
+                a short bio. The draft lands in the AI inbox for review; nothing writes to the
+                producer until you approve it.
+              </p>
+              <ProducerBioButton producerId={producer.id} />
+            </div>
+          )}
+
           <SourcesPanel
             entityType="producer"
             entityId={producer.id}
@@ -197,6 +244,29 @@ export default async function ProducerDetail({ params }: { params: Promise<{ id:
         </div>
 
         <div>
+          {canEdit && (
+            <>
+              <ProducerImagePanel
+                producerId={producer.id}
+                role="logo"
+                roleLabel="Logo"
+                roleHint="A clean producer logo on a transparent background works best. Appears on Portfolio sheets and the producer intro page."
+                currentAssetId={producer.logo_asset_id}
+                currentAssetSignedUrl={logoUrl}
+                recentAssets={recentLogoAssets}
+              />
+              <ProducerImagePanel
+                producerId={producer.id}
+                role="hero"
+                roleLabel="Hero image"
+                roleHint="A landscape photo of the vineyard or cellars. Appears on the top of the producer intro page in Portfolio and Editorial catalogs."
+                currentAssetId={producer.hero_asset_id}
+                currentAssetSignedUrl={heroUrl}
+                recentAssets={recentHeroAssets}
+              />
+            </>
+          )}
+
           <div className="panel">
             <h2>Wines</h2>
             {wines.length === 0 ? (
