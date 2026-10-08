@@ -7,6 +7,7 @@ import ConfirmSubmit from "@/components/ConfirmSubmit";
 import CatalogSharePanel, { type Share } from "@/components/CatalogSharePanel";
 import CloneCatalogButton from "@/components/CloneCatalogButton";
 import CatalogPreflight from "@/components/CatalogPreflight";
+import CatalogThumbnailStrip from "@/components/CatalogThumbnailStrip";
 import CatalogSectionsReorder, { type SectionRow as DragSectionRow } from "@/components/CatalogSectionsReorder";
 import CatalogItemsReorder, { type CatalogItemRow } from "@/components/CatalogItemsReorder";
 import CopyButton from "@/components/CopyButton";
@@ -174,6 +175,8 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
           <p className="small muted" style={{ margin: "6px 0 0" }}>These do not block export. Fix what you want to; export when ready.</p>
         </div>
       )}
+
+      <CatalogThumbnailStrip catalogId={id} />
 
       <section className="split wide">
         <div>
