@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { one, query } from "@/lib/db";
+import VintageCompare, { type CompareVintage } from "@/components/VintageCompare";
+import { signedUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
-type Vintage = {
+type VintageRow = {
   id: string;
   wine_id: string;
   vintage_text: string | null;
@@ -21,6 +23,8 @@ type Vintage = {
   organic: boolean | null;
   biodynamic: boolean | null;
   bottle_asset_id: string | null;
+  bottle_asset_path: string | null;
+  legacy_img: string | null;
   grapes_text: string;
   score_count: number;
   top_score: string | null;
@@ -39,11 +43,13 @@ export default async function CompareVintagesPage({ params }: { params: Promise<
   );
   if (!current) notFound();
 
-  const vintages = await query<Vintage>(
+  const rows = await query<VintageRow>(
     `SELECT v.id, v.wine_id, v.vintage_text, v.status, v.mevushal,
             v.supervision_display, v.aging_display, v.bottle_sizes,
             v.special_designation, v.tasting_note, v.food_pairing, v.short_description,
             v.first_kosher_vintage, v.organic, v.biodynamic, v.bottle_asset_id, v.updated_at,
+            a.storage_path AS bottle_asset_path,
+            v.legacy->>'img' AS legacy_img,
        COALESCE(
          (SELECT string_agg(
            CASE WHEN wg.percentage IS NOT NULL
@@ -56,63 +62,63 @@ export default async function CompareVintagesPage({ params }: { params: Promise<
        (SELECT score_text FROM wine_scores WHERE wine_vintage_id = v.id AND is_primary
           ORDER BY numeric_score DESC NULLS LAST LIMIT 1) AS top_score
        FROM wine_vintages v
+       LEFT JOIN assets a ON a.id = v.bottle_asset_id AND a.deleted_at IS NULL
        WHERE v.wine_id = $1 AND v.deleted_at IS NULL
        ORDER BY v.vintage_text DESC NULLS LAST`,
     [current.wine_id],
   );
 
-  const yesNo = (b: boolean | null) => (b === null ? null : b ? "Yes" : "No");
-  const mevushalDisplay = (m: string) => m === "yes" ? "Yes" : m === "no" ? "No" : "—";
-
-  const rows: {
-    key: string;
-    label: string;
-    cell: (v: Vintage) => React.ReactNode;
-    sameOkEmpty?: boolean; // treat empty as "not different"
-  }[] = [
-    { key: "status", label: "Status", cell: (v) => v.status.replace(/_/g, " ") },
-    { key: "grapes_text", label: "Blend", cell: (v) => v.grapes_text || <span className="missing">—</span> },
-    { key: "mevushal", label: "Mevushal", cell: (v) => mevushalDisplay(v.mevushal) },
-    { key: "supervision_display", label: "Supervision", cell: (v) => v.supervision_display ?? <span className="missing">—</span> },
-    { key: "aging_display", label: "Aging", cell: (v) => v.aging_display ?? <span className="missing">—</span> },
-    { key: "special_designation", label: "Designation", cell: (v) => v.special_designation ?? <span className="missing">—</span> },
-    { key: "bottle_sizes", label: "Sizes", cell: (v) => v.bottle_sizes.join(", ") || <span className="missing">—</span> },
-    { key: "first_kosher_vintage", label: "First kosher", cell: (v) => yesNo(v.first_kosher_vintage) ?? "—" },
-    { key: "organic", label: "Organic", cell: (v) => yesNo(v.organic) ?? "—" },
-    { key: "biodynamic", label: "Biodynamic", cell: (v) => yesNo(v.biodynamic) ?? "—" },
-    { key: "score_count", label: "Scores", cell: (v) => (
-      <>
-        {v.score_count || 0}
-        {v.top_score && <span className="muted small"> · top {v.top_score}</span>}
-      </>
-    )},
-    { key: "bottle_asset_id", label: "Bottle image", cell: (v) => v.bottle_asset_id ? "Set" : <span className="missing">—</span> },
-    { key: "tasting_note", label: "Tasting note", cell: (v) => (
-      v.tasting_note
-        ? <span className="small">{v.tasting_note.slice(0, 240)}{v.tasting_note.length > 240 ? "…" : ""}</span>
-        : <span className="missing">—</span>
-    )},
-    { key: "food_pairing", label: "Pairing", cell: (v) => (
-      v.food_pairing ? <span className="small">{v.food_pairing}</span> : <span className="missing">—</span>
-    )},
-    { key: "short_description", label: "Short", cell: (v) => (
-      v.short_description ? <span className="small">{v.short_description}</span> : <span className="missing">—</span>
-    )},
-    { key: "updated_at", label: "Updated", cell: (v) => new Date(v.updated_at).toLocaleDateString("en-US") },
-  ];
-
-  // Figure out which rows have different values across vintages so we can
-  // highlight them.
-  function differs(row: typeof rows[number]): boolean {
-    if (vintages.length < 2) return false;
-    const vals = vintages.map((v) => {
-      const value = (v as unknown as Record<string, unknown>)[row.key];
-      if (Array.isArray(value)) return value.join(",");
-      return value === null || value === undefined ? "" : String(value);
-    });
-    const first = vals[0];
-    return vals.some((val) => val !== first);
+  // Resolve bottle thumbnails: signed URL for an uploaded asset, else the
+  // legacy site image. Parallelised with a cap to keep Firebase happy.
+  const CONCURRENCY = 10;
+  const thumbByVintage = new Map<string, string | null>();
+  const assetRows = rows.filter((r) => r.bottle_asset_path);
+  for (let i = 0; i < assetRows.length; i += CONCURRENCY) {
+    const chunk = assetRows.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(
+      chunk.map(async (r) => {
+        try {
+          const url = await signedUrl(r.bottle_asset_path as string, 60);
+          return [r.id, url] as const;
+        } catch (err) {
+          console.warn("[compare] signedUrl failed", r.id, err);
+          return [r.id, null] as const;
+        }
+      }),
+    );
+    for (const [vid, url] of results) thumbByVintage.set(vid, url);
   }
+
+  const vintages: CompareVintage[] = rows.map((r) => {
+    let thumb = thumbByVintage.get(r.id) ?? null;
+    if (!thumb && r.legacy_img) {
+      thumb = r.legacy_img.startsWith("http")
+        ? r.legacy_img
+        : `https://www.mandmimporters.com${r.legacy_img}`;
+    }
+    return {
+      id: r.id,
+      vintage_text: r.vintage_text,
+      status: r.status,
+      mevushal: r.mevushal,
+      supervision_display: r.supervision_display,
+      aging_display: r.aging_display,
+      bottle_sizes: r.bottle_sizes,
+      special_designation: r.special_designation,
+      tasting_note: r.tasting_note,
+      food_pairing: r.food_pairing,
+      short_description: r.short_description,
+      first_kosher_vintage: r.first_kosher_vintage,
+      organic: r.organic,
+      biodynamic: r.biodynamic,
+      bottle_asset_id: r.bottle_asset_id,
+      bottle_thumb_url: thumb,
+      grapes_text: r.grapes_text,
+      score_count: r.score_count,
+      top_score: r.top_score,
+      updated_at: r.updated_at.toISOString(),
+    };
+  });
 
   return (
     <>
@@ -125,44 +131,7 @@ export default async function CompareVintagesPage({ params }: { params: Promise<
         <p className="muted">{vintages.length} vintage{vintages.length === 1 ? "" : "s"} on record</p>
       </header>
 
-      {vintages.length < 2 ? (
-        <p className="muted">
-          Only one vintage recorded. Add another vintage from the wine detail page to compare them side by side.
-        </p>
-      ) : (
-        <div className="compare-wrap">
-          <table className="compare-table">
-            <thead>
-              <tr>
-                <th />
-                {vintages.map((v) => (
-                  <th key={v.id} className={v.id === id ? "compare-current" : undefined}>
-                    <Link href={`/wines/${v.id}`} className="strong">
-                      {v.vintage_text ?? "No vintage"}
-                    </Link>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const diff = differs(r);
-                return (
-                  <tr key={r.key} className={diff ? "compare-row--diff" : undefined}>
-                    <th scope="row">{r.label}</th>
-                    {vintages.map((v) => (
-                      <td key={v.id} className={v.id === id ? "compare-current" : undefined}>
-                        {r.cell(v)}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <p className="small muted">Rows highlighted amber vary between vintages. Click a vintage header to open its editor.</p>
-        </div>
-      )}
+      <VintageCompare currentId={id} vintages={vintages} />
     </>
   );
 }

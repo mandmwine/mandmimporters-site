@@ -1027,6 +1027,30 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 .compare-row--diff th[scope="row"] { background: var(--warn-soft); }
 .compare-current { background: var(--accent-soft); font-weight: 500; }
 .compare-row--diff .compare-current { background: color-mix(in oklab, var(--accent-soft) 70%, var(--warn-soft)); }
+/* Phase 32 — "Hide identical rows" toolbar above the table, and a bottle
+ * thumbnail cell that replaces the "Set / —" string on the Bottle row. */
+.compare-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: var(--card-soft);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+}
+.compare-toolbar .form-checkbox { margin: 0; font-size: 13px; color: var(--ink); }
+.compare-bottle {
+  display: block;
+  max-height: 110px;
+  max-width: 60px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+}
 
 /* Phase 10 — share links, theme tokens, public share shell */
 .share-list { gap: 10px; }
