@@ -1231,7 +1231,7 @@ export async function seedMapsBatch(formData: FormData): Promise<SeedBatchResult
      WHERE NOT EXISTS (SELECT 1 FROM map_assets m WHERE m.location_id = l.id)
        ${statusFilter}
      ORDER BY
-       CASE l.type WHEN 'country' THEN 0 WHEN 'region' THEN 1 WHEN 'subregion' THEN 2 ELSE 3 END,
+       CASE l.type WHEN 'appellation' THEN 0 WHEN 'subregion' THEN 1 WHEN 'region' THEN 2 ELSE 3 END,
        l.name
      LIMIT $1`,
     [limit],
@@ -1369,7 +1369,7 @@ export async function mapsSeedSnapshot() {
        FROM locations l
        WHERE NOT EXISTS (SELECT 1 FROM map_assets m WHERE m.location_id = l.id)
        ORDER BY
-         CASE l.type WHEN 'country' THEN 0 WHEN 'region' THEN 1 WHEN 'subregion' THEN 2 ELSE 3 END,
+         CASE l.type WHEN 'appellation' THEN 0 WHEN 'subregion' THEN 1 WHEN 'region' THEN 2 ELSE 3 END,
          l.name
        LIMIT 60`,
     ),

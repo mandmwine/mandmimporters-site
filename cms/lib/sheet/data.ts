@@ -277,6 +277,7 @@ async function resolveGeoMap(
   return {
     geojson: picked.geojson,
     location_name: picked.location_name,
+    location_type: picked.location_type,
     highlight,
   };
 }

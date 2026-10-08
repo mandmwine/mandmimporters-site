@@ -92,7 +92,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const version = await one<{ id: string }>(
     `INSERT INTO catalog_versions (catalog_id, version_label, template_version, snapshot, created_by)
      VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-    [id, versionLabel, "wine-sheet-v1", snapshot, user.id],
+    [id, versionLabel, "wine-sheet-v2", snapshot, user.id],
   );
   const exportFile = await one<{ id: string }>(
     `INSERT INTO export_files (catalog_version_id, preset, status, created_by)

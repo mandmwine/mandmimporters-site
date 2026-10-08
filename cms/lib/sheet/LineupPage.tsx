@@ -26,6 +26,7 @@ export function LineupPage({ data }: { data: LineupData }) {
     // Fall back to the single-wine map if a region-level GeoJSON has been
     // approved for one of these wines; the renderer re-highlights the region.
     first?.geoMap ?? null,
+    `${first?.wine.canonical_name ?? ""} ${first?.wine.special_designation ?? ""}`,
   );
 
   return (

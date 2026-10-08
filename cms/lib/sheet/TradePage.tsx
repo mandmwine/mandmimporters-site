@@ -48,7 +48,7 @@ export function TradePage({ data, priceOptions }: { data: TradeData; priceOption
   return (
     <article className="sheet sheet--print trade" data-count={wines.length}>
       <header className="trade__head">
-        <p className="trade__eyebrow">Exceptional wines, extraordinary places</p>
+        <p className="trade__eyebrow">Trade Portfolio</p>
         <h1 className="trade__title">{data.title}</h1>
         {data.subtitle && <p className="trade__sub">{data.subtitle}</p>}
       </header>
