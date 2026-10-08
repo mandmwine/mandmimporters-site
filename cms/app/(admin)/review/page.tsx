@@ -42,6 +42,12 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
   const counts = await query<{ flag_type: string; n: number }>(
     "SELECT flag_type, count(*)::int AS n FROM review_flags WHERE status = 'open' GROUP BY 1",
   );
+  // Phase 37 (Sprint 2) — AI inbox count, shown as a tab on the review nav
+  // so the editor can bounce between flagged records and AI-proposed changes.
+  const aiPending = await query<{ n: number }>(
+    "SELECT count(*)::int AS n FROM ai_actions WHERE status = 'proposed'",
+  );
+  const aiCount = aiPending[0]?.n ?? 0;
   const rows = await query<Flag>(
     `SELECT f.id, f.entity_type, f.entity_id, f.field_name, f.flag_type, f.severity, f.message, f.status,
        CASE f.entity_type
@@ -66,9 +72,16 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <header className="page-head">
-        <h1>Review queue</h1>
-        <p className="muted">{total} open items. Warnings never block a catalog; they show what to check.</p>
+      <header className="page-head row">
+        <div>
+          <h1>Review queue</h1>
+          <p className="muted">{total} open items. Warnings never block a catalog; they show what to check.</p>
+        </div>
+        <div className="head-side">
+          <Link href="/review/ai" className="btn small">
+            AI inbox {aiCount > 0 && <span className="pill">{aiCount}</span>}
+          </Link>
+        </div>
       </header>
 
       <nav className="chips">

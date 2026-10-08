@@ -1479,6 +1479,30 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 .env-row--mute { border-left-color: var(--rule); }
 
 
+/* Phase 37 (Sprint 2) — Global AI inbox at /review/ai.
+ * Each proposal renders as its own panel. The head row carries the action
+ * label + entity type + timestamp on the left, and an "Open <entity> →"
+ * link on the right so the reviewer can jump to the live record. The
+ * entity label below is the human name ("Vallepicciola Chianti 2021"). */
+.ai-inbox { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+.ai-inbox__item { padding: 14px 16px; }
+.ai-inbox__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.ai-inbox__entity {
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule);
+}
+
+
+
 
 /* Drag-anywhere upload overlay */
 .drop-overlay {
