@@ -1025,6 +1025,53 @@ export async function moveCatalogItem(formData: FormData) {
   revalidatePath(`/catalogs/${row.catalog_id}`);
 }
 
+// Phase 30 — move an item from one Wines section to another. Keeps the
+// row's position relative to the target section (lands at the end), and
+// the catalog's overall position space stays contiguous because the
+// reorderCatalogItems/removeCatalogItem path already renumbers.
+export async function moveCatalogItemToSection(formData: FormData) {
+  const user = await requireEditor();
+  const itemId = String(formData.get("id") ?? "");
+  const sectionIdRaw = String(formData.get("section_id") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(itemId)) return { ok: false };
+  const sectionId = sectionIdRaw && /^[0-9a-f-]{36}$/i.test(sectionIdRaw) ? sectionIdRaw : null;
+  const row = await one<{ catalog_id: string; section_id: string | null; position: number }>(
+    "SELECT catalog_id, section_id, position FROM catalog_items WHERE id = $1",
+    [itemId],
+  );
+  if (!row) return { ok: false };
+
+  // Validate that the target section (if non-null) exists on this catalog
+  // and is of kind 'wines' — moving an item into a Cover makes no sense.
+  if (sectionId) {
+    const sec = await one<{ kind: string }>(
+      "SELECT kind FROM catalog_sections WHERE id = $1 AND catalog_id = $2",
+      [sectionId, row.catalog_id],
+    );
+    if (!sec) return { ok: false, message: "That section isn't in this catalog." };
+    if (sec.kind !== "wines") return { ok: false, message: "Items can only move into a Wines section." };
+  }
+
+  // Land at the end of the target section — use the max position in that
+  // section plus 1, which also keeps the catalog-wide position monotonic
+  // (catalog_items.position is per-catalog, not per-section).
+  const tail = await one<{ last: number | null }>(
+    "SELECT max(position) AS last FROM catalog_items WHERE catalog_id = $1",
+    [row.catalog_id],
+  );
+  const newPosition = (tail?.last ?? 0) + 1;
+  await query(
+    "UPDATE catalog_items SET section_id = $2, position = $3 WHERE id = $1",
+    [itemId, sectionId, newPosition],
+  );
+  await audit(user.id, "catalog_item.move_section", { type: "catalog_item", id: itemId }, {
+    new: { section_id: sectionId },
+    old: { section_id: row.section_id },
+  });
+  revalidatePath(`/catalogs/${row.catalog_id}`);
+  return { ok: true };
+}
+
 export async function setSectionRenderMode(formData: FormData) {
   const user = await requireEditor();
   const sectionId = String(formData.get("id") ?? "");

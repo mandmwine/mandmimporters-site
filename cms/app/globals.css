@@ -1296,6 +1296,17 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
 }
 .catalog-item-row__n { min-width: 24px; }
 .catalog-item-row__body { flex: 1; min-width: 0; }
+/* Phase 30 — move-to-section dropdown on each item row. Kept narrow so
+ * it reads as an inline action, not a hero control. */
+.catalog-item-row__move {
+  max-width: 160px;
+  font-size: 12px;
+  padding: 4px 8px;
+  background: var(--card-soft);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+}
 
 /* Drag-anywhere upload overlay */
 .drop-overlay {

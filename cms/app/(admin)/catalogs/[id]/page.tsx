@@ -219,6 +219,9 @@ export default async function CatalogDetail({ params }: { params: Promise<{ id: 
               <CatalogItemsReorder
                 catalogId={id}
                 canEdit={canEdit}
+                sections={sections
+                  .filter((s) => s.kind === "wines")
+                  .map((s) => ({ id: s.id, title: s.title, position: s.position }))}
                 items={items.map<CatalogItemRow>((it) => ({
                   id: it.id,
                   wine_vintage_id: it.wine_vintage_id,

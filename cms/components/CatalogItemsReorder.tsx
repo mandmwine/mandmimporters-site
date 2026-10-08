@@ -2,7 +2,12 @@
 import Link from "next/link";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { reinsertCatalogItem, removeCatalogItem, reorderCatalogItems } from "@/lib/actions";
+import {
+  moveCatalogItemToSection,
+  reinsertCatalogItem,
+  removeCatalogItem,
+  reorderCatalogItems,
+} from "@/lib/actions";
 import DragReorderList, { type DragItem } from "./DragReorderList";
 import { useUndo } from "./UndoToast";
 
@@ -17,13 +22,23 @@ export type CatalogItemRow = {
   section_id: string | null;
 };
 
+export type WineSectionOption = {
+  id: string;
+  title: string | null;
+  position: number;
+};
+
 export default function CatalogItemsReorder({
   catalogId,
   items,
+  sections,
   canEdit,
 }: {
   catalogId: string;
   items: CatalogItemRow[];
+  // Phase 30 — Wines-kind sections only; passed in so each row can offer
+  // a "Move to…" dropdown that reassigns the item across sections.
+  sections: WineSectionOption[];
   canEdit: boolean;
 }) {
   const [pending, start] = useTransition();
@@ -35,6 +50,16 @@ export default function CatalogItemsReorder({
     fd.set("catalog_id", catalogId);
     fd.set("ids", orderedIds.join(","));
     await reorderCatalogItems(fd);
+  }
+
+  function moveToSection(id: string, sectionId: string) {
+    const fd = new FormData();
+    fd.set("id", id);
+    fd.set("section_id", sectionId);
+    start(async () => {
+      await moveCatalogItemToSection(fd);
+      router.refresh();
+    });
   }
 
   function remove(id: string, label: string) {
@@ -59,6 +84,12 @@ export default function CatalogItemsReorder({
     });
   }
 
+  const sectionLabel = (sid: string | null) => {
+    if (!sid) return "— unassigned —";
+    const s = sections.find((x) => x.id === sid);
+    return s ? (s.title && s.title.trim() ? s.title : `Wines (position ${s.position})`) : "— unknown —";
+  };
+
   const dragItems: DragItem[] = items.map((it, i) => ({
     id: it.id,
     content: (
@@ -71,8 +102,30 @@ export default function CatalogItemsReorder({
             {it.vintage_text ? ` · ${it.vintage_text}` : ""}
             {!it.has_image && <span className="warn-text"> · no image</span>}
             {it.flag_count > 0 && <span className="warn-text"> · {it.flag_count} open flag{it.flag_count === 1 ? "" : "s"}</span>}
+            {" · in "}
+            <em>{sectionLabel(it.section_id)}</em>
           </div>
         </div>
+        {canEdit && sections.length > 0 && (
+          // Phase 30 — move-to-section dropdown lets a user cross section
+          // boundaries without drag-and-drop (useful when sections are far
+          // apart in the list, or on touch devices).
+          <select
+            className="catalog-item-row__move"
+            value={it.section_id ?? ""}
+            onChange={(e) => moveToSection(it.id, e.target.value)}
+            disabled={pending}
+            aria-label="Move to a different section"
+            title="Move to a different section"
+          >
+            <option value="">— unassigned —</option>
+            {sections.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title && s.title.trim() ? s.title : `Wines (position ${s.position})`}
+              </option>
+            ))}
+          </select>
+        )}
         {canEdit && (
           <button
             type="button"
