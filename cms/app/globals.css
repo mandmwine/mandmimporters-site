@@ -1308,6 +1308,124 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   border-radius: 3px;
 }
 
+/* Phase 31 — Office UX acceptance test harness. Each test is a card,
+ * each card has a status rail + a 4-way picker + a notes textarea. The
+ * four statuses map to the familiar three severity rails (not_started
+ * stays neutral). */
+.ux-tests { display: flex; flex-direction: column; gap: 14px; }
+.ux-tests__summary { padding: 14px 16px; }
+.ux-tests__summary-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+@media (max-width: 720px) {
+  .ux-tests__summary-row { grid-template-columns: 1fr; }
+}
+.ux-tests__name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 320px;
+}
+.ux-tests__name input {
+  font-size: 14px;
+  padding: 6px 8px;
+  background: var(--card-soft);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--ink);
+}
+.ux-tests__scoreboard {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ux-tests__score {
+  display: inline-flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 4px 10px;
+  background: var(--card-soft);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-size: 15px;
+  min-width: 72px;
+  justify-content: center;
+}
+.ux-tests__score--ok   { border-left: 3px solid var(--ok); }
+.ux-tests__score--warn { border-left: 3px solid var(--warn); }
+.ux-tests__score--err  { border-left: 3px solid var(--err); }
+.ux-tests__score--mute { border-left: 3px solid var(--rule); }
+.ux-tests__actions { display: flex; gap: 10px; align-items: center; }
+.ux-tests__started { margin: 10px 0 0; }
+
+.ux-test {
+  padding: 16px 18px;
+  border-left: 3px solid var(--rule);
+}
+.ux-test--passed  { border-left-color: var(--ok); }
+.ux-test--failed  { border-left-color: var(--err); }
+.ux-test--blocked { border-left-color: var(--warn); }
+
+.ux-test__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.ux-test__head h2 { margin: 0; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.ux-test__ask {
+  margin: 6px 0 10px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent, var(--ink));
+  background: var(--card-soft);
+  font-size: 18px;
+  line-height: 1.3;
+  font-style: italic;
+  color: var(--ink);
+}
+.ux-test__pass { margin: 4px 0 2px; }
+.ux-test__hint { margin: 2px 0 10px; }
+.ux-test__notes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.ux-test__notes textarea {
+  font-size: 13px;
+  padding: 8px 10px;
+  background: var(--card-soft);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--ink);
+  resize: vertical;
+}
+.ux-test__picker { display: inline-flex; gap: 4px; }
+.ux-test__pick {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: var(--card-soft);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.ux-test__pick--on                 { font-weight: 600; }
+.ux-test__pick--passed.ux-test__pick--on  { background: var(--ok);   color: #fff; border-color: var(--ok); }
+.ux-test__pick--failed.ux-test__pick--on  { background: var(--err);  color: #fff; border-color: var(--err); }
+.ux-test__pick--blocked.ux-test__pick--on { background: var(--warn); color: #fff; border-color: var(--warn); }
+.ux-test__pick--not_started.ux-test__pick--on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+
 /* Drag-anywhere upload overlay */
 .drop-overlay {
   position: fixed; inset: 0; z-index: 90;

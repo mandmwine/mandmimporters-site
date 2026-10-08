@@ -25,6 +25,10 @@ const ADVANCED: Item[] = [
   { href: "/data", label: "Data" },
   { href: "/maps", label: "Maps" },
   { href: "/theme", label: "Theme" },
+  // Phase 31 — UX acceptance tests (audit §44). Hidden under Settings so
+  // it doesn't crowd the everyday nav; the people running the tests
+  // typically open it once per build.
+  { href: "/tests", label: "UX tests" },
 ];
 
 export default function Nav({ isAdmin }: { isAdmin: boolean }) {
