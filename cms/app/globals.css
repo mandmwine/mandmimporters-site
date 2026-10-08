@@ -1531,6 +1531,27 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   border-bottom: 1px solid var(--rule);
 }
 
+/* Phase 40 (Sprint 3) — producer list filters. One row of search + select
+ * + Apply, with chip toggles below for the common quick filters. */
+.filters-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0 6px;
+  flex-wrap: wrap;
+}
+.filters-row input[type="search"],
+.filters-row select {
+  font-size: 13px;
+  padding: 6px 10px;
+  background: var(--card-soft);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--ink);
+  min-width: 180px;
+}
+
+
 
 
 
