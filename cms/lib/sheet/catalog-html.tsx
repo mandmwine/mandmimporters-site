@@ -114,11 +114,19 @@ function paginatePortfolio(wines: SheetData[]): { kind: string; wines: SheetData
   return pages;
 }
 
+export type ProducerAssets = {
+  logo_url: string | null;
+  hero_url: string | null;
+};
+
 export type CatalogPlan = {
   catalog: CatalogRow;
   sections: SectionRow[];
   items: ItemRow[];
   wineDataById: Map<string, SheetData>;
+  // Phase 44 — per-producer logo + hero URLs so Portfolio & Editorial
+  // renderers can paint the brand mark + spread photo. Keyed by producer_id.
+  producerAssets: Map<string, ProducerAssets>;
 };
 
 export async function buildCatalogPlan(catalogId: string): Promise<CatalogPlan | null> {
@@ -141,7 +149,42 @@ export async function buildCatalogPlan(catalogId: string): Promise<CatalogPlan |
     const d = await loadSheetData(it.wine_vintage_id);
     if (d) wineDataById.set(it.wine_vintage_id, d);
   }
-  return { catalog, sections, items, wineDataById };
+
+  // Phase 44 — load logo + hero paths for every producer touched by this
+  // catalog, in one round-trip, and sign each URL. Keeps the sheet renderers
+  // completely synchronous (they can't do I/O).
+  const producerIds = Array.from(new Set(Array.from(wineDataById.values()).map((d) => d.wine.producer_id).filter(Boolean)));
+  const producerAssets = new Map<string, ProducerAssets>();
+  if (producerIds.length > 0) {
+    const prodRows = await query<{ id: string; logo_path: string | null; hero_path: string | null }>(
+      `SELECT p.id,
+              la.storage_path AS logo_path,
+              ha.storage_path AS hero_path
+         FROM producers p
+         LEFT JOIN assets la ON la.id = p.logo_asset_id AND la.deleted_at IS NULL
+         LEFT JOIN assets ha ON ha.id = p.hero_asset_id AND ha.deleted_at IS NULL
+         WHERE p.id = ANY($1::uuid[])`,
+      [producerIds],
+    );
+    // Sign in parallel but cap concurrency to stay inside Firebase's limits.
+    const { signedUrl } = await import("@/lib/storage");
+    const CONCURRENCY = 8;
+    const jobs: Array<() => Promise<void>> = [];
+    for (const row of prodRows) {
+      jobs.push(async () => {
+        const [logo_url, hero_url] = await Promise.all([
+          row.logo_path ? signedUrl(row.logo_path, 60).catch(() => null) : Promise.resolve(null),
+          row.hero_path ? signedUrl(row.hero_path, 60).catch(() => null) : Promise.resolve(null),
+        ]);
+        producerAssets.set(row.id, { logo_url, hero_url });
+      });
+    }
+    for (let i = 0; i < jobs.length; i += CONCURRENCY) {
+      await Promise.all(jobs.slice(i, i + CONCURRENCY).map((j) => j()));
+    }
+  }
+
+  return { catalog, sections, items, wineDataById, producerAssets };
 }
 
 // Returns a complete HTML document that renders every page of the catalog.
@@ -261,12 +304,38 @@ export async function catalogHtml(plan: CatalogPlan, preset: Preset): Promise<st
             // the paginator above already grouped by producer so every
             // portfolio page's wines come from exactly one producer.
             const producer = p.wines[0]?.wine.producer ?? "";
+            // Phase 44 — pass the producer's logo + hero so the renderer
+            // paints the brand mark. Portfolio uses hero as a top strip;
+            // Lineup uses the logo in place of the eyebrow. Either can
+            // fall back to the text-only version if the slot is empty.
+            const producerId = p.wines[0]?.wine.producer_id ?? "";
+            const assets = plan.producerAssets.get(producerId);
             parts.push(renderToStaticMarkup(
-              <LineupPage data={{ producer, wines: p.wines, producer_note: p.wines[0]?.producer_note }} />,
+              <LineupPage data={{
+                producer,
+                wines: p.wines,
+                producer_note: p.wines[0]?.producer_note,
+                producer_logo_url: assets?.logo_url ?? null,
+                producer_hero_url: p.kind === "portfolio" ? (assets?.hero_url ?? null) : null,
+              }} />,
             ));
           } else if (p.kind === "editorial") {
+            // Phase 44 — Editorial also carries the producer logo (per
+            // half) so a two-wine spread with two different producers
+            // can mark each half with its own winery brand.
+            const assetsByProducer = new Map<string, ProducerAssets>();
+            for (const w of p.wines) {
+              const a = plan.producerAssets.get(w.wine.producer_id);
+              if (a) assetsByProducer.set(w.wine.producer_id, a);
+            }
             parts.push(renderToStaticMarkup(
-              <EditorialPage data={{ wines: p.wines, spread_title: title }} />,
+              <EditorialPage data={{
+                wines: p.wines,
+                spread_title: title,
+                producer_logos: Object.fromEntries(
+                  Array.from(assetsByProducer.entries()).map(([pid, a]) => [pid, a.logo_url]),
+                ),
+              }} />,
             ));
           } else if (p.kind === "trade") {
             parts.push(renderToStaticMarkup(

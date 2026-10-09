@@ -11,6 +11,10 @@ import type { SheetData } from "./data";
 export type EditorialPageData = {
   wines: SheetData[]; // 1 or 2 entries; the paginator always sends ≤ 2
   spread_title?: string | null; // optional running head (e.g. a section title)
+  // Phase 44 — producer logo per producer_id so a two-wine spread with
+  // two different producers marks each half with its own winery brand.
+  // Missing entries fall back to the text-only producer line.
+  producer_logos?: Record<string, string | null>;
 };
 
 export function EditorialPage({ data }: { data: EditorialPageData }) {
@@ -27,7 +31,12 @@ export function EditorialPage({ data }: { data: EditorialPageData }) {
 
       <div className={`editorial__spread editorial__spread--${wines.length}`}>
         {wines.map((w, idx) => (
-          <EditorialWine wine={w} key={w.wine.id} side={idx === 0 ? "left" : "right"} />
+          <EditorialWine
+            wine={w}
+            key={w.wine.id}
+            side={idx === 0 ? "left" : "right"}
+            producerLogoUrl={data.producer_logos?.[w.wine.producer_id] ?? null}
+          />
         ))}
       </div>
 
@@ -38,7 +47,7 @@ export function EditorialPage({ data }: { data: EditorialPageData }) {
   );
 }
 
-function EditorialWine({ wine: w, side }: { wine: SheetData; side: "left" | "right" }) {
+function EditorialWine({ wine: w, side, producerLogoUrl }: { wine: SheetData; side: "left" | "right"; producerLogoUrl: string | null }) {
   const primary = w.scores[0];
   const grapes = w.grapes
     .map((g) => (g.percentage ? `${Math.round(Number(g.percentage))}% ${g.name}` : g.name))
@@ -107,7 +116,14 @@ function EditorialWine({ wine: w, side }: { wine: SheetData; side: "left" | "rig
 
       {w.producer_note && (
         <p className="editorial__producer-note">
-          <span className="editorial__producer-mark">{w.wine.producer}</span>
+          {/* Phase 44 — if a producer logo is present, use it as the inline
+              brand mark; otherwise fall back to the stylised producer name. */}
+          {producerLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="editorial__producer-logo" src={producerLogoUrl} alt={w.wine.producer} />
+          ) : (
+            <span className="editorial__producer-mark">{w.wine.producer}</span>
+          )}
           <span>&nbsp;&middot;&nbsp;</span>
           {w.producer_note}
         </p>

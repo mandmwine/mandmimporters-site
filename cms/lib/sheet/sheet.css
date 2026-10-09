@@ -517,6 +517,38 @@
   color: var(--mute);
 }
 
+/* Phase 44 — when a producer logo is present it replaces the uppercase
+ * eyebrow; the geography eyebrow drops below the producer name as a
+ * subhead so the region still reads. */
+.lineup__eyebrow--sub { margin: 2pt 0 6pt; }
+
+/* Logo above the producer name on Lineup / Portfolio spreads. Capped
+ * modestly so a wide landscape logo doesn't blow the page out. */
+.lineup__logo {
+  display: block;
+  max-height: 0.6in;
+  max-width: 2.4in;
+  margin: 0 0 6pt;
+  object-fit: contain;
+}
+
+/* Portfolio-only hero strip above the main header. 1.2in tall covers
+ * a landscape photo without taking over the page; wine content below
+ * still gets the full column. */
+.lineup__hero {
+  grid-column: 1 / -1;
+  height: 1.2in;
+  overflow: hidden;
+  margin: -0.55in -0.55in 0.3in;
+  background: #000;
+}
+.lineup__hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .lineup__producer {
   font-family: var(--display);
   font-size: 42pt;
@@ -870,6 +902,15 @@
   color: var(--accent);
   font-size: 9.5pt;
   letter-spacing: 0.04em;
+}
+/* Phase 44 — inline producer logo mark on each Editorial half. Kept
+ * small so it reads as a mark, not a header image. */
+.editorial__producer-logo {
+  display: inline-block;
+  max-height: 14pt;
+  max-width: 1in;
+  vertical-align: middle;
+  object-fit: contain;
 }
 
 .editorial__foot {

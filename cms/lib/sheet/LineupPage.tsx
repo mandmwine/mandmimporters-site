@@ -10,6 +10,11 @@ export type LineupData = {
   producer_note?: string | null;
   wines: SheetData[]; // each pre-loaded via loadSheetData, 2–6 entries
   theme_tagline?: string;
+  // Phase 44 — producer brand assets. Logo renders in place of the
+  // eyebrow when present; hero renders as a top strip on Portfolio
+  // pages only. Both are optional; falls back to the text header.
+  producer_logo_url?: string | null;
+  producer_hero_url?: string | null;
 };
 
 export function LineupPage({ data }: { data: LineupData }) {
@@ -31,13 +36,38 @@ export function LineupPage({ data }: { data: LineupData }) {
 
   return (
     <article className="sheet sheet--print lineup" data-count={wines.length}>
+      {/* Phase 44 — Portfolio-mode hero strip. Omitted on plain Lineup
+          (the catalog-html dispatcher only passes producer_hero_url for
+          'portfolio' pages). The hero sits above the main header and
+          caps at a modest height so it doesn't eat the content column. */}
+      {data.producer_hero_url && (
+        <div className="lineup__hero">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={data.producer_hero_url} alt="" />
+        </div>
+      )}
       <header className="lineup__head">
         <div>
-          <p className="lineup__eyebrow">
-            {location.country?.toUpperCase() ?? ""}
-            {location.region && (location.country ? ` · ${location.region.toUpperCase()}` : location.region.toUpperCase())}
-          </p>
+          {/* Phase 44 — a producer logo (when present) sits above the
+              name in place of a plain uppercase eyebrow. Falls back to
+              the country/region line below the name when the logo is
+              missing so the geography still reads at a glance. */}
+          {data.producer_logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="lineup__logo" src={data.producer_logo_url} alt={data.producer} />
+          ) : (
+            <p className="lineup__eyebrow">
+              {location.country?.toUpperCase() ?? ""}
+              {location.region && (location.country ? ` · ${location.region.toUpperCase()}` : location.region.toUpperCase())}
+            </p>
+          )}
           <h1 className="lineup__producer">{data.producer}</h1>
+          {data.producer_logo_url && (
+            <p className="lineup__eyebrow lineup__eyebrow--sub">
+              {location.country?.toUpperCase() ?? ""}
+              {location.region && (location.country ? ` · ${location.region.toUpperCase()}` : location.region.toUpperCase())}
+            </p>
+          )}
           {data.theme_tagline && <p className="lineup__tagline">{data.theme_tagline}</p>}
           {data.producer_note && <p className="lineup__note">{data.producer_note}</p>}
         </div>
