@@ -1134,6 +1134,27 @@ input:focus, select:focus { outline: 2px solid #c9a46a; outline-offset: 0; }
   margin: 0 auto;
   padding: 48px 20px 80px;
 }
+
+/* Phase 45 — draft banner on web share only. Decisions §17 explicitly
+ * keeps PDFs clean; this is the web-only draft marker so a recipient
+ * who got a half-finished working copy doesn't mistake it for a final
+ * deliverable. Red rail, inline strong + descriptive line. */
+.catalog-draft-banner {
+  background: var(--err-soft);
+  border-left: 4px solid var(--err);
+  color: var(--err);
+  padding: 10px 16px;
+  margin: 0 auto 20px;
+  max-width: 980px;
+  font-size: 14px;
+  border-radius: 3px;
+}
+.catalog-draft-banner strong {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-right: 6px;
+}
 .catalog-read__header {
   text-align: center;
   padding-bottom: 24px;

@@ -77,6 +77,17 @@ export default async function PublicCatalogShare({
   const plan = await buildCatalogPlan(share.catalog_id);
   if (!plan) notFound();
 
+  // Phase 45 — draft banner on the web share only. Final-decisions §17
+  // keeps the PDF clean (no watermarks) but surfaces a draft notice on
+  // the online read so a recipient who got a half-finished catalog
+  // doesn't mistake it for a finalised deliverable. Hidden when the
+  // catalog's status is 'approved' or 'published'.
+  const catalogStatusRow = await one<{ status: string }>(
+    "SELECT status FROM catalogs WHERE id = $1",
+    [share.catalog_id],
+  );
+  const isDraft = catalogStatusRow && !["approved", "published"].includes(catalogStatusRow.status);
+
   const itemsBySection = new Map<string | null, typeof plan.items>();
   for (const it of plan.items) {
     const key = it.section_id ?? null;
@@ -91,6 +102,12 @@ export default async function PublicCatalogShare({
 
   return (
     <article className="catalog-read">
+      {isDraft && (
+        <div className="catalog-draft-banner" role="status">
+          <strong>Draft catalog</strong>
+          <span> &middot; Not approved for distribution. The PDF below is a working proof, not a final deliverable.</span>
+        </div>
+      )}
       <header className="catalog-read__header">
         <p className="eyebrow">M &amp; M Importers · Catalog</p>
         <h1>{plan.catalog.name}</h1>
