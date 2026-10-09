@@ -1,23 +1,40 @@
 :root {
-  --paper: #f7f3ea;
-  --panel: #fffdf8;
-  /* --card-soft: a subtly tinted surface used for cards nested INSIDE a panel
-     (AI dialog actions, proposal cards, inline forms). Needs a theme-flipping
-     token so the surface + ink stay legible together in dark mode. */
-  --card-soft: #faf6ec;
-  --card-soft-hover: #fffefa;
-  --ink: #1e1b18;
-  --muted: #6f675d;
-  --rule: #e2dacb;
-  --accent: #6e2335;
-  --accent-soft: #f3e6e8;
+  /* ----- Phase 48 (final-decisions §3) — simpler default light theme.
+     Reference character: Apple Settings, Notion, Linear light, Stripe
+     restraint. The sheet preview (.sheet) still gets the warm paper
+     token so printed sheets look like actual paper; the chrome around
+     them goes cleaner and less warm. All token NAMES unchanged so no
+     component change is required — only the values shift. ------- */
+  --paper: #f5f4f1;                 /* was #f7f3ea — cleaner app bg */
+  --panel: #ffffff;                 /* was #fffdf8 — plain white panels */
+  --card-soft: #faf9f7;             /* was #faf6ec — barely-tinted neutral */
+  --card-soft-hover: #f3f1ec;
+  --ink: #1b1a18;                   /* was #1e1b18 */
+  --muted: #6f6b64;                 /* was #6f675d */
+  --faint: #98938b;                 /* new — a third tier below muted */
+  --rule: #e4e0d9;                  /* was #e2dacb — lighter, less warm */
+  --rule-strong: #d5cfc5;           /* new — for the rare case rule is too subtle */
+  --accent: #7d2432;                /* was #6e2335 — closer to the AQ wine palette */
+  --accent-soft: #f3e8ea;
   --warn: #9a5b00;
   --warn-soft: #fbf0dc;
   --ok: #2f6b45;
   --ok-soft: #e4f1e8;
   --err: #a32222;
   --err-soft: #f8e3e3;
-  --radius: 6px;
+  /* The sheet renderer locks its own warm --paper inside .sheet; this
+     token is read only by sheet.css where it still matters. */
+  --sheet-paper: #f7f3ea;
+  /* Rounded corners softened: 6px → 8px baseline, with sm/md/lg for finer
+     control. Components that use var(--radius) stay compatible. */
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  /* Shadows — barely-there, decisions §3 Stripe-style. Shadows are only
+     applied to pop-overs and hover states; everything else uses borders. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
 /* ---------------------------------------------------------------------------
@@ -172,7 +189,10 @@ h3 { font-size: 16px; font-family: var(--font-sans); font-weight: 600; margin-to
 .me { margin-top: auto; font-size: 13px; }
 .me .muted { color: #b7ab98; }
 .me .link { color: #e5cfa3; padding: 0; margin-top: 6px; }
-.content { padding: 32px 40px 60px; max-width: 1280px; width: 100%; }
+/* Phase 48 — more generous breathing room on wide screens, per decisions
+   §3 Apple-Settings-restraint; panels get air around them, text lines
+   stay around 72ch so paragraphs read like a document, not a database. */
+.content { padding: 40px 48px 72px; max-width: 1280px; width: 100%; }
 
 @media (max-width: 800px) {
   .shell { grid-template-columns: 1fr; }
@@ -189,7 +209,9 @@ h3 { font-size: 16px; font-family: var(--font-sans); font-weight: 600; margin-to
 .head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 .export-group { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border: 1px solid var(--rule); border-radius: var(--radius); background: #fff; }
 .crumbs { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
-.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 16px; }
+/* Phase 48 — panels: slightly larger radius, slightly more padding so
+   the page reads as "a few cards" instead of "a wall of boxes". */
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 18px; }
 details.panel summary { cursor: pointer; font-weight: 600; }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .split.wide { grid-template-columns: 3fr 2fr; }
