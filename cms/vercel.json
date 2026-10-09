@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/cleanup-ai-history",
       "schedule": "17 3 * * *"
+    },
+    {
+      "path": "/api/cron/pg-dump",
+      "schedule": "47 3 * * *"
     }
   ]
 }
