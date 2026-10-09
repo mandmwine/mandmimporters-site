@@ -293,6 +293,23 @@ export async function addVintage(formData: FormData) {
       );
       newId = r!.id;
     } else {
+      // Phase 47 (final-decisions §20.3) — Vintage duplication rules.
+      //
+      // Safe to carry (identity + static context):
+      //   location_id, bottle_family, bottle_* overrides, map_asset_override_id,
+      //   supervision_display, winery_note_override, wine_story, catalog_note,
+      //   display_title_override, theme_override, bottle_asset_id
+      // Carry but force review (status='needs_review' + listed in
+      // carried_forward_fields so the UI badges them):
+      //   mevushal, aging_display, bottle_sizes, special_designation,
+      //   organic, biodynamic, short_description, grapes
+      // DO NOT blindly carry (vintage-specific; left NULL/empty):
+      //   tasting_note, food_pairing  — the character of a specific
+      //                                 vintage differs year-to-year;
+      //                                 carrying mysteriously tags the
+      //                                 2023 with 2021's palate.
+      //   first_kosher_vintage        — never carry; FALSE here.
+      //   critic scores               — not copied; wine_scores stays empty.
       const r = await one<{ id: string }>(
         `INSERT INTO wine_vintages (
            wine_id, vintage_text, status, display_title_override, location_id, mevushal,
@@ -305,15 +322,19 @@ export async function addVintage(formData: FormData) {
            carried_forward_fields)
          SELECT wine_id, $2, 'needs_review', display_title_override, location_id, mevushal,
                 supervision_display, aging_display, bottle_sizes, special_designation,
-                FALSE AS first_kosher_vintage,   -- never carry forward; it is vintage-specific
-                organic, biodynamic, tasting_note, winery_note_override,
-                wine_story, food_pairing, short_description, catalog_note, bottle_asset_id,
+                FALSE AS first_kosher_vintage,   -- never carry forward; vintage-specific (§20.3)
+                organic, biodynamic,
+                NULL AS tasting_note,            -- vintage-specific (§20.3)
+                winery_note_override,
+                wine_story,
+                NULL AS food_pairing,            -- vintage-specific (§20.3)
+                short_description, catalog_note, bottle_asset_id,
                 bottle_family, bottle_scale_override, bottle_x_override, bottle_y_override,
                 map_asset_override_id, theme_override,
                 id,
                 ARRAY['mevushal','supervision_display','aging_display','bottle_sizes',
                       'special_designation','organic','biodynamic',
-                      'tasting_note','food_pairing','grapes','location_id']::text[]
+                      'short_description','grapes','location_id']::text[]
          FROM wine_vintages WHERE id = $1
          RETURNING id`,
         [prev.id, vintage],
