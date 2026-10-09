@@ -1,9 +1,14 @@
 "use client";
 // Client component — one card in the AIProposalsPanel. Shows the proposed
 // content, the sources Claude cited, and Accept / Reject / Edit buttons.
+//
+// Phase 46 — factual proposals (critic scores, vintage details) require
+// a source before Accept. The card surfaces a "Attach a source" picker
+// listing the proposal's web_results; selecting one calls
+// setProposalSource server-side, which clears the gate.
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { acceptProposal, rejectProposal } from "@/lib/ai-actions";
+import { acceptProposal, rejectProposal, setProposalSource } from "@/lib/ai-actions";
 
 export type ProposalRow = {
   id: string;
@@ -14,6 +19,11 @@ export type ProposalRow = {
   output: { text: string; web_results?: { title: string; url: string }[] };
   model: string | null;
   created_at: Date;
+  // Phase 46 — proposal_type + source_id come through so the UI can
+  // decide whether to show the source gate. Optional on existing API
+  // callers so pages that haven't been updated yet still compile.
+  proposal_type?: "fact" | "copy" | null;
+  source_id?: string | null;
 };
 
 // Try to parse the proposed output as JSON — some actions (scores, vintage
@@ -95,7 +105,18 @@ function PrettyBody({ row }: { row: ProposalRow }) {
 export default function AIProposalReviewer({ row, label }: { row: ProposalRow; label: string }) {
   const [pending, start] = useTransition();
   const [done, setDone] = useState<"accepted" | "rejected" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Phase 46 — track whether a source has been attached in this session so
+  // the UI updates between the Attach click and the Accept click without
+  // waiting for a full router.refresh.
+  const [attachedSource, setAttachedSource] = useState<string | null>(row.source_id ?? null);
   const router = useRouter();
+
+  // Phase 46 — a factual proposal with no attached source blocks Accept.
+  const isFact = row.proposal_type === "fact";
+  const sourceAttached = Boolean(attachedSource);
+  const sourceGate = isFact && !sourceAttached;
+  const webResults = row.output.web_results ?? [];
 
   if (done) {
     return (
@@ -108,10 +129,15 @@ export default function AIProposalReviewer({ row, label }: { row: ProposalRow; l
   }
 
   function accept() {
+    setError(null);
     const fd = new FormData();
     fd.set("id", row.id);
     start(async () => {
-      await acceptProposal(fd);
+      const res = await acceptProposal(fd);
+      if (res && !res.ok) {
+        setError(res.message ?? "Could not accept.");
+        return;
+      }
       setDone("accepted");
       router.refresh();
     });
@@ -122,6 +148,22 @@ export default function AIProposalReviewer({ row, label }: { row: ProposalRow; l
     start(async () => {
       await rejectProposal(fd);
       setDone("rejected");
+      router.refresh();
+    });
+  }
+  function attachSource(url: string, title: string) {
+    setError(null);
+    const fd = new FormData();
+    fd.set("id", row.id);
+    fd.set("url", url);
+    fd.set("title", title);
+    start(async () => {
+      const res = await setProposalSource(fd);
+      if (!res.ok) {
+        setError(res.message ?? "Could not attach source.");
+        return;
+      }
+      setAttachedSource(url);
       router.refresh();
     });
   }
@@ -150,14 +192,102 @@ export default function AIProposalReviewer({ row, label }: { row: ProposalRow; l
           </ul>
         </details>
       )}
+
+      {/* Phase 46 — factual-proposal source gate. For a fact proposal
+          with no source yet, Accept is disabled and the reviewer must
+          first pick one of the proposal's web_results (or paste a
+          custom URL) as the backing source. Copy proposals skip this. */}
+      {isFact && (
+        <div className={`ai-proposal-source ${sourceAttached ? "ai-proposal-source--ok" : "ai-proposal-source--needed"}`}>
+          {sourceAttached ? (
+            <p className="small">
+              <strong>Source attached:</strong>{" "}
+              <a href={attachedSource!} target="_blank" rel="noreferrer">{attachedSource}</a>
+            </p>
+          ) : (
+            <>
+              <p className="small">
+                <strong>Attach a source.</strong> This is a factual claim; one of
+                the following should back it before Accept.
+              </p>
+              {webResults.length === 0 ? (
+                <AttachCustomSource onAttach={attachSource} pending={pending} />
+              ) : (
+                <ul className="plain-list small ai-proposal-source__list">
+                  {webResults.map((r, i) => (
+                    <li key={i}>
+                      <button
+                        type="button"
+                        className="link small"
+                        disabled={pending}
+                        onClick={() => attachSource(r.url, r.title || r.url)}
+                        title={r.url}
+                      >
+                        Attach: {r.title || r.url}
+                      </button>
+                    </li>
+                  ))}
+                  <li>
+                    <AttachCustomSource onAttach={attachSource} pending={pending} />
+                  </li>
+                </ul>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       <div className="ai-proposal-card__actions">
-        <button className="btn primary small" type="button" disabled={pending} onClick={accept}>
+        <button
+          className="btn primary small"
+          type="button"
+          disabled={pending || sourceGate}
+          onClick={accept}
+          title={sourceGate ? "Attach a source first" : undefined}
+        >
           {pending ? "Applying…" : "Accept"}
         </button>
         <button className="link small muted" type="button" disabled={pending} onClick={reject}>
           Reject
         </button>
+        {error && <span className="error small">{error}</span>}
       </div>
     </div>
+  );
+}
+
+// Phase 46 — small inline form for pasting a custom URL when Claude's
+// web_results didn't include the right source (or when there were none).
+function AttachCustomSource({ onAttach, pending }: { onAttach: (url: string, title: string) => void; pending: boolean }) {
+  const [url, setUrl] = useState("");
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button type="button" className="link small" onClick={() => setOpen(true)} disabled={pending}>
+        + Attach a custom URL
+      </button>
+    );
+  }
+  return (
+    <span style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+      <input
+        type="url"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="https://…"
+        style={{ fontSize: 12, padding: "4px 8px", border: "1px solid var(--rule)", borderRadius: 3, minWidth: 240 }}
+      />
+      <button
+        type="button"
+        className="btn small"
+        onClick={() => url && onAttach(url, url)}
+        disabled={pending || !url}
+      >
+        Attach
+      </button>
+      <button type="button" className="link small muted" onClick={() => { setOpen(false); setUrl(""); }}>
+        Cancel
+      </button>
+    </span>
   );
 }

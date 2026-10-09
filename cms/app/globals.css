@@ -2273,6 +2273,20 @@ kbd {
   margin-top: 2px;
 }
 
+/* Phase 46 (final-decisions §20.1) — source gate on factual AI proposals.
+ * The card paints a warn (amber) rail when a source is needed, and an
+ * ok (green) rail once attached. Accept is server-side gated too. */
+.ai-proposal-source {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--rule);
+  background: var(--card-soft);
+  border-radius: 2px;
+}
+.ai-proposal-source--needed { border-left-color: var(--warn); }
+.ai-proposal-source--ok     { border-left-color: var(--ok); }
+.ai-proposal-source__list   { margin: 6px 0 0; display: flex; flex-direction: column; gap: 2px; }
+
 /* ---------- Phase 18: inline row-archive + export chooser ---------- */
 
 .inline-archive {

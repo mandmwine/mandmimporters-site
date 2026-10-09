@@ -55,6 +55,7 @@ export default async function AIInboxPage({
   const rows = await query<Row>(
     `SELECT a.id, a.action, a.entity_type, a.entity_id, a.field_name,
             a.output, a.model, a.created_at,
+            a.proposal_type, a.source_id,
             CASE a.entity_type
               WHEN 'wine_vintage' THEN (
                 SELECT w.display_name || CASE WHEN v.vintage_text IS NOT NULL THEN ' ' || v.vintage_text ELSE '' END

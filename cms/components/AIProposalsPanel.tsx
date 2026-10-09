@@ -21,7 +21,8 @@ const ACTION_LABEL: Record<string, string> = {
 export default async function AIProposalsPanel({ wineVintageId, producerId }: Props) {
   const rows = await query<ProposalRow>(
     `SELECT id, action, entity_type, entity_id, field_name,
-            output, model, created_at
+            output, model, created_at,
+            proposal_type, source_id
      FROM ai_actions
      WHERE status = 'proposed'
        AND ((entity_type = 'wine_vintage' AND entity_id = $1)

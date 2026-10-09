@@ -11,6 +11,15 @@ export type ProposeResult =
   | { ok: true; id: string; proposedText: string; webResults?: { title: string; url: string }[] }
   | { ok: false; error: string };
 
+// Phase 46 — proposal classification. Decisions §20.1: a factual proposal
+// may only be accepted if source_id is set; a copy proposal may be
+// accepted freely. The classification lives next to the propose() helper
+// so a future proposer type adds one line here and nothing else.
+const FACT_ACTIONS = new Set(["find_scores", "fill_vintage_details"]);
+export function proposalTypeOf(action: string): "fact" | "copy" {
+  return FACT_ACTIONS.has(action) ? "fact" : "copy";
+}
+
 // Shared internal helper: calls Claude, stores the ai_actions row, returns the
 // proposal to the caller.
 async function propose(opts: {
@@ -30,10 +39,14 @@ async function propose(opts: {
     const res = opts.useSearch
       ? await askClaudeWithSearch({ user: opts.user, system: opts.system, model: opts.model })
       : await askClaude({ user: opts.user, system: opts.system, model: opts.model });
+    const proposalType = proposalTypeOf(opts.action);
+    // Phase 46 — if the model returned any web_results, hoist the first
+    // one as a candidate source so the reviewer can one-click accept it
+    // later. Nothing writes to the sources table until the user approves.
     const row = await one<{ id: string }>(
       `INSERT INTO ai_actions
-         (user_id, action, entity_type, entity_id, field_name, input, output, model, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'proposed')
+         (user_id, action, entity_type, entity_id, field_name, input, output, model, status, proposal_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'proposed', $9)
        RETURNING id`,
       [
         opts.userId,
@@ -44,10 +57,12 @@ async function propose(opts: {
         JSON.stringify({ prompt: opts.user.slice(0, 4000), payload: opts.payload ?? {} }),
         JSON.stringify({ text: res.text, web_results: res.web_results ?? [] }),
         res.model,
+        proposalType,
       ],
     );
     await audit(opts.userId, `ai.${opts.action}.proposed`, { ...opts.entity }, undefined, {
       tokens: { in: res.input_tokens, out: res.output_tokens },
+      proposal_type: proposalType,
     });
     return { ok: true, id: row!.id, proposedText: res.text, webResults: res.web_results };
   } catch (err) {
@@ -353,10 +368,10 @@ export async function proposeAssetAltText(formData: FormData): Promise<ProposeRe
 
 // -- Accept a proposal: apply its text to the entity's field -----------------
 
-export async function acceptProposal(formData: FormData) {
+export async function acceptProposal(formData: FormData): Promise<{ ok: boolean; message?: string; code?: "source_required" | "not_found" | "already_decided" }> {
   const user = await requireEditor();
   const id = String(formData.get("id") ?? "");
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, code: "not_found", message: "Bad proposal id." };
   const row = await one<{
     id: string;
     action: string;
@@ -365,8 +380,22 @@ export async function acceptProposal(formData: FormData) {
     field_name: string | null;
     output: { text: string; web_results?: { title: string; url: string }[] };
     status: string;
-  }>("SELECT id, action, entity_type, entity_id, field_name, output, status FROM ai_actions WHERE id = $1", [id]);
-  if (!row || row.status !== "proposed") return;
+    proposal_type: "fact" | "copy" | null;
+    source_id: string | null;
+  }>("SELECT id, action, entity_type, entity_id, field_name, output, status, proposal_type, source_id FROM ai_actions WHERE id = $1", [id]);
+  if (!row) return { ok: false, code: "not_found", message: "Proposal not found." };
+  if (row.status !== "proposed") return { ok: false, code: "already_decided", message: `Already ${row.status}.` };
+
+  // Phase 46 (decisions §20.1) — factual proposals require a source.
+  // The reviewer attaches one by picking a web_result via
+  // setProposalSource; only then does Accept clear this gate.
+  if (row.proposal_type === "fact" && !row.source_id) {
+    return {
+      ok: false,
+      code: "source_required",
+      message: "This is a factual claim. Attach a source before accepting.",
+    };
+  }
 
   if (row.entity_type === "wine_vintage" && row.field_name) {
     const field = row.field_name;
@@ -471,6 +500,46 @@ export async function acceptProposal(formData: FormData) {
   await audit(user.id, `ai.${row.action}.accepted`, { type: row.entity_type, id: row.entity_id, field: row.field_name ?? undefined });
   revalidatePath(`/wines/${row.entity_id}`);
   revalidatePath(`/sheet/${row.entity_id}`);
+  revalidatePath("/review/ai");
+  return { ok: true };
+}
+
+// Phase 46 (decisions §20.1) — attach one of a proposal's web_results as
+// the source behind it. Creates (or finds) a sources row for the URL,
+// writes source_id onto the ai_actions row. After this clears, the
+// Accept button on the proposal is no longer gated.
+export async function setProposalSource(formData: FormData): Promise<{ ok: boolean; message?: string }> {
+  const user = await requireEditor();
+  const id = String(formData.get("id") ?? "");
+  const url = String(formData.get("url") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, message: "Bad proposal id." };
+  if (!/^https?:\/\//i.test(url)) return { ok: false, message: "Need a valid URL." };
+
+  // Look for an existing sources row for this URL first; create one if not.
+  // We use source_type='other' as a safe default — the reviewer can
+  // reclassify later from the Sources panel on the entity.
+  let source = await one<{ id: string }>("SELECT id FROM sources WHERE url = $1 LIMIT 1", [url]);
+  if (!source) {
+    source = await one<{ id: string }>(
+      `INSERT INTO sources (source_type, title, url, created_by)
+       VALUES ('other', $1, $2, $3) RETURNING id`,
+      [title || url, url, user.id],
+    );
+  }
+
+  const row = await one<{ entity_type: string; entity_id: string; status: string }>(
+    "SELECT entity_type, entity_id, status FROM ai_actions WHERE id = $1",
+    [id],
+  );
+  if (!row || row.status !== "proposed") return { ok: false, message: "Proposal already reviewed." };
+
+  await query("UPDATE ai_actions SET source_id = $2 WHERE id = $1", [id, source!.id]);
+  await audit(user.id, "ai.source_attached", { type: "ai_action", id }, undefined, { url: url.slice(0, 160) });
+  revalidatePath(`/wines/${row.entity_id}`);
+  revalidatePath(`/sheet/${row.entity_id}`);
+  revalidatePath("/review/ai");
+  return { ok: true };
 }
 
 export async function rejectProposal(formData: FormData) {
