@@ -34,6 +34,20 @@ export async function captureError(err: unknown, ctx: ErrorContext): Promise<voi
   const label = `${ctx.kind}${ctx.route ? `:${ctx.route}` : ""}`;
   console.error(`[captureError] ${label}: ${message}`, ctx.extra);
 
+  // Phase 50 (final-decisions §19) — forward to Sentry when configured.
+  // Lazy, dynamic, gated. A build without @sentry/nextjs installed still
+  // works; a build with the package but no SENTRY_DSN still works; a
+  // build with both will initialise Sentry on first error and start
+  // sending. This keeps next.config untouched, so there's no risk of a
+  // Sentry misconfigure wedging the deploy.
+  if (process.env.SENTRY_DSN) {
+    try {
+      await forwardToSentry(err, ctx);
+    } catch (sentryErr) {
+      console.warn("[captureError] Sentry forward failed", sentryErr);
+    }
+  }
+
   if (!dbConfigured()) return;
 
   try {
@@ -59,6 +73,39 @@ export async function captureError(err: unknown, ctx: ErrorContext): Promise<voi
 // Thin wrapper for the common "wrap a server action" shape. Any throw
 // gets captured with the action name and the user (if the action grabbed
 // one) in context, then rethrows so the client still sees the failure.
+// Phase 50 — one-time Sentry init with the right filters. Flag kept at
+// module scope so init runs at most once per Lambda instance.
+let sentryInitDone = false;
+async function forwardToSentry(err: unknown, ctx: ErrorContext): Promise<void> {
+  const Sentry = (await import("@sentry/nextjs")) as typeof import("@sentry/nextjs");
+  if (!sentryInitDone) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? "0.1"),
+      environment: process.env.VERCEL_ENV ?? "development",
+      release: process.env.VERCEL_GIT_COMMIT_SHA ?? undefined,
+      // Decisions §19 — filter sensitive headers so Sentry never
+      // records auth cookies or bearer tokens.
+      beforeSend(event) {
+        if (event.request?.headers) {
+          delete (event.request.headers as Record<string, unknown>).authorization;
+          delete (event.request.headers as Record<string, unknown>).cookie;
+        }
+        return event;
+      },
+    });
+    sentryInitDone = true;
+  }
+  Sentry.captureException(err, {
+    tags: {
+      kind: ctx.kind,
+      ...(ctx.route ? { route: ctx.route } : {}),
+    },
+    extra: ctx.extra,
+    user: ctx.userId ? { id: ctx.userId } : undefined,
+  });
+}
+
 export async function withErrorCapture<T>(
   name: string,
   fn: () => Promise<T>,
