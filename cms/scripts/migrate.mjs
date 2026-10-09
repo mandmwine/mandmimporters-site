@@ -1,6 +1,10 @@
 // Applies migrations/*.sql in order, once each, inside a transaction.
-// Runs automatically before every Vercel build. Skips cleanly when no database
-// is configured yet so the app can still deploy.
+// Runs automatically before every Vercel build via the `vercel-build`
+// npm script in cms/package.json (Vercel prefers vercel-build over build
+// when present). Also runnable manually: `npm run migrate` with
+// DATABASE_URL set. Skips cleanly when no database is configured yet so
+// the app can still deploy during initial setup.
+// Uses pg_advisory_lock so two concurrent builds can't race.
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
