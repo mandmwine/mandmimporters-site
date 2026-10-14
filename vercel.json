@@ -129,6 +129,86 @@
       "source": "/wines/white",
       "destination": "/wines?color=White",
       "permanent": true
+    },
+    {
+      "source": "/wines/p/aegerter-corton-vergennes",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/aegerter-nuits-saint-georges",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/botteotto-cabernet-sauvignon",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/botteotto-cerasuolo-dabruzzo-rose",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/botteotto-grigio-xm6p7-w95x6",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/botteotto-grigio-xm6p7",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/botteotto-montepulciano-dabruzzo",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/botteotto-moscato",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/chateau-valandraud-virginie-de-valandraud",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/falesco-ferentano",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/janisson-and-fils-grand-cru-brut",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/janisson-fils-brut-ros",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/san-paolo-irpinia-aglianico",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/von-hvel-oberemmeler-riesling",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/von-hvel-saar-riesling-feinherb",
+      "destination": "/wines",
+      "permanent": false
+    },
+    {
+      "source": "/wines/p/von-hvel-scharzhofberg-riesling",
+      "destination": "/wines",
+      "permanent": false
     }
   ],
   "headers": [
